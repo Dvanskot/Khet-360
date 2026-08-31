@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Khet360.Api/Khet360.Api.csproj" />
+    <Project Path="src/Khet360.Application/Khet360.Application.csproj" />
+    <Project Path="src/Khet360.Domain/Khet360.Domain.csproj" />
+    <Project Path="src/Khet360.Infrastructure/Khet360.Infrastructure.csproj" />
+  </Folder>
+</Solution>

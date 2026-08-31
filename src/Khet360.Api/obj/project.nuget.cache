@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "wfBQxxgXCaw=",
+  "success": true,
+  "projectFilePath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Api\\Khet360.Api.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Israel Tshikota\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.11\\microsoft.aspnetcore.openapi.10.0.11.nupkg.sha512",
+    "C:\\Users\\Israel Tshikota\\.nuget\\packages\\microsoft.openapi\\2.7.5\\microsoft.openapi.2.7.5.nupkg.sha512"
+  ],
+  "logs": []
+}

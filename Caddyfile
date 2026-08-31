@@ -1,0 +1,23 @@
+# Caddyfile for Khet-360
+# This is a basic configuration for local development.
+# In production, Caddy will automatically handle HTTPS for *.khet360.co.za
+
+:80 {
+    # Redirect all HTTP traffic to HTTPS (uncomment in production)
+    # redir https://{host}{uri}
+
+    # Proxy API requests to the .NET Backend (once created)
+    handle_path /api/* {
+        reverse_proxy backend:8080
+    }
+
+    # Proxy Frontend requests to the Vue 3 app (once created)
+    handle {
+        reverse_proxy frontend:3000
+    }
+
+    # Log requests for debugging
+    log {
+        output file /var/log/caddy/access.log
+    }
+}

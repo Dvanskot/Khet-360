@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Khet360.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e4b4e72af378d63599d3d211783363161841d06f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e7bfc6309e80452dbd06201bffaafcb548690efe")]
 [assembly: System.Reflection.AssemblyProductAttribute("Khet360.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Khet360.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

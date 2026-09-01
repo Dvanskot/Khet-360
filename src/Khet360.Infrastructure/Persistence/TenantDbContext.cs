@@ -33,6 +33,9 @@ public class TenantDbContext : DbContext
     public DbSet<FuneralCase> FuneralCases { get; set; } = null!;
     public DbSet<FuneralCaseMilestone> FuneralCaseMilestones { get; set; } = null!;
     public DbSet<RoutingRule> RoutingRules { get; set; } = null!;
+    public DbSet<InsurancePolicy> InsurancePolicies { get; set; } = null!;
+    public DbSet<InsuranceClaim> InsuranceClaims { get; set; } = null!;
+    public DbSet<ClaimPayment> ClaimPayments { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -142,6 +145,25 @@ public class TenantDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(a => a.WorkItemId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<InsuranceClaim>(entity =>
+        {
+            entity.HasOne(c => c.Policy)
+                .WithMany(p => p.Claims)
+                .HasForeignKey(c => c.PolicyId);
+
+            entity.HasOne(c => c.FuneralCase)
+                .WithMany()
+                .HasForeignKey(c => c.FuneralCaseId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ClaimPayment>(entity =>
+        {
+            entity.HasOne(p => p.Claim)
+                .WithMany(c => c.Payments)
+                .HasForeignKey(p => p.ClaimId);
         });
 
         // Apply Branch Scope filters to all IBranchScoped entities

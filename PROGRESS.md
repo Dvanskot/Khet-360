@@ -35,7 +35,7 @@ This document serves as the authoritative record of implementation progress for 
 - [x] **SLA-Driven Intelligent Routing** ✅
 - [x] **Redis Caching Implementation** ✅
 - [x] **RabbitMQ Async Task Exchange** ✅
-- [ ] Policy & Claims Management
+- [x] Policy & Claims Management ✅
 - [ ] Repatriation, Mortuary, and Fleet Modules
 - [ ] Service Arrangements & Catering
 - [ ] Memorials (Core)
@@ -44,7 +44,7 @@ This document serves as the authoritative record of implementation progress for 
 ### Phase 4: External Ecosystem (Enhanced)
 - [ ] **The Family Experience Portal** 🚀
 - [ ] **Vendor Collaboration Hub** 🚀
-- [ ] **MinIO S3 Object Storage Integration** 🚀
+- [x] **MinIO S3 Object Storage Integration** ✅
 - [ ] Integrated Portal Payments & Document Uploads
 
 ### Phase 5: Power-User UX (Enhanced)
@@ -96,5 +96,5 @@ This document serves as the authoritative record of implementation progress for 
 - [ ] **Command Palette** (High) ⚪
 - [ ] **Guided Wizards** (Medium) ⚪
 - [ ] **Deal Boards** (Medium) ⚪
-- [ ] **MinIO Storage** (Medium) ⚪
+- [x] **MinIO Storage** (Medium) 🟢
 - [ ] **Observability Stack** (Low) ⚪

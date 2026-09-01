@@ -76,6 +76,9 @@ builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<IRoutingService, RoutingService>();
 builder.Services.AddScoped<IFamilyRelationshipService, FamilyRelationshipService>();
 builder.Services.AddScoped<IFuneralCaseService, FuneralCaseService>();
+builder.Services.AddScoped<IPolicyService, PolicyService>();
+builder.Services.AddScoped<IClaimService, ClaimService>();
+builder.Services.AddScoped<IFileStorageService, MinioStorageService>();
 
 builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddSingleton<IMessageBus, MessageBus>();

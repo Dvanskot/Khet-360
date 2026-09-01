@@ -83,6 +83,7 @@ public class SlaEscalationWorker : BackgroundService
         using var scope = _serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TenantDbContext>();
 
+        // 1. WorkItem SLA checks
         var pendingWork = await db.WorkItems
             .Where(wi => wi.Status != WorkItemStatus.Completed && wi.Status != WorkItemStatus.Cancelled)
             .ToListAsync();
@@ -113,6 +114,29 @@ public class SlaEscalationWorker : BackgroundService
                     _logger.LogInformation("SLA Warning: WorkItem {Id} is approaching its due date.", wi.Id);
                 }
             }
+        }
+
+        // 2. Fleet SLA checks (Maintenance & Trip Delays)
+        var now = DateTime.UtcNow;
+
+        // Check for overdue maintenance
+        var overdueMaintenance = await db.MaintenanceSchedules
+            .Where(s => s.NextDueDate <= now)
+            .ToListAsync();
+
+        foreach (var sched in overdueMaintenance)
+        {
+            _logger.LogWarning("FLEET ALERT: Vehicle {VehicleId} is overdue for maintenance! Due Date: {DueDate}", sched.VehicleId, sched.NextDueDate);
+        }
+
+        // Check for delayed trips (e.g., Trip not started within 30 mins of scheduled time)
+        var delayedTrips = await db.TripAssignments
+            .Where(t => !t.IsCompleted && t.ActualStartTime == null && t.ScheduledStartTime < now.AddMinutes(-30))
+            .ToListAsync();
+
+        foreach (var trip in delayedTrips)
+        {
+            _logger.LogWarning("LOGISTICS ALERT: Trip {TripId} for Case {CaseId} is delayed! Scheduled Start: {StartTime}", trip.Id, trip.FuneralCaseId, trip.ScheduledStartTime);
         }
 
         await db.SaveChangesAsync();

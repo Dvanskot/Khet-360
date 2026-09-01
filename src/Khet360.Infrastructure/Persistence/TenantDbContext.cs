@@ -41,6 +41,15 @@ public class TenantDbContext : DbContext
     public DbSet<FuneralVehicle> FuneralVehicles { get; set; } = null!;
     public DbSet<MortuarySlot> MortuarySlots { get; set; } = null!;
     public DbSet<Repatriation> Repatriations { get; set; } = null!;
+    public DbSet<CaseAccessToken> CaseAccessTokens { get; set; } = null!;
+    public DbSet<DocumentRequest> DocumentRequests { get; set; } = null!;
+    public DbSet<VehicleTelematics> VehicleTelematics { get; set; } = null!;
+    public DbSet<MaintenanceSchedule> MaintenanceSchedules { get; set; } = null!;
+    public DbSet<WorkOrder> WorkOrders { get; set; } = null!;
+    public DbSet<FuelLog> FuelLogs { get; set; } = null!;
+    public DbSet<DriverProfile> DriverProfiles { get; set; } = null!;
+    public DbSet<TripAssignment> TripAssignments { get; set; } = null!;
+    public DbSet<VehicleDocument> VehicleDocuments { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Khet360.Application.Dtos;
 using Khet360.Application.Interfaces;
 using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
@@ -68,5 +69,68 @@ public class FleetService : IFleetService
             .Where(v => v.BranchId == branchId && v.Status == VehicleStatus.Available)
             .Select(v => new VehicleDto(v.Id, v.RegistrationNumber, v.Model, v.Capacity, v.Status, v.LastMaintenanceDate))
             .ToListAsync();
+    }
+
+    // --- Extensions ---
+
+    public async Task<double> CalculateFuelEfficiencyAsync(Guid vehicleId)
+    {
+        var logs = await _db.FuelLogs
+            .Where(l => l.VehicleId == vehicleId)
+            .OrderByDescending(l => l.PurchaseDate)
+            .Take(5)
+            .ToListAsync();
+
+        if (logs.Count < 2) return 0;
+
+        // Simplified: Avg (Distance between logs / Volume)
+        double totalDistance = 0;
+        double totalFuel = 0;
+
+        for (int i = 0; i < logs.Count - 1; i++)
+        {
+            totalDistance += Math.Abs(logs[i].MileageAtPurchase - logs[i + 1].MileageAtPurchase);
+            totalFuel += logs[i].Volume;
+        }
+
+        return totalFuel > 0 ? totalDistance / totalFuel : 0;
+    }
+
+    public async Task<List<Guid>> GetVehiclesRequiringMaintenanceAsync(Guid branchId)
+    {
+        var now = DateTime.UtcNow;
+        var vehicles = await _db.MaintenanceSchedules
+            .Where(s => s.BranchId == branchId && s.NextDueDate <= now)
+            .Select(s => s.VehicleId)
+            .ToListAsync();
+
+        return vehicles;
+    }
+
+    public async Task AssignTripAsync(Guid vehicleId, Guid driverId, Guid caseId, string route)
+    {
+        var tenantId = _tenantService.CurrentTenant?.Id
+            ?? throw new InvalidOperationException("Tenant context not found.");
+
+        var vehicle = await _db.FuneralVehicles.FindAsync(vehicleId);
+        if (vehicle == null || vehicle.Status != VehicleStatus.Available)
+            throw new InvalidOperationException("Vehicle is not available for assignment.");
+
+        var trip = new TripAssignment
+        {
+            Id = Guid.NewGuid(),
+            ScheduledStartTime = DateTime.UtcNow, // Default
+            RouteDetails = route,
+            VehicleId = vehicleId,
+            DriverId = driverId,
+            FuneralCaseId = caseId,
+            TenantId = tenantId,
+            BranchId = vehicle.BranchId,
+            IsCompleted = false
+        };
+
+        vehicle.Status = VehicleStatus.InUse;
+        _db.TripAssignments.Add(trip);
+        await _db.SaveChangesAsync();
     }
 }

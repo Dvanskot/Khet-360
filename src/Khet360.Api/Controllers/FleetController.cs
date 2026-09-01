@@ -18,7 +18,7 @@ public class FleetController : ControllerBase
         _fleetService = fleetService;
     }
 
-    [HttpPost]
+    [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] VehicleCreateDto dto, [FromQuery] Guid branchId)
     {
         var id = await _fleetService.RegisterVehicleAsync(dto, branchId);
@@ -45,5 +45,26 @@ public class FleetController : ControllerBase
     {
         var vehicles = await _fleetService.GetAvailableVehiclesAsync(branchId);
         return Ok(vehicles);
+    }
+
+    [HttpGet("{id}/efficiency")]
+    public async Task<IActionResult> GetEfficiency(Guid id)
+    {
+        var efficiency = await _fleetService.CalculateFuelEfficiencyAsync(id);
+        return Ok(new { VehicleId = id, Efficiency = efficiency });
+    }
+
+    [HttpGet("maintenance-due")]
+    public async Task<IActionResult> GetMaintenanceDue([FromQuery] Guid branchId)
+    {
+        var vehicles = await _fleetService.GetVehiclesRequiringMaintenanceAsync(branchId);
+        return Ok(vehicles);
+    }
+
+    [HttpPost("assign-trip")]
+    public async Task<IActionResult> AssignTrip([FromBody] TripAssignmentDto dto)
+    {
+        await _fleetService.AssignTripAsync(dto.VehicleId, dto.DriverId, dto.FuneralCaseId, dto.RouteDetails);
+        return Ok("Trip assigned successfully.");
     }
 }

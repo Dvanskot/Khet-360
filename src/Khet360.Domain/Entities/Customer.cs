@@ -26,6 +26,8 @@ public abstract class Customer : IBranchScoped
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 
+    public abstract string FullName { get; }
+
     public virtual ICollection<CustomerAddress> Addresses { get; set; } = new List<CustomerAddress>();
     public virtual ICollection<CustomerContact> Contacts { get; set; } = new List<CustomerContact>();
 }

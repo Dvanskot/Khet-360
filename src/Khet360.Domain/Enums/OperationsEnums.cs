@@ -5,7 +5,10 @@ public enum VehicleStatus
     Available,
     InUse,
     Maintenance,
-    Retired
+    Retired,
+    Moving,
+    Idle,
+    Parked
 }
 
 public enum MortuarySlotStatus
@@ -14,3 +17,13 @@ public enum MortuarySlotStatus
     Occupied,
     Reserved
 }
+
+public enum WorkOrderStatus
+{
+    Open,
+    InProgress,
+    AwaitingParts,
+    Completed,
+    Cancelled
+}
+

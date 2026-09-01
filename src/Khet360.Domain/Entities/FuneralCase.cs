@@ -29,6 +29,7 @@ public class FuneralCase : IBranchScoped
     public DateTime OpenedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? ClosedAt { get; set; }
+    public DateTime? ScheduledDate { get; set; }
 
     public string? Notes { get; set; }
 

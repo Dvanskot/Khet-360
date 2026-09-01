@@ -23,4 +23,6 @@ public class IndividualCustomer : Customer
 
     [MaxLength(50)]
     public string? IdentityType { get; set; }
+
+    public override string FullName => $"{FirstName} {LastName}";
 }

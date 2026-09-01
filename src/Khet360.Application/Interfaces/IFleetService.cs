@@ -29,4 +29,7 @@ public interface IFleetService
     Task<VehicleDto?> GetVehicleAsync(Guid id);
     Task UpdateVehicleStatusAsync(Guid id, VehicleUpdateDto dto);
     Task<IEnumerable<VehicleDto>> GetAvailableVehiclesAsync(Guid branchId);
+    Task<double> CalculateFuelEfficiencyAsync(Guid vehicleId);
+    Task<List<Guid>> GetVehiclesRequiringMaintenanceAsync(Guid branchId);
+    Task AssignTripAsync(Guid vehicleId, Guid driverId, Guid caseId, string route);
 }

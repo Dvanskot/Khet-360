@@ -18,4 +18,6 @@ public class OrganisationCustomer : Customer
 
     [MaxLength(100)]
     public string? Industry { get; set; }
+
+    public override string FullName => OrganisationName;
 }

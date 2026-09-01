@@ -36,6 +36,10 @@ public class TenantDbContext : DbContext
     public DbSet<InsurancePolicy> InsurancePolicies { get; set; } = null!;
     public DbSet<InsuranceClaim> InsuranceClaims { get; set; } = null!;
     public DbSet<ClaimPayment> ClaimPayments { get; set; } = null!;
+    public DbSet<ServiceArrangement> ServiceArrangements { get; set; } = null!;
+    public DbSet<ArrangementItem> ArrangementItems { get; set; } = null!;
+    public DbSet<FuneralVehicle> FuneralVehicles { get; set; } = null!;
+    public DbSet<MortuarySlot> MortuarySlots { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -164,6 +168,29 @@ public class TenantDbContext : DbContext
             entity.HasOne(p => p.Claim)
                 .WithMany(c => c.Payments)
                 .HasForeignKey(p => p.ClaimId);
+        });
+
+        modelBuilder.Entity<ServiceArrangement>(entity =>
+        {
+            entity.HasOne(s => s.FuneralCase)
+                .WithMany()
+                .HasForeignKey(s => s.FuneralCaseId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ArrangementItem>(entity =>
+        {
+            entity.HasOne(i => i.ServiceArrangement)
+                .WithMany(s => s.Items)
+                .HasForeignKey(i => i.ServiceArrangementId);
+        });
+
+        modelBuilder.Entity<MortuarySlot>(entity =>
+        {
+            entity.HasOne(s => s.FuneralCase)
+                .WithMany()
+                .HasForeignKey(s => s.FuneralCaseId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // Apply Branch Scope filters to all IBranchScoped entities

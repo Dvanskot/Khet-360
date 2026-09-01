@@ -78,6 +78,7 @@ builder.Services.AddScoped<IFamilyRelationshipService, FamilyRelationshipService
 builder.Services.AddScoped<IFuneralCaseService, FuneralCaseService>();
 builder.Services.AddScoped<IPolicyService, PolicyService>();
 builder.Services.AddScoped<IClaimService, ClaimService>();
+builder.Services.AddScoped<IServiceArrangementService, ServiceArrangementService>();
 builder.Services.AddScoped<IFileStorageService, MinioStorageService>();
 
 builder.Services.AddScoped<ICacheService, CacheService>();

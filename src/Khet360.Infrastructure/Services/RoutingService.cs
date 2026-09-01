@@ -38,13 +38,13 @@ public class RoutingService : IRoutingService
 
         // 2. Find eligible users in the branch with the required role
         var eligibleUserIds = await (from ur in _tenantDb.UserRoles
-                                    join u in _tenantDb.Users on ur.UserId equals u.Id
-                                    join ub in _tenantDb.UserBranches on u.Id equals ub.UserId
-                                    join r in _tenantDb.Roles on ur.RoleId equals r.Id
-                                    where r.Name == rule.RequiredRole
-                                    && ub.BranchId == branchId
-                                    && u.IsActive
-                                    select u.Id).ToListAsync();
+                                     join u in _tenantDb.Users on ur.UserId equals u.Id
+                                     join ub in _tenantDb.UserBranches on u.Id equals ub.UserId
+                                     join r in _tenantDb.Roles on ur.RoleId equals r.Id
+                                     where r.Name == rule.RequiredRole
+                                     && ub.BranchId == branchId
+                                     && u.IsActive
+                                     select u.Id).ToListAsync();
 
         if (!eligibleUserIds.Any())
             return null;

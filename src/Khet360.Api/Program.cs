@@ -85,6 +85,7 @@ builder.Services.AddScoped<IRepatriationService, RepatriationService>();
 builder.Services.AddScoped<IVendorService, VendorService>();
 builder.Services.AddScoped<IMemorialService, MemorialService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<ICommandPaletteService, CommandPaletteService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IFileStorageService, MinioStorageService>();
 

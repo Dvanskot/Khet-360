@@ -40,6 +40,7 @@ public class TenantDbContext : DbContext
     public DbSet<ArrangementItem> ArrangementItems { get; set; } = null!;
     public DbSet<FuneralVehicle> FuneralVehicles { get; set; } = null!;
     public DbSet<MortuarySlot> MortuarySlots { get; set; } = null!;
+    public DbSet<Repatriation> Repatriations { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

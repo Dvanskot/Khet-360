@@ -24,7 +24,7 @@ This document serves as the authoritative record of implementation progress for 
 ### Phase 2: Tenant Identity & Core ERP
 - [x] Tenant Authentication (JWT + Tenant Binding) ✅
 - [x] Tenant RBAC & Branch Scope ✅
-- [ ] Organisation Configuration
+- [x] Organisation Configuration ✅
 - [x] Customer/Family 360 ✅
 - [ ] CRM (Leads, Opportunities, Activities)
 - [ ] Funeral Case Core

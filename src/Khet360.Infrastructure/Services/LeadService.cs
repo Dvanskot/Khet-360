@@ -77,7 +77,7 @@ public class LeadService : ILeadService
             lead.Email,
             lead.Phone,
             lead.Source,
-            lead.Notes,
+            lead.Notes ?? string.Empty,
             lead.Status,
             lead.CreatedAt,
             lead.BranchId);
@@ -124,7 +124,7 @@ public class LeadService : ILeadService
                 l.Email,
                 l.Phone,
                 l.Source,
-                l.Notes,
+                l.Notes ?? string.Empty,
                 l.Status,
                 l.CreatedAt,
                 l.BranchId)).ToList(),

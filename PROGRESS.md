@@ -38,14 +38,14 @@ This document serves as the authoritative record of implementation progress for 
 - [x] Policy & Claims Management ✅
 - [x] **Repatriation, Mortuary, and Fleet Modules** ✅
 - [x] Service Arrangements & Catering ✅
-- [ ] Memorials (Core)
-- [ ] Operational Command Centre (Dashboards)
+- [x] Memorials (Core) ✅
+- [x] Operational Command Centre (Dashboards) ✅
 
 ### Phase 4: External Ecosystem (Enhanced)
 - [x] **The Family Experience Portal** ✅
 - [x] **Vendor Collaboration Hub** ✅
 - [x] **MinIO S3 Object Storage Integration** ✅
-- [ ] Integrated Portal Payments & Document Uploads
+- [x] Integrated Portal Payments & Document Uploads ✅
 
 ### Phase 5: Power-User UX (Enhanced)
 - [ ] **Action-Oriented Command Palette** 🚀
@@ -84,6 +84,7 @@ This document serves as the authoritative record of implementation progress for 
 | 2026-09-01 | Funeral Case Workflow | Core | Implemented sequential case state machine and milestone auditing. |
 | 2026-09-01 | CRM Pipeline | Core | Implemented Lead $\to$ Customer $\to$ Opportunity conversion and Activity tracking. |
 | 2026-09-01 | Advanced Operations Stack | Performance | Implemented Redis Read-Through Caching, RabbitMQ Event Bus, and SLA-Driven Routing/Escalation Workers. |
+| 2026-09-01 | Operational Command Centre | Analytics | Implemented Dashboard APIs for SLA, Fleet, Vendor, and CRM overview. |
 
 ---
 

@@ -9,6 +9,8 @@ public class DocumentRequest : IBranchScoped
     public string Description { get; set; } = string.Empty;
     public bool IsMandatory { get; set; }
     public bool IsFulfilled { get; set; }
+    public string? FileKey { get; set; }
+
 
     public Guid FuneralCaseId { get; set; }
     public virtual FuneralCase FuneralCase { get; set; } = null!;

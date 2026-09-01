@@ -11,7 +11,8 @@ public record FamilyCaseViewDto(
     List<CaseMilestoneDto> Progress,
     List<ArrangementItemDto> SelectedItems,
     List<DocumentDto> UploadedDocuments,
-    List<DocumentRequestDto> PendingDocuments);
+    List<DocumentRequestDto> PendingDocuments,
+    List<InvoiceDto> OutstandingInvoices);
 
 public record CaseMilestoneDto(
     string MilestoneName,
@@ -29,6 +30,13 @@ public record DocumentRequestDto(
     string DocumentName,
     string Description,
     bool IsMandatory);
+
+public record InvoiceDto(
+    Guid Id,
+    string InvoiceNumber,
+    decimal Amount,
+    DateTime DueDate,
+    string Status);
 
 public record TokenResponseDto(
     string Token,

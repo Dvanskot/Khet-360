@@ -56,7 +56,7 @@ public class OpportunityService : IOpportunityService
             opp.Stage,
             opp.CustomerId,
             opp.BranchId,
-            opp.Notes,
+            opp.Notes ?? string.Empty,
             opp.CreatedAt);
     }
 
@@ -99,7 +99,7 @@ public class OpportunityService : IOpportunityService
                 o.Stage,
                 o.CustomerId,
                 o.BranchId,
-                o.Notes,
+                o.Notes ?? string.Empty,
                 o.CreatedAt)).ToList(),
             total,
             filter.Page,

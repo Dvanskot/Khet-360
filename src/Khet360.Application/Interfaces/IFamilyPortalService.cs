@@ -9,5 +9,5 @@ public interface IFamilyPortalService
 {
     Task<TokenResponseDto> GenerateCaseAccessTokenAsync(Guid caseId);
     Task<FamilyCaseViewDto?> GetCaseViewByTokenAsync(string token);
-    Task<Guid> UploadDocumentAsync(string token, System.IO.Stream fileStream, string fileName, string contentType);
+    Task<Guid> UploadDocumentAsync(string token, System.IO.Stream fileStream, string fileName, string contentType, Guid documentRequestId);
 }

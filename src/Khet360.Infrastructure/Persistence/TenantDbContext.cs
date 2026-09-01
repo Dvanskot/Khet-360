@@ -53,6 +53,12 @@ public class TenantDbContext : DbContext
     public DbSet<Vendor> Vendors { get; set; } = null!;
     public DbSet<VendorOrder> VendorOrders { get; set; } = null!;
     public DbSet<VendorOrderItem> VendorOrderItems { get; set; } = null!;
+    public DbSet<Memorial> Memorials { get; set; } = null!;
+    public DbSet<Obituary> Obituaries { get; set; } = null!;
+    public DbSet<MemorialTribute> MemorialTributes { get; set; } = null!;
+    public DbSet<Invoice> Invoices { get; set; } = null!;
+    public DbSet<Payment> Payments { get; set; } = null!;
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -198,6 +204,13 @@ public class TenantDbContext : DbContext
                 .HasForeignKey(i => i.ServiceArrangementId);
         });
 
+        modelBuilder.Entity<VendorOrderItem>(entity =>
+        {
+            entity.HasOne(i => i.VendorOrder)
+                .WithMany(o => o.Items)
+                .HasForeignKey(i => i.VendorOrderId);
+        });
+
         modelBuilder.Entity<MortuarySlot>(entity =>
         {
             entity.HasOne(s => s.FuneralCase)
@@ -205,6 +218,44 @@ public class TenantDbContext : DbContext
                 .HasForeignKey(s => s.FuneralCaseId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<Memorial>(entity =>
+        {
+            entity.HasOne(m => m.FuneralCase)
+                .WithMany()
+                .HasForeignKey(m => m.FuneralCaseId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Obituary>(entity =>
+        {
+            entity.HasOne(o => o.Memorial)
+                .WithOne(m => m.Obituary)
+                .HasForeignKey<Obituary>(o => o.MemorialId);
+        });
+
+        modelBuilder.Entity<MemorialTribute>(entity =>
+        {
+            entity.HasOne(t => t.Memorial)
+                .WithMany(m => m.Tributes)
+                .HasForeignKey(t => t.MemorialId);
+        });
+
+        modelBuilder.Entity<Invoice>(entity =>
+        {
+            entity.HasOne(i => i.FuneralCase)
+                .WithMany()
+                .HasForeignKey(i => i.FuneralCaseId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Payment>(entity =>
+        {
+            entity.HasOne(p => p.Invoice)
+                .WithMany(i => i.Payments)
+                .HasForeignKey(p => p.InvoiceId);
+        });
+
 
         // Apply Branch Scope filters to all IBranchScoped entities
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())

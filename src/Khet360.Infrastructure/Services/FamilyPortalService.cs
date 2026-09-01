@@ -58,8 +58,6 @@ public class FamilyPortalService : IFamilyPortalService
 
         if (funeralCase == null) return null;
 
-        // Get arrangements associated with this case (simplified)
-        // In a real app, we'd filter for "Family-Visible" arrangements
         var arrangements = await _db.ServiceArrangements
             .Include(s => s.Items)
             .Where(s => s.FuneralCaseId == funeralCase.Id)
@@ -67,14 +65,29 @@ public class FamilyPortalService : IFamilyPortalService
 
         var selectedItems = arrangements.SelectMany(a => a.Items).ToList();
 
-        // Get pending documents
         var pendingDocs = await _db.DocumentRequests
             .Where(d => d.FuneralCaseId == funeralCase.Id && !d.IsFulfilled)
             .Select(d => new DocumentRequestDto(d.Id, d.DocumentName, d.Description, d.IsMandatory))
             .ToListAsync();
 
-        // Note: In a real app, we would track which physical files in MinIO
-        // correspond to which DocumentRequest. For now, we return an empty list of uploaded docs.
+        var fulfilledDocs = await _db.DocumentRequests
+            .Where(d => d.FuneralCaseId == funeralCase.Id && d.IsFulfilled && d.FileKey != null)
+            .Select(d => new DocumentDto(
+                d.Id,
+                d.DocumentName,
+                DateTime.UtcNow,
+                _storage.GetPresignedUrl(d.FileKey!)))
+            .ToListAsync();
+
+        var invoices = await _db.Invoices
+            .Where(i => i.FuneralCaseId == funeralCase.Id && i.Status != InvoiceStatus.Paid)
+            .Select(i => new InvoiceDto(
+                i.Id,
+                i.InvoiceNumber,
+                i.TotalAmount,
+                i.DueDate,
+                i.Status.ToString()))
+            .ToListAsync();
 
         return new FamilyCaseViewDto(
             funeralCase.Id,
@@ -83,11 +96,12 @@ public class FamilyPortalService : IFamilyPortalService
             funeralCase.ScheduledDate ?? DateTime.MinValue,
             funeralCase.Milestones.Select(m => new CaseMilestoneDto(m.MilestoneStatus.ToString(), true, m.CompletedAt)).ToList(),
             selectedItems.Select(i => new ArrangementItemDto(i.Id, i.ItemName, i.Description, i.UnitPrice, i.Quantity, i.IsProvidedByFamily)).ToList(),
-            new List<DocumentDto>(),
-            pendingDocs);
+            fulfilledDocs,
+            pendingDocs,
+            invoices);
     }
 
-    public async Task<Guid> UploadDocumentAsync(string token, System.IO.Stream fileStream, string fileName, string contentType)
+    public async Task<Guid> UploadDocumentAsync(string token, System.IO.Stream fileStream, string fileName, string contentType, Guid documentRequestId)
     {
         var accessToken = await _db.CaseAccessTokens
             .FirstOrDefaultAsync(t => t.Token == token && t.IsActive && t.ExpiryDate > DateTime.UtcNow);
@@ -96,10 +110,13 @@ public class FamilyPortalService : IFamilyPortalService
 
         var fileKey = await _storage.UploadFileAsync(fileStream, fileName, contentType, $"family-portal/{accessToken.FuneralCaseId}");
 
-        // In a production system, the family would select WHICH DocumentRequest they are fulfilling.
-        // For this implementation, we just upload the file.
-        // Future: add a DocumentRequestId to the upload call.
+        var request = await _db.DocumentRequests.FindAsync(documentRequestId);
+        if (request == null) throw new KeyNotFoundException("Document request not found.");
 
-        return Guid.NewGuid(); // Returning a dummy ID for the upload confirmation
+        request.FileKey = fileKey;
+        request.IsFulfilled = true;
+        await _db.SaveChangesAsync();
+
+        return request.Id;
     }
 }

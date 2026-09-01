@@ -83,6 +83,9 @@ builder.Services.AddScoped<IFleetService, FleetService>();
 builder.Services.AddScoped<IMortuaryService, MortuaryService>();
 builder.Services.AddScoped<IRepatriationService, RepatriationService>();
 builder.Services.AddScoped<IVendorService, VendorService>();
+builder.Services.AddScoped<IMemorialService, MemorialService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IFileStorageService, MinioStorageService>();
 
 builder.Services.AddScoped<ICacheService, CacheService>();

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Khet360.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+487e7e555afc07f47ccbcf41630e2bc956474379")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a8362d658f1c050e8226ac06198c1902c96259cb")]
 [assembly: System.Reflection.AssemblyProductAttribute("Khet360.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Khet360.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -82,6 +82,7 @@ builder.Services.AddScoped<IServiceArrangementService, ServiceArrangementService
 builder.Services.AddScoped<IFleetService, FleetService>();
 builder.Services.AddScoped<IMortuaryService, MortuaryService>();
 builder.Services.AddScoped<IRepatriationService, RepatriationService>();
+builder.Services.AddScoped<IVendorService, VendorService>();
 builder.Services.AddScoped<IFileStorageService, MinioStorageService>();
 
 builder.Services.AddScoped<ICacheService, CacheService>();

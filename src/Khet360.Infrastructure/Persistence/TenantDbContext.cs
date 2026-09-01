@@ -50,6 +50,9 @@ public class TenantDbContext : DbContext
     public DbSet<DriverProfile> DriverProfiles { get; set; } = null!;
     public DbSet<TripAssignment> TripAssignments { get; set; } = null!;
     public DbSet<VehicleDocument> VehicleDocuments { get; set; } = null!;
+    public DbSet<Vendor> Vendors { get; set; } = null!;
+    public DbSet<VendorOrder> VendorOrders { get; set; } = null!;
+    public DbSet<VendorOrderItem> VendorOrderItems { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

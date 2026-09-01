@@ -3,9 +3,9 @@
 This document serves as the authoritative record of implementation progress for the Khet-360 ERP. It maps development tasks to the project roadmap and tracks the completion of the "Power-Up" enhancements.
 
 ## 📊 Overall Project Status
-**Current Phase:** Phase 1 — Platform Foundation
+**Current Phase:** Phase 2 — Tenant Identity & Core ERP
 **Status:** 🟢 In Progress
-**Next Major Milestone:** Platform Tenant Resolver & Database Routing
+**Next Major Milestone:** Tenant RBAC & Branch Scope
 
 ---
 
@@ -13,19 +13,19 @@ This document serves as the authoritative record of implementation progress for 
 
 ### Phase 1: Platform Foundation
 - [x] **Infrastructure Setup** (Docker, SQL Server, Redis, RabbitMQ, MinIO, Caddy) ✅
-- [ ] Platform Control Database Schema
-- [ ] Tenant Registry & Lifecycle Management
-- [ ] Subscription Plans & Entitlement Engine
-- [ ] Platform-First Tenant Resolver (Subdomain Routing)
-- [ ] Tenant DB Connection Resolver
-- [ ] Provisioning Automation (DB Creation & Seeding)
-- [ ] Platform Authentication & Roles
+- [x] Platform Control Database Schema ✅
+- [x] Tenant Registry & Lifecycle Management ✅
+- [x] Subscription Plans & Entitlement Engine ✅
+- [x] Platform-First Tenant Resolver (Subdomain Routing) ✅
+- [x] Tenant DB Connection Resolver ✅
+- [x] Provisioning Automation (DB Creation & Seeding) ✅
+- [x] Platform Authentication & Roles ✅
 
 ### Phase 2: Tenant Identity & Core ERP
-- [ ] Tenant Authentication (JWT + Tenant Binding)
-- [ ] Tenant RBAC & Branch Scope
+- [x] Tenant Authentication (JWT + Tenant Binding) ✅
+- [x] Tenant RBAC & Branch Scope ✅
 - [ ] Organisation Configuration
-- [ ] Customer/Family 360
+- [x] Customer/Family 360 ✅
 - [ ] CRM (Leads, Opportunities, Activities)
 - [ ] Funeral Case Core
 - [ ] Productivity Foundation (My Work, Team Queue, Exceptions)
@@ -77,6 +77,8 @@ This document serves as the authoritative record of implementation progress for 
 | 2026-08-31 | Implementation Planning | Plan | Defined full technical strategy and Zero-Cost infrastructure blueprint. |
 | 2026-08-31 | Infrastructure Provisioning | Infra | Deployed Dockerized environment: SQL Server, Redis, RabbitMQ, MinIO, and Caddy. |
 | 2026-08-31 | Environment Configuration | Infra | Configured `.env` and `Caddyfile` for subdomain routing. |
+| 2026-09-01 | Platform Foundation Completion | Platform | Implemented Tenant Registry, Subscription Engine, Database Routing, Provisioning, and Platform Auth. |
+| 2026-09-01 | Tenant Identity Foundation | Identity | Implemented User/Role/Branch entities, Tenant Authentication, and dual-scheme JWT support. |
 
 ---
 

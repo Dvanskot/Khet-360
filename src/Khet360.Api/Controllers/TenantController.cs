@@ -28,7 +28,7 @@ public class TenantController : ControllerBase
             TenantId = tenant.Id,
             Name = tenant.Name,
             Slug = tenant.Slug,
-            Plan = tenant.Plan
+            SubscriptionPlanId = tenant.SubscriptionPlanId
         });
     }
 }

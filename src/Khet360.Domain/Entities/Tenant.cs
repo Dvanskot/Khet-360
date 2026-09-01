@@ -7,7 +7,8 @@ public class Tenant
     public string Slug { get; set; } = string.Empty; // e.g., "tenanta"
     public string ConnectionString { get; set; } = string.Empty;
     public bool IsActive { get; set; }
-    public string Plan { get; set; } = "Starter";
+    public Guid SubscriptionPlanId { get; set; }
+    public SubscriptionPlan SubscriptionPlan { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }

@@ -3,6 +3,10 @@ using Khet360.Application.Interfaces;
 using Khet360.Infrastructure.Persistence;
 using Khet360.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +14,45 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpContextAccessor();
+
+// MediatR Configuration
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Khet360.Application.Interfaces.ITenantService).Assembly));
+
+// Authentication Configuration
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+    .AddJwtBearer("PlatformJwt", options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:PlatformKey"] ?? "DefaultPlatformKey_MustChangeInProduction_12345!"))
+        };
+    })
+    .AddJwtBearer("TenantJwt", options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:TenantKey"] ?? "DefaultTenantKey_MustChangeInProduction_56789!"))
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 // Platform Database Configuration
 var connectionString = builder.Configuration.GetConnectionString("PlatformConnection");
@@ -18,8 +61,43 @@ builder.Services.AddDbContext<PlatformDbContext>(options =>
 
 // Tenant Service - Must be Scoped to persist tenant for the duration of the request
 builder.Services.AddScoped<ITenantService, TenantService>();
+builder.Services.AddScoped<IEntitlementService, EntitlementService>();
+builder.Services.AddScoped<ITenantAuthService, TenantAuthService>();
+builder.Services.AddScoped<IOrganisationService, OrganisationService>();
+builder.Services.AddScoped<ITenantManagementService, TenantManagementService>();
+builder.Services.AddScoped<ITenantUserContext, TenantUserContext>();
+builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
+builder.Services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IFamilyRelationshipService, FamilyRelationshipService>();
+builder.Services.AddScoped<TenantDbContextFactory>();
+builder.Services.AddScoped<PlatformAuthService>();
+
+// TenantDbContext - Resolved via factory to apply tenant-specific connection string
+builder.Services.AddScoped<TenantDbContext>(sp =>
+{
+    var factory = sp.GetRequiredService<TenantDbContextFactory>();
+    return factory.CreateDbContext();
+});
 
 var app = builder.Build();
+
+// Seed the Platform Database
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<PlatformDbContext>();
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        await DbInitializer.InitializeDatabase(context, logger);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database during startup.");
+    }
+}
 
 // 2. Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -33,6 +111,7 @@ app.UseHttpsRedirection();
 // Tenant Resolver Middleware - Must run BEFORE authorization and controllers
 app.UseMiddleware<TenantResolverMiddleware>();
 
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

@@ -1,0 +1,58 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\2026\\Projects\\August\\Khet-360\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{C4F48540-62F1-1BE5-C997-9C99CA9B669F}|src\\Khet360.Api\\Khet360.Api.csproj|c:\\2026\\projects\\august\\khet-360\\src\\khet360.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C4F48540-62F1-1BE5-C997-9C99CA9B669F}|src\\Khet360.Api\\Khet360.Api.csproj|solutionrelative:src\\khet360.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A63F7A10-0CCE-1F48-FB35-03E4E3A08C7E}|src\\Khet360.Infrastructure\\Khet360.Infrastructure.csproj|c:\\2026\\projects\\august\\khet-360\\src\\khet360.infrastructure\\persistence\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A63F7A10-0CCE-1F48-FB35-03E4E3A08C7E}|src\\Khet360.Infrastructure\\Khet360.Infrastructure.csproj|solutionrelative:src\\khet360.infrastructure\\persistence\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{75188d03-9892-4ae2-abf1-207126247ce5}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Api\\Program.cs",
+              "RelativeDocumentMoniker": "src\\Khet360.Api\\Program.cs",
+              "ToolTip": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Api\\Program.cs",
+              "RelativeToolTip": "src\\Khet360.Api\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-31T18:10:51.301Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "DbInitializer.cs",
+              "DocumentMoniker": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Infrastructure\\Persistence\\DbInitializer.cs",
+              "RelativeDocumentMoniker": "src\\Khet360.Infrastructure\\Persistence\\DbInitializer.cs",
+              "ToolTip": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Infrastructure\\Persistence\\DbInitializer.cs",
+              "RelativeToolTip": "src\\Khet360.Infrastructure\\Persistence\\DbInitializer.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-31T18:07:02.763Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

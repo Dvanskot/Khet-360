@@ -1,0 +1,16 @@
+C:\2026\Projects\August\Khet-360\src\Khet360.Application\bin\Debug\net10.0\Khet360.Application.deps.json
+C:\2026\Projects\August\Khet-360\src\Khet360.Application\bin\Debug\net10.0\Khet360.Application.dll
+C:\2026\Projects\August\Khet-360\src\Khet360.Application\bin\Debug\net10.0\Khet360.Application.pdb
+C:\2026\Projects\August\Khet-360\src\Khet360.Application\bin\Debug\net10.0\Khet360.Domain.dll
+C:\2026\Projects\August\Khet-360\src\Khet360.Application\bin\Debug\net10.0\Khet360.Domain.pdb
+C:\2026\Projects\August\Khet-360\src\Khet360.Application\obj\Debug\net10.0\Khet360.Application.csproj.AssemblyReference.cache
+C:\2026\Projects\August\Khet-360\src\Khet360.Application\obj\Debug\net10.0\Khet360.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\2026\Projects\August\Khet-360\src\Khet360.Application\obj\Debug\net10.0\Khet360.Application.AssemblyInfoInputs.cache
+C:\2026\Projects\August\Khet-360\src\Khet360.Application\obj\Debug\net10.0\Khet360.Application.AssemblyInfo.cs
+C:\2026\Projects\August\Khet-360\src\Khet360.Application\obj\Debug\net10.0\Khet360.Application.csproj.CoreCompileInputs.cache
+C:\2026\Projects\August\Khet-360\src\Khet360.Application\obj\Debug\net10.0\Khet360.Application.sourcelink.json
+C:\2026\Projects\August\Khet-360\src\Khet360.Application\obj\Debug\net10.0\Khet360..0AD7C6DE.Up2Date
+C:\2026\Projects\August\Khet-360\src\Khet360.Application\obj\Debug\net10.0\Khet360.Application.dll
+C:\2026\Projects\August\Khet-360\src\Khet360.Application\obj\Debug\net10.0\refint\Khet360.Application.dll
+C:\2026\Projects\August\Khet-360\src\Khet360.Application\obj\Debug\net10.0\Khet360.Application.pdb
+C:\2026\Projects\August\Khet-360\src\Khet360.Application\obj\Debug\net10.0\ref\Khet360.Application.dll

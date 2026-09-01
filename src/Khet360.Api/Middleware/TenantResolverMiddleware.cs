@@ -24,13 +24,12 @@ public class TenantResolverMiddleware
             return;
         }
 
-        // Logic to extract subdomain (e.g., tenanta.khet360.co.za -> tenanta)
-        // This is a simplified version for development.
-        var parts = host.Split('.');
-        if (parts.Length >= 3)
-        {
-            var slug = parts[0];
+        // Extract subdomain: tenanta.khet360.co.za -> tenanta
+        // Support localhost: tenanta.localhost -> tenanta
+        var slug = ExtractSlug(host);
 
+        if (!string.IsNullOrEmpty(slug))
+        {
             var tenant = await platformDb.Tenants
                 .FirstOrDefaultAsync(t => t.Slug == slug && t.IsActive);
 
@@ -52,4 +51,22 @@ public class TenantResolverMiddleware
 
         await _next(context);
     }
+
+    private string? ExtractSlug(string host)
+    {
+        // Handle localhost explicitly
+        if (host.EndsWith(".localhost"))
+        {
+            return host.Replace(".localhost", "");
+        }
+
+        var parts = host.Split('.');
+        if (parts.Length >= 3)
+        {
+            return parts[0];
+        }
+
+        return null;
+    }
+
 }

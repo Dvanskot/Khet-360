@@ -34,5 +34,7 @@ public class Opportunity : IBranchScoped
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 
+    public string? Notes { get; set; }
+
     public virtual ICollection<Activity> Activities { get; set; } = new List<Activity>();
 }

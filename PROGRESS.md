@@ -5,7 +5,7 @@ This document serves as the authoritative record of implementation progress for 
 ## 📊 Overall Project Status
 **Current Phase:** Phase 2 — Tenant Identity & Core ERP
 **Status:** 🟢 In Progress
-**Next Major Milestone:** Tenant RBAC & Branch Scope
+**Next Major Milestone:** Phase 3 — Internal Operations (SLA Routing, Redis Caching, RabbitMQ)
 
 ---
 
@@ -26,15 +26,15 @@ This document serves as the authoritative record of implementation progress for 
 - [x] Tenant RBAC & Branch Scope ✅
 - [x] Organisation Configuration ✅
 - [x] Customer/Family 360 ✅
-- [ ] CRM (Leads, Opportunities, Activities)
-- [ ] Funeral Case Core
-- [ ] Productivity Foundation (My Work, Team Queue, Exceptions)
+- [x] CRM (Leads, Opportunities, Activities) ✅
+- [x] Funeral Case Core ✅
+- [x] Productivity Foundation (My Work, Team Queue, Exceptions) ✅
 - [ ] Initial Finance/Accounting
 
 ### Phase 3: Internal Operations (Enhanced)
-- [ ] **SLA-Driven Intelligent Routing** 🚀
-- [ ] **Redis Caching Implementation** 🚀
-- [ ] **RabbitMQ Async Task Exchange** 🚀
+- [x] **SLA-Driven Intelligent Routing** ✅
+- [x] **Redis Caching Implementation** ✅
+- [x] **RabbitMQ Async Task Exchange** ✅
 - [ ] Policy & Claims Management
 - [ ] Repatriation, Mortuary, and Fleet Modules
 - [ ] Service Arrangements & Catering
@@ -79,6 +79,11 @@ This document serves as the authoritative record of implementation progress for 
 | 2026-08-31 | Environment Configuration | Infra | Configured `.env` and `Caddyfile` for subdomain routing. |
 | 2026-09-01 | Platform Foundation Completion | Platform | Implemented Tenant Registry, Subscription Engine, Database Routing, Provisioning, and Platform Auth. |
 | 2026-09-01 | Tenant Identity Foundation | Identity | Implemented User/Role/Branch entities, Tenant Authentication, and dual-scheme JWT support. |
+| 2026-09-01 | Customer & Family Core | Domain | Implemented polymorphic customer hierarchy and temporal family relationships. |
+| 2026-09-01 | Productivity Engine | Core | Implemented `WorkItem` system for unified task management and SLA tracking. |
+| 2026-09-01 | Funeral Case Workflow | Core | Implemented sequential case state machine and milestone auditing. |
+| 2026-09-01 | CRM Pipeline | Core | Implemented Lead $\to$ Customer $\to$ Opportunity conversion and Activity tracking. |
+| 2026-09-01 | Advanced Operations Stack | Performance | Implemented Redis Read-Through Caching, RabbitMQ Event Bus, and SLA-Driven Routing/Escalation Workers. |
 
 ---
 
@@ -87,7 +92,7 @@ This document serves as the authoritative record of implementation progress for 
 
 - [ ] **Family Portal** (High) ⚪
 - [ ] **Vendor Hub** (High) ⚪
-- [ ] **SLA Routing** (High) ⚪
+- [x] **SLA Routing** (High) 🟢
 - [ ] **Command Palette** (High) ⚪
 - [ ] **Guided Wizards** (Medium) ⚪
 - [ ] **Deal Boards** (Medium) ⚪

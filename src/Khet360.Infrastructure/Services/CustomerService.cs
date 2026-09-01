@@ -11,12 +11,14 @@ public class CustomerService : ICustomerService
     private readonly TenantDbContext _tenantDb;
     private readonly ITenantUserContext _userContext;
     private readonly ITenantService _tenantService;
+    private readonly ICacheService _cache;
 
-    public CustomerService(TenantDbContext tenantDb, ITenantUserContext userContext, ITenantService tenantService)
+    public CustomerService(TenantDbContext tenantDb, ITenantUserContext userContext, ITenantService tenantService, ICacheService cache)
     {
         _tenantDb = tenantDb;
         _userContext = userContext;
         _tenantService = tenantService;
+        _cache = cache;
     }
 
     public async Task<Guid> CreateIndividualAsync(CreateIndividualRequest request)
@@ -115,6 +117,10 @@ public class CustomerService : ICustomerService
 
     public async Task<CustomerDto?> GetCustomerByIdAsync(Guid id)
     {
+        string cacheKey = $"customer:{id}";
+        var cachedCustomer = await _cache.GetAsync<CustomerDto>(cacheKey);
+        if (cachedCustomer != null) return cachedCustomer;
+
         var customer = await _tenantDb.Customers
             .Include(c => c.Addresses)
             .Include(c => c.Contacts)
@@ -122,7 +128,10 @@ public class CustomerService : ICustomerService
 
         if (customer == null) return null;
 
-        return MapToDto(customer);
+        var dto = MapToDto(customer);
+        await _cache.SetAsync(cacheKey, dto, TimeSpan.FromMinutes(30));
+
+        return dto;
     }
 
     public async Task UpdateCustomerAsync(UpdateCustomerRequest request)
@@ -174,6 +183,9 @@ public class CustomerService : ICustomerService
         }).ToList();
 
         await _tenantDb.SaveChangesAsync();
+
+        // Invalidate cache
+        await _cache.RemoveAsync($"customer:{customer.Id}");
     }
 
     public async Task<PagedList<CustomerDto>> SearchCustomersAsync(CustomerSearchFilter filter)

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "XI5S0M62WHM=",
+  "dgSpecHash": "YK/IvT4l9ow=",
   "success": true,
   "projectFilePath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Infrastructure\\Khet360.Infrastructure.csproj",
   "expectedPackageFiles": [
@@ -40,6 +40,9 @@
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\microsoft.visualstudio.solutionpersistence\\1.0.52\\microsoft.visualstudio.solutionpersistence.1.0.52.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\mono.texttemplating\\3.0.0\\mono.texttemplating.3.0.0.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\newtonsoft.json\\13.0.4\\newtonsoft.json.13.0.4.nupkg.sha512",
+    "C:\\Users\\Israel Tshikota\\.nuget\\packages\\rabbitmq.client\\7.2.2\\rabbitmq.client.7.2.2.nupkg.sha512",
+    "C:\\Users\\Israel Tshikota\\.nuget\\packages\\respite\\3.1.31\\respite.3.1.31.nupkg.sha512",
+    "C:\\Users\\Israel Tshikota\\.nuget\\packages\\stackexchange.redis\\3.1.31\\stackexchange.redis.3.1.31.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\system.clientmodel\\1.8.0\\system.clientmodel.1.8.0.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\system.codedom\\6.0.0\\system.codedom.6.0.0.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\system.composition\\9.0.0\\system.composition.9.0.0.nupkg.sha512",
@@ -50,6 +53,7 @@
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\system.composition.typedparts\\9.0.0\\system.composition.typedparts.9.0.0.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\system.configuration.configurationmanager\\9.0.11\\system.configuration.configurationmanager.9.0.11.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\system.identitymodel.tokens.jwt\\7.7.1\\system.identitymodel.tokens.jwt.7.7.1.nupkg.sha512",
+    "C:\\Users\\Israel Tshikota\\.nuget\\packages\\system.io.hashing\\10.0.5\\system.io.hashing.10.0.5.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\system.memory.data\\8.0.1\\system.memory.data.8.0.1.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\system.security.cryptography.pkcs\\9.0.11\\system.security.cryptography.pkcs.9.0.11.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\system.security.cryptography.protecteddata\\9.0.11\\system.security.cryptography.protecteddata.9.0.11.nupkg.sha512"

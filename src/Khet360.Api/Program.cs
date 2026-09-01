@@ -2,6 +2,7 @@ using Khet360.Api.Middleware;
 using Khet360.Application.Interfaces;
 using Khet360.Infrastructure.Persistence;
 using Khet360.Infrastructure.Services;
+using Khet360.Infrastructure.BackgroundServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -69,7 +70,19 @@ builder.Services.AddScoped<ITenantUserContext, TenantUserContext>();
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 builder.Services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<ILeadService, LeadService>();
+builder.Services.AddScoped<IOpportunityService, OpportunityService>();
+builder.Services.AddScoped<IActivityService, ActivityService>();
+builder.Services.AddScoped<IRoutingService, RoutingService>();
 builder.Services.AddScoped<IFamilyRelationshipService, FamilyRelationshipService>();
+builder.Services.AddScoped<IFuneralCaseService, FuneralCaseService>();
+
+builder.Services.AddScoped<ICacheService, CacheService>();
+builder.Services.AddSingleton<IMessageBus, MessageBus>();
+
+builder.Services.AddHostedService<SlaEscalationWorker>();
+builder.Services.AddHostedService<EventConsumerService>();
+builder.Services.AddHostedService<NotificationConsumerService>();
 builder.Services.AddScoped<TenantDbContextFactory>();
 builder.Services.AddScoped<PlatformAuthService>();
 

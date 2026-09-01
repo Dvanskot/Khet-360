@@ -26,6 +26,12 @@ public class Lead : IBranchScoped
     [MaxLength(100)]
     public string Source { get; set; } = "Unknown";
 
+    [MaxLength(100)]
+    public string? CompanyName { get; set; }
+
+    [MaxLength(100)]
+    public string? Industry { get; set; }
+
     [Required]
     public LeadStatus Status { get; set; } = LeadStatus.New;
 

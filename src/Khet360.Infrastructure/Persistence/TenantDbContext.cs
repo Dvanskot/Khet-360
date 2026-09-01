@@ -30,6 +30,9 @@ public class TenantDbContext : DbContext
     public DbSet<Lead> Leads { get; set; } = null!;
     public DbSet<Opportunity> Opportunities { get; set; } = null!;
     public DbSet<Activity> Activities { get; set; } = null!;
+    public DbSet<FuneralCase> FuneralCases { get; set; } = null!;
+    public DbSet<FuneralCaseMilestone> FuneralCaseMilestones { get; set; } = null!;
+    public DbSet<RoutingRule> RoutingRules { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

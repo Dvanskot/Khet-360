@@ -1,6 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using Khet360.Domain.Enums;
-
 namespace Khet360.Domain.Enums;
 
 public enum LeadStatus
@@ -8,16 +5,19 @@ public enum LeadStatus
     New = 0,
     Contacted = 1,
     Qualified = 2,
-    Disqualified = 3
+    Converted = 3,
+    Lost = 4,
+    Disqualified = 5
 }
 
 public enum OpportunityStage
 {
-    Discovery = 0,
-    Proposal = 1,
-    Negotiation = 2,
-    Won = 3,
-    Lost = 4
+    Qualification = 0,
+    Discovery = 1,
+    Proposal = 2,
+    Negotiation = 3,
+    ClosedWon = 4,
+    ClosedLost = 5
 }
 
 public enum ActivityType
@@ -27,4 +27,12 @@ public enum ActivityType
     Visit = 2,
     Meeting = 3,
     Note = 4
+}
+
+public enum ActivityStatus
+{
+    Pending = 0,
+    InProgress = 1,
+    Completed = 2,
+    Cancelled = 3
 }

@@ -36,6 +36,7 @@ public class WorkItem : IBranchScoped
     public string? NextAction { get; set; }
 
     public SlaStatus SlaStatus { get; set; } = SlaStatus.OnTrack;
+    public DateTime? LastSlaUpdate { get; set; }
 
     [Required]
     public Guid BranchId { get; set; }

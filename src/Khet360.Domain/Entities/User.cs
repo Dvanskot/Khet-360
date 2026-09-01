@@ -16,6 +16,7 @@ public class User
     public string PasswordHash { get; set; } = string.Empty;
 
     public bool IsActive { get; set; } = true;
+    public int MaxCapacity { get; set; } = 20;
 
     public Guid TenantId { get; set; }
     public Tenant Tenant { get; set; } = null!;

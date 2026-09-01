@@ -24,6 +24,9 @@ public class Activity : IBranchScoped
     [Required]
     public ActivityType Type { get; set; }
 
+    [Required]
+    public ActivityStatus Status { get; set; } = ActivityStatus.Pending;
+
     [Required, MaxLength(255)]
     public string Subject { get; set; } = null!;
 

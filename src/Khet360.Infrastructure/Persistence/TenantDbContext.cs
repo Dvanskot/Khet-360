@@ -25,6 +25,11 @@ public class TenantDbContext : DbContext
     public DbSet<CustomerAddress> CustomerAddresses { get; set; } = null!;
     public DbSet<CustomerContact> CustomerContacts { get; set; } = null!;
     public DbSet<FamilyRelationship> FamilyRelationships { get; set; } = null!;
+    public DbSet<WorkItem> WorkItems { get; set; } = null!;
+    public DbSet<WorkItemHistory> WorkItemHistories { get; set; } = null!;
+    public DbSet<Lead> Leads { get; set; } = null!;
+    public DbSet<Opportunity> Opportunities { get; set; } = null!;
+    public DbSet<Activity> Activities { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -103,6 +108,36 @@ public class TenantDbContext : DbContext
             entity.HasOne(fr => fr.ToCustomer)
                 .WithMany()
                 .HasForeignKey(fr => fr.ToCustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<WorkItemHistory>(entity =>
+        {
+            entity.HasOne(wh => wh.WorkItem)
+                .WithMany(wi => wi.History)
+                .HasForeignKey(wh => wh.WorkItemId);
+        });
+
+        modelBuilder.Entity<Activity>(entity =>
+        {
+            entity.HasOne(a => a.Lead)
+                .WithMany(l => l.Activities)
+                .HasForeignKey(a => a.LeadId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(a => a.Opportunity)
+                .WithMany(o => o.Activities)
+                .HasForeignKey(a => a.OpportunityId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(a => a.Customer)
+                .WithMany()
+                .HasForeignKey(a => a.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(a => a.WorkItem)
+                .WithMany()
+                .HasForeignKey(a => a.WorkItemId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

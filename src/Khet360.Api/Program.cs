@@ -98,6 +98,8 @@ builder.Services.AddScoped<IProductivityScorecardService, ProductivityScorecardS
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<IHubContextWrapper, HubContextWrapper>();
 builder.Services.AddScoped<IOutboxService, OutboxService>();
+builder.Services.AddScoped<IBackupService, BackupService>();
+builder.Services.AddScoped<IMigrationService, MigrationService>();
 
 builder.Services.AddHttpClient<IProductivityScorecardService, ProductivityScorecardService>(client =>
 {
@@ -111,6 +113,7 @@ builder.Services.AddHostedService<SlaEscalationWorker>();
 builder.Services.AddHostedService<EventConsumerService>();
 builder.Services.AddHostedService<NotificationConsumerService>();
 builder.Services.AddHostedService<OutboxPublisherWorker>();
+builder.Services.AddHostedService<BackupJobWorker>();
 builder.Services.AddScoped<TenantDbContextFactory>();
 builder.Services.AddScoped<PlatformAuthService>();
 

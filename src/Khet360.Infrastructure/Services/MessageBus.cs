@@ -32,7 +32,12 @@ public class MessageBus : IMessageBus, IAsyncDisposable
     public async Task PublishAsync<T>(T message) where T : class
     {
         var json = JsonSerializer.Serialize(message);
-        var body = Encoding.UTF8.GetBytes(json);
+        await PublishRawAsync(json);
+    }
+
+    public async Task PublishRawAsync(string content)
+    {
+        var body = Encoding.UTF8.GetBytes(content);
 
         await _channel.BasicPublishAsync(
             exchange: "khet360_events",

@@ -76,9 +76,8 @@ public class OutboxPublisherWorker : BackgroundService
         {
             try
             {
-                // We publish as a generic object or use a dispatcher based on EventType
-                // For simplicity, we'll publish the content directly.
-                await messageBus.PublishAsync(message.Content);
+                // Use PublishRawAsync to avoid double-serialization of already stored JSON content
+                await messageBus.PublishRawAsync(message.Content);
 
                 message.ProcessedAtUtc = DateTime.UtcNow;
                 _logger.LogInformation("Published outbox message {Id} for tenant {Tenant}", message.Id, tenant.Slug);

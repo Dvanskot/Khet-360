@@ -6,7 +6,6 @@ C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\Khet360.Api.A
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\Khet360.Api.csproj.CoreCompileInputs.cache
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\Khet360.Api.MvcApplicationPartsAssemblyInfo.cache
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\Khet360.Api.sourcelink.json
-C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\Khet360.Api.MvcApplicationPartsAssemblyInfo.cs
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\bin\Debug\net10.0\appsettings.Development.json
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\bin\Debug\net10.0\appsettings.json
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\bin\Debug\net10.0\Khet360.Api.staticwebassets.endpoints.json

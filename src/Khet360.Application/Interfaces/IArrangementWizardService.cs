@@ -11,6 +11,6 @@ public interface IArrangementWizardService
 {
     Task<ArrangementWizardState> StartWizardAsync(Guid funeralCaseId, Guid branchId);
     Task<WizardStepResult> SaveStepAsync(Guid stateId, ArrangementWizardStep step, Dictionary<string, string> data);
-    Task<ArrangementWizardState> GetStateAsync(Guid stateId);
+    Task<ArrangementWizardState?> GetStateAsync(Guid stateId);
     Task FinalizeArrangementAsync(Guid stateId);
 }

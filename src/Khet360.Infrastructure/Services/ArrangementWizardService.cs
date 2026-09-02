@@ -79,7 +79,7 @@ public class ArrangementWizardService : IArrangementWizardService
         return new WizardStepResult(true, "Step saved successfully", new List<string>());
     }
 
-    public async Task<ArrangementWizardState> GetStateAsync(Guid stateId)
+    public async Task<ArrangementWizardState?> GetStateAsync(Guid stateId)
     {
         return await _db.ArrangementWizardStates.FindAsync(stateId);
     }

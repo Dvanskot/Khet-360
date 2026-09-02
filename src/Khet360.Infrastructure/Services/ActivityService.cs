@@ -97,7 +97,7 @@ public class ActivityService : IActivityService
 
         if (!string.IsNullOrEmpty(filter.Query))
         {
-            query = query.Where(a => a.Subject.Contains(filter.Query) || a.Description.Contains(filter.Query));
+            query = query.Where(a => (a.Subject != null && a.Subject.Contains(filter.Query)) || (a.Description != null && a.Description.Contains(filter.Query)));
         }
 
         if (filter.Status.HasValue)

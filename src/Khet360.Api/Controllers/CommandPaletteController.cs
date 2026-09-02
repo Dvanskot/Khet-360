@@ -18,7 +18,7 @@ public class CommandPaletteController : ControllerBase
     }
 
     [HttpGet("actions")]
-    public async Task<ActionResult<List<CommandActionDto>>> GetActions([FromQuery] string context = null)
+    public async Task<ActionResult<List<CommandActionDto>>> GetActions([FromQuery] string? context = null)
     {
         var actions = await _paletteService.GetAvailableCommandsAsync(context);
         return Ok(actions);

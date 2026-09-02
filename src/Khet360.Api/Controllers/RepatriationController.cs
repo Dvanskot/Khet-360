@@ -19,7 +19,7 @@ public class RepatriationController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Request([FromBody] RepatriationCreateDto dto, [FromQuery] Guid branchId)
+    public async Task<IActionResult> Create([FromBody] RepatriationCreateDto dto, [FromQuery] Guid branchId)
     {
         var id = await _repatriationService.RequestRepatriationAsync(dto, branchId);
         return Ok(id);

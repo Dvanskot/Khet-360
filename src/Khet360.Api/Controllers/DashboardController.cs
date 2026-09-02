@@ -22,4 +22,18 @@ public class DashboardController : ControllerBase
         var overview = await _dashboardService.GetOperationalOverviewAsync();
         return Ok(overview);
     }
+
+    [HttpGet("layout")]
+    public async Task<ActionResult<UserDashboardLayoutDto>> GetLayout([FromQuery] Guid userId)
+    {
+        var layout = await _dashboardService.GetUserLayoutAsync(userId);
+        return Ok(layout);
+    }
+
+    [HttpPost("layout")]
+    public async Task<IActionResult> SaveLayout([FromBody] UserDashboardLayoutDto layout)
+    {
+        await _dashboardService.SaveUserLayoutAsync(layout);
+        return Ok();
+    }
 }

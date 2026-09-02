@@ -16,6 +16,8 @@ public class LeadService : ILeadService
     private readonly IOpportunityService _opportunityService;
     private readonly ICacheService _cache;
     private readonly IMessageBus _messageBus;
+    private readonly IStateSyncService _stateSync;
+    private readonly IMetricsService _metrics;
 
     public LeadService(
         TenantDbContext tenantDb,
@@ -23,7 +25,9 @@ public class LeadService : ILeadService
         ICustomerService customerService,
         IOpportunityService opportunityService,
         ICacheService cache,
-        IMessageBus messageBus)
+        IMessageBus messageBus,
+        IStateSyncService stateSync,
+        IMetricsService metrics)
     {
         _tenantDb = tenantDb;
         _tenantService = tenantService;
@@ -31,6 +35,8 @@ public class LeadService : ILeadService
         _opportunityService = opportunityService;
         _cache = cache;
         _messageBus = messageBus;
+        _stateSync = stateSync;
+        _metrics = metrics;
     }
 
     public async Task<Guid> CreateLeadAsync(LeadCreateDto leadDto, Guid branchId)
@@ -148,6 +154,7 @@ public class LeadService : ILeadService
         await _tenantDb.SaveChangesAsync();
 
         await _cache.RemoveAsync($"lead:{id}");
+        await _stateSync.NotifyStateChangedAsync("Lead", id, lead.BranchId, "StatusUpdated");
     }
 
     public async Task<Guid> ConvertLeadAsync(Guid leadId, LeadConversionDto conversionDto)
@@ -212,6 +219,8 @@ public class LeadService : ILeadService
 
             await _tenantDb.SaveChangesAsync();
             await transaction.CommitAsync();
+
+            _metrics.IncrementLeadConverted();
 
             // Publish LeadConvertedEvent for async processing
             await _messageBus.PublishAsync(new LeadConvertedEvent(

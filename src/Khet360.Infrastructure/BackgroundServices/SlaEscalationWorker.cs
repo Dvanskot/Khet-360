@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Khet360.Application.Interfaces;
 
 namespace Khet360.Infrastructure.BackgroundServices;
 
@@ -82,6 +83,7 @@ public class SlaEscalationWorker : BackgroundService
     {
         using var scope = _serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TenantDbContext>();
+        var metrics = scope.ServiceProvider.GetRequiredService<IMetricsService>();
 
         // 1. WorkItem SLA checks
         var pendingWork = await db.WorkItems
@@ -108,6 +110,7 @@ public class SlaEscalationWorker : BackgroundService
                 if (currentSla == SlaStatus.Breached)
                 {
                     _logger.LogWarning("SLA BREACH: WorkItem {Id} ({NextAction}) has breached its SLA!", wi.Id, wi.NextAction);
+                    metrics.IncrementSlaBreach();
                 }
                 else if (currentSla == SlaStatus.Warning)
                 {

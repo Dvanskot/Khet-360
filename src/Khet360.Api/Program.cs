@@ -8,11 +8,14 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Khet360.Api.Services;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpContextAccessor();
@@ -90,6 +93,15 @@ builder.Services.AddScoped<IDealBoardService, DealBoardService>();
 builder.Services.AddScoped<IArrangementWizardService, ArrangementWizardService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IFileStorageService, MinioStorageService>();
+builder.Services.AddScoped<IStateSyncService, StateSyncService>();
+builder.Services.AddScoped<IProductivityScorecardService, ProductivityScorecardService>();
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+builder.Services.AddScoped<IHubContextWrapper, HubContextWrapper>();
+
+builder.Services.AddHttpClient<IProductivityScorecardService, ProductivityScorecardService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Prometheus:Url"] ?? "http://localhost:9090");
+});
 
 builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddSingleton<IMessageBus, MessageBus>();
@@ -135,11 +147,14 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseMetricServer();
+
 // Tenant Resolver Middleware - Must run BEFORE authorization and controllers
 app.UseMiddleware<TenantResolverMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapHub<Khet360.Api.Hubs.NotificationHub>("/hubs/notifications");
 app.MapControllers();
 
 app.Run();

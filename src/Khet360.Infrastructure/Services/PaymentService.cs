@@ -25,6 +25,9 @@ public class PaymentService : IPaymentService
         var tenantId = _tenantService.CurrentTenant?.Id
             ?? throw new InvalidOperationException("Tenant context not found.");
 
+        var funeralCase = await _db.FuneralCases.FindAsync(funeralCaseId);
+        if (funeralCase == null) throw new KeyNotFoundException("Funeral Case not found.");
+
         var invoice = new Invoice
         {
             Id = Guid.NewGuid(),
@@ -34,7 +37,7 @@ public class PaymentService : IPaymentService
             Status = InvoiceStatus.Sent,
             FuneralCaseId = funeralCaseId,
             TenantId = tenantId,
-            BranchId = Guid.Empty // In a real app, get from FuneralCase
+            BranchId = funeralCase.BranchId
         };
 
         _db.Invoices.Add(invoice);
@@ -72,11 +75,29 @@ public class PaymentService : IPaymentService
 
         _db.Payments.Add(payment);
 
-        if (amount >= invoice.TotalAmount)
+        var totalPaid = await _db.Payments
+            .Where(p => p.InvoiceId == invoiceId)
+            .SumAsync(p => p.Amount);
+
+        if (totalPaid >= invoice.TotalAmount)
         {
             invoice.Status = InvoiceStatus.Paid;
         }
 
         await _db.SaveChangesAsync();
+    }
+
+    public async Task<List<Invoice>> GetInvoicesByCaseAsync(Guid funeralCaseId)
+    {
+        return await _db.Invoices
+            .Where(i => i.FuneralCaseId == funeralCaseId)
+            .ToListAsync();
+    }
+
+    public async Task<List<Payment>> GetPaymentsByInvoiceAsync(Guid invoiceId)
+    {
+        return await _db.Payments
+            .Where(p => p.InvoiceId == invoiceId)
+            .ToListAsync();
     }
 }

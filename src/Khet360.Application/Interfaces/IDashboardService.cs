@@ -6,4 +6,6 @@ namespace Khet360.Application.Interfaces;
 public interface IDashboardService
 {
     Task<OperationalDashboardDto> GetOperationalOverviewAsync();
+    Task<UserDashboardLayoutDto> GetUserLayoutAsync(Guid userId);
+    Task SaveUserLayoutAsync(UserDashboardLayoutDto layout);
 }

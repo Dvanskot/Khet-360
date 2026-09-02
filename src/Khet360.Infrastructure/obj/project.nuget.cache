@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "kOOLTRv6vmU=",
+  "dgSpecHash": "jGyyAn6JSxA=",
   "success": true,
   "projectFilePath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Infrastructure\\Khet360.Infrastructure.csproj",
   "expectedPackageFiles": [
@@ -42,6 +42,7 @@
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\minio\\7.0.0\\minio.7.0.0.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\mono.texttemplating\\3.0.0\\mono.texttemplating.3.0.0.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\newtonsoft.json\\13.0.4\\newtonsoft.json.13.0.4.nupkg.sha512",
+    "C:\\Users\\Israel Tshikota\\.nuget\\packages\\prometheus-net\\8.2.1\\prometheus-net.8.2.1.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\rabbitmq.client\\7.2.2\\rabbitmq.client.7.2.2.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\respite\\3.1.31\\respite.3.1.31.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\stackexchange.redis\\3.1.31\\stackexchange.redis.3.1.31.nupkg.sha512",

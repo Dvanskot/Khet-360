@@ -15,11 +15,13 @@ public class DealBoardService : IDealBoardService
 {
     private readonly TenantDbContext _db;
     private readonly ITenantService _tenantService;
+    private readonly IStateSyncService _stateSync;
 
-    public DealBoardService(TenantDbContext db, ITenantService tenantService)
+    public DealBoardService(TenantDbContext db, ITenantService tenantService, IStateSyncService stateSync)
     {
         _db = db;
         _tenantService = tenantService;
+        _stateSync = stateSync;
     }
 
     public async Task<DealBoardDto> GetLeadBoardAsync(Guid branchId)
@@ -85,6 +87,8 @@ public class DealBoardService : IDealBoardService
 
         lead.Status = (LeadStatus)newStatus;
         await _db.SaveChangesAsync();
+
+        await _stateSync.NotifyStateChangedAsync("Lead", leadId, lead.BranchId, "StatusUpdated");
     }
 
     public async Task UpdateOpportunityStageAsync(Guid opportunityId, int newStage)
@@ -94,5 +98,7 @@ public class DealBoardService : IDealBoardService
 
         opp.Stage = (OpportunityStage)newStage;
         await _db.SaveChangesAsync();
+
+        await _stateSync.NotifyStateChangedAsync("Opportunity", opportunityId, opp.BranchId, "StageUpdated");
     }
 }

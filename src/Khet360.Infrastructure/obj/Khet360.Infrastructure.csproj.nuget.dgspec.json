@@ -772,6 +772,10 @@
             "StackExchange.Redis": {
               "target": "Package",
               "version": "[3.1.31, )"
+            },
+            "prometheus-net": {
+              "target": "Package",
+              "version": "[8.2.1, )"
             }
           },
           "imports": [

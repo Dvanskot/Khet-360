@@ -10,3 +10,4 @@ C:\2026\Projects\August\Khet-360\src\Khet360.Domain\obj\Debug\net10.0\Khet360.Do
 C:\2026\Projects\August\Khet-360\src\Khet360.Domain\obj\Debug\net10.0\refint\Khet360.Domain.dll
 C:\2026\Projects\August\Khet-360\src\Khet360.Domain\obj\Debug\net10.0\Khet360.Domain.pdb
 C:\2026\Projects\August\Khet-360\src\Khet360.Domain\obj\Debug\net10.0\ref\Khet360.Domain.dll
+C:\2026\Projects\August\Khet-360\src\Khet360.Domain\obj\Debug\net10.0\Khet360..BAB2EFE1.Up2Date

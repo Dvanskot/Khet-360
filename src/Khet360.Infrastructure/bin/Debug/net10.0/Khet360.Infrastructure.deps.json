@@ -13,7 +13,8 @@
           "Microsoft.EntityFrameworkCore.SqlServer": "10.0.11",
           "Minio": "7.0.0",
           "RabbitMQ.Client": "7.2.2",
-          "StackExchange.Redis": "3.1.31"
+          "StackExchange.Redis": "3.1.31",
+          "prometheus-net": "8.2.1"
         },
         "runtime": {
           "Khet360.Infrastructure.dll": {}
@@ -719,6 +720,14 @@
           }
         }
       },
+      "prometheus-net/8.2.1": {
+        "runtime": {
+          "lib/net7.0/Prometheus.NetStandard.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.2.1.0"
+          }
+        }
+      },
       "RabbitMQ.Client/7.2.2": {
         "runtime": {
           "lib/net8.0/RabbitMQ.Client.dll": {
@@ -1160,6 +1169,13 @@
       "sha512": "sha512-pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A==",
       "path": "newtonsoft.json/13.0.4",
       "hashPath": "newtonsoft.json.13.0.4.nupkg.sha512"
+    },
+    "prometheus-net/8.2.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-3wVgdEPOCBF752s2xps5T+VH+c9mJK8S8GKEDg49084P6JZMumTZI5Te6aJ9MQpX0sx7om6JOnBpIi7ZBmmiDQ==",
+      "path": "prometheus-net/8.2.1",
+      "hashPath": "prometheus-net.8.2.1.nupkg.sha512"
     },
     "RabbitMQ.Client/7.2.2": {
       "type": "package",

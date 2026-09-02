@@ -7,6 +7,8 @@ using Khet360.Application.Interfaces;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Khet360.Domain.Enums;
+using Khet360.Domain.Entities;
+using System.Text.Json;
 
 namespace Khet360.Infrastructure.Services;
 
@@ -114,5 +116,63 @@ public class DashboardService : IDashboardService
             fleetOverview,
             vendorOverview,
             crmOverview);
+    }
+
+    public async Task<UserDashboardLayoutDto> GetUserLayoutAsync(Guid userId)
+    {
+        var tenantId = _tenantService.CurrentTenant?.Id
+            ?? throw new InvalidOperationException("Tenant context not found.");
+
+        var config = await _db.UserDashboardConfigs
+            .FirstOrDefaultAsync(c => c.UserId == userId && c.TenantId == tenantId);
+
+        if (config == null)
+        {
+            return GetDefaultLayout(userId);
+        }
+
+        var widgets = JsonSerializer.Deserialize<List<DashboardWidgetDto>>(config.ConfigJson)
+            ?? new List<DashboardWidgetDto>();
+
+        return new UserDashboardLayoutDto(userId, widgets);
+    }
+
+    public async Task SaveUserLayoutAsync(UserDashboardLayoutDto layout)
+    {
+        var tenantId = _tenantService.CurrentTenant?.Id
+            ?? throw new InvalidOperationException("Tenant context not found.");
+
+        var config = await _db.UserDashboardConfigs
+            .FirstOrDefaultAsync(c => c.UserId == layout.UserId && c.TenantId == tenantId);
+
+        if (config == null)
+        {
+            config = new UserDashboardConfig
+            {
+                Id = Guid.NewGuid(),
+                UserId = layout.UserId,
+                TenantId = tenantId
+            };
+            _db.UserDashboardConfigs.Add(config);
+        }
+
+        config.ConfigJson = JsonSerializer.Serialize(layout.Widgets);
+        config.LastUpdatedUtc = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+    }
+
+    private UserDashboardLayoutDto GetDefaultLayout(Guid userId)
+    {
+        var defaultWidgets = new List<DashboardWidgetDto>
+        {
+            new("sla-overview", "SLA Overview", 4, 2, 0, 0, true),
+            new("fleet-overview", "Fleet Status", 4, 2, 4, 0, true),
+            new("vendor-overview", "Vendor Pending", 4, 2, 0, 2, true),
+            new("crm-overview", "CRM Pipeline", 4, 2, 4, 2, true),
+            new("productivity-scorecard", "Productivity Scorecard", 8, 2, 0, 4, true)
+        };
+
+        return new UserDashboardLayoutDto(userId, defaultWidgets);
     }
 }

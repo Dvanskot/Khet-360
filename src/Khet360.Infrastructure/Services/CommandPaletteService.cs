@@ -19,7 +19,7 @@ public class CommandPaletteService : ICommandPaletteService
         _authService = authService;
     }
 
-    public async Task<List<CommandActionDto>> GetAvailableCommandsAsync(string context = null)
+    public async Task<List<CommandActionDto>> GetAvailableCommandsAsync(string? context = null)
     {
         var commands = new List<CommandActionDto>();
 

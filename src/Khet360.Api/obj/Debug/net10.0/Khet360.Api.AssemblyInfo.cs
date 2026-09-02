@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Khet360.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4f9090c718bc5beee2915910dac1e4da016f7d98")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3c4f29ce923e66e3ce43c3a5a6906c9294fed575")]
 [assembly: System.Reflection.AssemblyProductAttribute("Khet360.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Khet360.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

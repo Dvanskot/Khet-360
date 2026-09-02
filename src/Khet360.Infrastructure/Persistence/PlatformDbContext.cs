@@ -11,6 +11,7 @@ public class PlatformDbContext : DbContext
     public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; } = null!;
     public DbSet<Entitlement> Entitlements { get; set; } = null!;
     public DbSet<PlatformBackupJob> BackupJobs { get; set; } = null!;
+    public DbSet<PlatformMigrationJob> MigrationJobs { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -126,6 +126,7 @@ builder.Services.AddHostedService<NotificationConsumerService>();
 builder.Services.AddHostedService<OutboxPublisherWorker>();
 builder.Services.AddHostedService<BackupJobWorker>();
 builder.Services.AddHostedService<InboxCleanupService>();
+builder.Services.AddHostedService<MigrationJobWorker>();
 builder.Services.AddScoped<TenantDbContextFactory>();
 builder.Services.AddScoped<PlatformAuthService>();
 

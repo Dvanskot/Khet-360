@@ -31,6 +31,17 @@
   </script>
 
   <style scoped>
+  :root {
+    --khet-primary: #4f46e5;
+    --khet-primary-rgb: 79, 70, 229;
+    --khet-bg: #f9fafb;
+    --khet-surface: #ffffff;
+    --khet-text-main: #111827;
+    --khet-text-muted: #6b7280;
+    --khet-border: #e5e7eb;
+    --khet-font-main: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
   .mobile-app {
     height: 100vh;
     display: flex;

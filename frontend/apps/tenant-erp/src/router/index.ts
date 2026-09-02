@@ -24,22 +24,79 @@ const routes: RouteRecordRaw[] = [
         path: 'crm',
         name: 'crm',
         component: () => import('@/views/crm/CRMDashboard.vue'),
+        children: [
+          {
+            path: 'customer/:id',
+            name: 'customer-detail',
+            component: () => import('@/views/crm/Customer360View.vue'),
+          },
+          {
+            path: 'leads',
+            name: 'leads',
+            component: () => import('@/views/crm/LeadsView.vue'),
+          },
+        ]
       },
+
       {
-        path: 'operations',
-        name: 'operations',
-        component: () => import('@/views/operations/OperationsDashboard.vue'),
+        path: 'inventory',
+        name: 'inventory',
+        component: () => import('@/views/inventory/InventoryDashboard.vue'),
+        children: [
+          {
+            path: 'stock',
+            name: 'stock',
+            component: () => import('@/views/inventory/stock/StockView.vue'),
+          },
+          {
+            path: 'transfers',
+            name: 'transfers',
+            component: () => import('@/views/inventory/transfers/TransfersView.vue'),
+          },
+          {
+            path: 'procurement',
+            name: 'procurement',
+            component: () => import('@/views/inventory/procurement/ProcurementView.vue'),
+          },
+        ]
       },
+
       {
         path: 'finance',
         name: 'finance',
         component: () => import('@/views/finance/FinanceDashboard.vue'),
+        children: [
+          {
+            path: 'ledger',
+            name: 'ledger',
+            component: () => import('@/views/finance/ledger/LedgerView.vue'),
+          },
+          {
+            path: 'tax',
+            name: 'tax',
+            component: () => import('@/views/finance/tax/TaxCenterView.vue'),
+          },
+        ]
       },
+
       {
         path: 'hr',
         name: 'hr',
         component: () => import('@/views/hr/HRDashboard.vue'),
+        children: [
+          {
+            path: 'employees',
+            name: 'employees',
+            component: () => import('@/views/hr/employees/EmployeesView.vue'),
+          },
+          {
+            path: 'payroll',
+            name: 'payroll',
+            component: () => import('@/views/hr/payroll/PayrollView.vue'),
+          },
+        ]
       },
+
     ],
   },
   {

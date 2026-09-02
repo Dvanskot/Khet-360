@@ -50,10 +50,12 @@ const navGroups = [
     items: [
       { name: 'crm', text: 'CRM & Customers', to: '/crm', icon: '🤝' },
       { name: 'operations', text: 'Funeral Ops', to: '/operations', icon: '⚰️' },
+      { name: 'inventory', text: 'Inventory', to: '/inventory', icon: '📦' },
       { name: 'finance', text: 'Finance', to: '/finance', icon: '💰' },
       { name: 'hr', text: 'HR & Payroll', to: '/hr', icon: '👥' },
     ]
   },
+
   {
     label: 'Platform',
     items: [

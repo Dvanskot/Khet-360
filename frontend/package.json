@@ -1,0 +1,18 @@
+{
+  "name": "khet360-frontend",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:public": "npm run dev -w apps/public-site",
+    "dev:erp": "npm run dev -w apps/tenant-erp",
+    "dev:mobile": "npm run dev -w apps/tenant-mobile",
+    "build": "npm run build -ws",
+    "lint": "npm run lint -ws"
+  }
+}

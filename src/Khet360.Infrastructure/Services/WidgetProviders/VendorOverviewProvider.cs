@@ -30,7 +30,8 @@ public class VendorOverviewProvider : IWidgetProvider
         var overdueOrders = pendingOrders.Count(vo => vo.OrderedAt < DateTime.UtcNow.AddDays(-7));
         var totalPendingValue = pendingOrders.Sum(vo => vo.TotalAmount);
 
-        return new {
+        return new
+        {
             PendingCount = pendingOrders.Count,
             OverdueCount = overdueOrders,
             TotalPendingValue = totalPendingValue

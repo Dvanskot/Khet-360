@@ -120,7 +120,8 @@ public class IntegrationTests
         await db.SaveChangesAsync();
 
         // 1. Lead Intake
-        var lead = new Lead {
+        var lead = new Lead
+        {
             Id = Guid.NewGuid(),
             FirstName = "Ultimate",
             LastName = "Test",
@@ -172,7 +173,8 @@ public class IntegrationTests
 
         // 6. Financials
         var txId = Guid.NewGuid();
-        var transaction = new FinancialTransaction {
+        var transaction = new FinancialTransaction
+        {
             Id = txId,
             Description = "Final Payment",
             Entries = new List<FinancialEntry> {
@@ -214,7 +216,8 @@ public class IntegrationTests
         var product = new FuneralProduct { Id = Guid.NewGuid(), Name = "Premium Casket", DefaultPrice = 2000m, Description = "High-end wood casket" };
         db.FuneralProducts.Add(product);
 
-        var plan = new InsurancePolicyPlan {
+        var plan = new InsurancePolicyPlan
+        {
             Id = Guid.NewGuid(),
             Name = "Premium Burial Plan",
             PremiumAmount = 100m,
@@ -223,7 +226,8 @@ public class IntegrationTests
         };
         db.InsurancePolicyPlans.Add(plan);
 
-        var benefit = new InsurancePolicyPlanBenefit {
+        var benefit = new InsurancePolicyPlanBenefit
+        {
             Id = Guid.NewGuid(),
             PolicyPlanId = plan.Id,
             Role = MemberRole.Main,
@@ -232,7 +236,8 @@ public class IntegrationTests
         };
         db.InsurancePolicyPlanBenefits.Add(benefit);
 
-        db.InsurancePolicyPlanBenefitItems.Add(new InsurancePolicyPlanBenefitItem {
+        db.InsurancePolicyPlanBenefitItems.Add(new InsurancePolicyPlanBenefitItem
+        {
             BenefitId = benefit.Id,
             FuneralProductId = product.Id,
             Quantity = 1
@@ -240,7 +245,8 @@ public class IntegrationTests
 
         await db.SaveChangesAsync();
 
-        var customer = new IndividualCustomer {
+        var customer = new IndividualCustomer
+        {
             Id = Guid.NewGuid(),
             FirstName = "Insured",
             LastName = "User",
@@ -250,7 +256,8 @@ public class IntegrationTests
         db.Customers.Add(customer);
         await db.SaveChangesAsync();
 
-        var funeralCase = new FuneralCase {
+        var funeralCase = new FuneralCase
+        {
             Id = Guid.NewGuid(),
             CaseNumber = "CLAIM-CASE-123",
             CustomerId = customer.Id,
@@ -366,7 +373,8 @@ public class IntegrationTests
         await db.SaveChangesAsync();
 
         // 1. Lead Intake
-        var lead = new Lead {
+        var lead = new Lead
+        {
             Id = Guid.NewGuid(),
             FirstName = "John",
             LastName = "Doe",
@@ -446,7 +454,8 @@ public class IntegrationTests
 
         // 4. Simulate Financial Entry for the order
         var txId = Guid.NewGuid();
-        var transaction = new FinancialTransaction {
+        var transaction = new FinancialTransaction
+        {
             Id = txId,
             Description = $"Payment for Memorial {memorialId}",
             Entries = new List<FinancialEntry> {
@@ -477,7 +486,7 @@ public class IntegrationTests
         // Add branch to mock user context to bypass global filter
         assignedBranches.Add(branchId);
         db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
-        db.Departments.Add(new Department { Id = deptId, Name = "HR"});
+        db.Departments.Add(new Department { Id = deptId, Name = "HR" });
         await db.SaveChangesAsync();
 
         // 1. Hire Employee
@@ -513,7 +522,8 @@ public class IntegrationTests
         await payrollService.CreatePayProfileAsync(payProfileDto);
 
         // Setup Basic Pay Item
-        db.PayItems.Add(new PayItem {
+        db.PayItems.Add(new PayItem
+        {
             Id = Guid.NewGuid(),
             Name = "Basic Salary",
             Code = "BASIC",
@@ -554,7 +564,8 @@ public class IntegrationTests
         db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
         await db.SaveChangesAsync();
 
-        var plan = new InsurancePolicyPlan {
+        var plan = new InsurancePolicyPlan
+        {
             Id = Guid.NewGuid(),
             Name = "Cash Payout Plan",
             PremiumAmount = 50m,
@@ -563,7 +574,8 @@ public class IntegrationTests
         };
         db.InsurancePolicyPlans.Add(plan);
 
-        var benefit = new InsurancePolicyPlanBenefit {
+        var benefit = new InsurancePolicyPlanBenefit
+        {
             Id = Guid.NewGuid(),
             PolicyPlanId = plan.Id,
             Role = MemberRole.Main,
@@ -574,7 +586,8 @@ public class IntegrationTests
 
         await db.SaveChangesAsync();
 
-        var customer = new IndividualCustomer {
+        var customer = new IndividualCustomer
+        {
             Id = Guid.NewGuid(),
             FirstName = "Cash",
             LastName = "User",
@@ -584,7 +597,8 @@ public class IntegrationTests
         db.Customers.Add(customer);
         await db.SaveChangesAsync();
 
-        var funeralCase = new FuneralCase {
+        var funeralCase = new FuneralCase
+        {
             Id = Guid.NewGuid(),
             CaseNumber = "CASH-CASE-123",
             CustomerId = customer.Id,
@@ -740,7 +754,8 @@ public class IntegrationTests
         await TestDataSeeder.SeedTenantBasicPayItems(db);
 
         // 2. Setup Employee
-        var emp = new Employee {
+        var emp = new Employee
+        {
             Id = Guid.NewGuid(),
             FirstName = "Tax",
             LastName = "Test",
@@ -749,14 +764,16 @@ public class IntegrationTests
         };
         db.Employees.Add(emp);
 
-        var contract = new EmploymentContract {
+        var contract = new EmploymentContract
+        {
             Id = Guid.NewGuid(),
             EmployeeId = emp.Id,
             Salary = 20000m // Monthly
         };
         db.EmploymentContracts.Add(contract);
 
-        var profile = new PayProfile {
+        var profile = new PayProfile
+        {
             Id = Guid.NewGuid(),
             EmployeeId = emp.Id,
             TaxNumber = "TAX123"

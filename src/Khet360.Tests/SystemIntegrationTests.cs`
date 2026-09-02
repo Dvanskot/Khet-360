@@ -1,0 +1,213 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Khet360.Application.Dtos;
+using Khet360.Application.Interfaces;
+using Khet360.Domain.Entities;
+using Khet360.Domain.Enums;
+using Khet360.Infrastructure.Persistence;
+using Khet360.Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
+using Moq;
+using Xunit;
+using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Khet360.Tests;
+
+public class SystemIntegrationTests
+{
+    private async Task<(IServiceProvider, TenantDbContext, List<Guid>)> GetServiceProviderAsync()
+    {
+        var mockUserContext = new Mock<ITenantUserContext>();
+        mockUserContext.Setup(uc => uc.IsAuthenticated).Returns(true);
+        mockUserContext.Setup(uc => uc.UserId).Returns(Guid.NewGuid());
+        var assignedBranches = new List<Guid>();
+        mockUserContext.Setup(uc => uc.AssignedBranchIds).Returns(assignedBranches);
+
+        var db = new TenantDbContext(new DbContextOptionsBuilder<TenantDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()).Options, mockUserContext.Object);
+
+        var services = new ServiceCollection();
+        services.AddSingleton(db);
+
+        var platformOptions = new DbContextOptionsBuilder<PlatformDbContext>()
+            .UseInMemoryDatabase(databaseName: "PlatformDB_" + Guid.NewGuid().ToString()).Options;
+        var platformDb = new PlatformDbContext(platformOptions);
+        // Use the seeder we created earlier
+        await TestDataSeeder.SeedPlatformTaxData(platformDb);
+        services.AddSingleton(platformDb);
+
+        services.AddSingleton(mockUserContext.Object);
+
+        var mockTenantService = new Mock<ITenantService>();
+        var mockTenant = new Tenant { Id = Guid.NewGuid(), Slug = "test-tenant" };
+        mockTenantService.Setup(ts => ts.CurrentTenant).Returns(mockTenant);
+        services.AddSingleton(mockTenantService.Object);
+
+        services.AddSingleton(new Mock<ICacheService>().Object);
+        services.AddSingleton(new Mock<IMessageBus>().Object);
+        services.AddSingleton(new Mock<IStateSyncService>().Object);
+        services.AddSingleton(new Mock<IMetricsService>().Object);
+        services.AddSingleton(new Mock<IOutboxService>().Object);
+
+        services.AddScoped<IWorkItemService, WorkItemService>();
+        services.AddSingleton(new Mock<ILogger<LeadService>>().Object);
+        services.AddSingleton(new Mock<ILogger<OpportunityService>>().Object);
+        services.AddSingleton(new Mock<ILogger<CustomerService>>().Object);
+        services.AddSingleton(new Mock<ILogger<FuneralCaseService>>().Object);
+        services.AddSingleton(new Mock<ILogger<ProductionService>>().Object);
+        services.AddSingleton(new Mock<ILogger<FinanceVerificationService>>().Object);
+        services.AddSingleton(new Mock<ILogger<EmployeeService>>().Object);
+        services.AddSingleton(new Mock<ILogger<PayrollService>>().Object);
+        services.AddSingleton(new Mock<ILogger<ServiceArrangementService>>().Object);
+        services.AddSingleton(new Mock<ILogger<PaymentService>>().Object);
+        services.AddSingleton(new Mock<ILogger<InventoryService>>().Object);
+        services.AddSingleton(new Mock<ILogger<POSService>>().Object);
+        services.AddSingleton(new Mock<ILogger<NotificationService>>().Object);
+        services.AddSingleton(new Mock<ILogger<ClaimService>>().Object);
+        services.AddSingleton(new Mock<ILogger<VendorService>>().Object);
+
+        services.AddScoped<ILeadService, LeadService>();
+        services.AddScoped<IOpportunityService, OpportunityService>();
+        services.AddScoped<ICustomerService, CustomerService>();
+        services.AddScoped<IFuneralCaseService, FuneralCaseService>();
+        services.AddScoped<IProductionService, ProductionService>();
+        services.AddScoped<IFinanceVerificationService, FinanceVerificationService>();
+        services.AddScoped<IEmployeeService, EmployeeService>();
+        services.AddScoped<IPayrollService, PayrollService>();
+        services.AddScoped<IServiceArrangementService, ServiceArrangementService>();
+        services.AddScoped<IPaymentService, PaymentService>();
+        services.AddScoped<IPolicyService, PolicyService>();
+        services.AddScoped<IClaimService, ClaimService>();
+        services.AddScoped<IRoutingService, RoutingService>();
+        services.AddScoped<IInventoryService, InventoryService>();
+        services.AddScoped<IPOSService, POSService>();
+        services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IFinancialService, FinancialService>();
+        services.AddScoped<ITaxService, TaxService>();
+        services.AddScoped<ISARSReportingService, SARSReportingService>();
+        services.AddScoped<IFinanceVerificationService, FinanceVerificationService>();
+
+        return (services.BuildServiceProvider(), db, assignedBranches);
+    }
+
+    [Fact]
+    public async Task EndToEnd_InsuranceBurialClaim_Should_DeductStock_And_PostToLedger()
+    {
+        // Arrange
+        var (sp, db, assignedBranches) = await GetServiceProviderAsync();
+        var policyService = sp.GetRequiredService<IPolicyService>();
+        var claimService = sp.GetRequiredService<IClaimService>();
+        var inventoryService = sp.GetRequiredService<IInventoryService>();
+        var branchId = Guid.NewGuid();
+        assignedBranches.Add(branchId);
+        db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
+        await db.SaveChangesAsync();
+
+        // 1. Setup Product and Stock
+        var product = new FuneralProduct { Id = Guid.NewGuid(), Name = "Premium Casket", DefaultPrice = 2000m };
+        db.FuneralProducts.Add(product);
+        await inventoryService.InitializeStockAsync(product.Id, branchId, 10, Guid.NewGuid());
+
+        // 2. Setup Burial Plan
+        var plan = new InsurancePolicyPlan {
+            Id = Guid.NewGuid(),
+            Name = "Burial Plan",
+            CoverType = InsuranceCoverType.Burial
+        };
+        db.InsurancePolicyPlans.Add(plan);
+
+        var benefit = new InsurancePolicyPlanBenefit {
+            Id = Guid.NewGuid(),
+            PolicyPlanId = plan.Id,
+            Role = MemberRole.Main,
+            IsFixed = true,
+            CoverAmount = 10000m
+        };
+        db.InsurancePolicyPlanBenefits.Add(benefit);
+
+        db.InsurancePolicyPlanBenefitItems.Add(new InsurancePolicyPlanBenefitItem {
+            BenefitId = benefit.Id,
+            FuneralProductId = product.Id,
+            Quantity = 1
+        });
+        await db.SaveChangesAsync();
+
+        // 3. Setup Customer and Policy
+        var customer = new IndividualCustomer { Id = Guid.NewGuid(), FirstName = "Test", LastName = "User", BranchId = branchId };
+        db.Customers.Add(customer);
+        await db.SaveChangesAsync();
+
+        var policyDto = new PolicyCreateDto("POL-1", "Provider", 10000m, DateTime.UtcNow.AddMonths(-1), null, plan.Id, new List<PolicyMemberCreateDto> { new(customer.Id, MemberRole.Main) });
+        var policyId = await policyService.CreatePolicyAsync(policyDto, branchId);
+
+        var funeralCase = new FuneralCase { Id = Guid.NewGuid(), CustomerId = customer.Id, DeceasedCustomerId = customer.Id, BranchId = branchId };
+        db.FuneralCases.Add(funeralCase);
+        await db.SaveChangesAsync();
+
+        var claimDto = new ClaimCreateDto("CLM-1", 10000m, policyId, funeralCase.Id, "Notes");
+        var claimId = await claimService.CreateClaimAsync(claimDto, branchId);
+
+        await claimService.UpdateClaimStatusAsync(claimId, new ClaimUpdateDto(ClaimStatus.Approved, DateTime.UtcNow, "Approved"));
+
+        // Act
+        await claimService.ExecutePayoutAsync(claimId);
+
+        // Assert
+        // 1. Stock should be decremented
+        var stock = await inventoryService.GetStockLevelAsync(product.Id, branchId);
+        stock.Should().Be(9);
+
+        // 2. Ledger should have a balanced transaction
+        var tx = await db.FinancialTransactions.FirstOrDefaultAsync(t => t.SourceEntityId == claimId);
+        tx.Should().NotBeNull();
+        var entries = await db.FinancialEntries.Where(e => e.FinancialTransactionId == tx!.Id).ToListAsync();
+        entries.Sum(e => e.Debit).Should().Be(entries.Sum(e => e.Credit));
+    }
+
+    [Fact]
+    public async Task EndToEnd_PayrollToFinance_Should_PostCorrectLiability()
+    {
+        // Arrange
+        var (sp, db, assignedBranches) = await GetServiceProviderAsync();
+        var payrollService = sp.GetRequiredService<IPayrollService>();
+        var branchId = Guid.NewGuid();
+        assignedBranches.Add(branchId);
+        db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
+
+        var dept = new Department { Id = Guid.NewGuid(), Name = "HR", BranchId = branchId };
+        db.Departments.Add(dept);
+
+        var pos = new Position { Id = Guid.NewGuid(), Title = "Manager" };
+        db.Positions.Add(pos); // Since we move Positions to Platform, this might fail if we use TenantDbContext
+        // Actually, we should use the platformDb for positions now.
+
+        // Fix: Positions are now in PlatformDb. We just need the ID.
+        var platformDb = sp.GetRequiredService<PlatformDbContext>();
+        var platformPosId = platformDb.Positions.First().Id;
+
+        var emp = new Employee { Id = Guid.NewGuid(), FirstName = "Payroll", LastName = "Test", BranchId = branchId, DepartmentId = dept.Id, PositionId = platformPosId };
+        db.Employees.Add(emp);
+
+        db.EmploymentContracts.Add(new EmploymentContract { Id = Guid.NewGuid(), EmployeeId = emp.Id, Salary = 10000m });
+        db.PayProfiles.Add(new PayProfile { Id = Guid.NewGuid(), EmployeeId = emp.Id });
+
+        db.PayItems.Add(new PayItem { Id = Guid.NewGuid(), Name = "Basic Salary", Code = "BASIC", Type = PayItemType.Earning });
+        await db.SaveChangesAsync();
+
+        var runId = await payrollService.CreatePayrollRunAsync(new PayrollRunCreateDto("Test Run", DateTime.UtcNow, DateTime.UtcNow.AddDays(30)));
+        await payrollService.CalculatePayrollAsync(runId);
+        await payrollService.FinalizePayrollRunAsync(runId, Guid.NewGuid());
+
+        // Assert
+        var tx = await db.FinancialTransactions.FirstOrDefaultAsync(t => t.SourceEntityId == runId);
+        tx.Should().NotBeNull();
+
+        var liabilityEntry = await db.FinancialEntries.FirstOrDefaultAsync(e => e.FinancialTransactionId == tx!.Id && e.AccountCode == "SARS-LIABILITY");
+        liabilityEntry.Should().NotBeNull();
+        liabilityEntry!.Credit.Should().BeGreaterThan(0);
+    }
+}

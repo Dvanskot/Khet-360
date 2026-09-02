@@ -26,7 +26,8 @@ public class ProductivityScorecardProvider : IWidgetProvider
 
         double completionRate = totalItems == 0 ? 0 : (double)completedItems / totalItems * 100;
 
-        return new {
+        return new
+        {
             TotalItems = totalItems,
             CompletedItems = completedItems,
             CompletionRate = completionRate,

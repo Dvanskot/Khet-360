@@ -32,7 +32,8 @@ public class SlaOverviewProvider : IWidgetProvider
 
         var criticalAlerts = workItems
             .Where(wi => wi.SlaStatus == SlaStatus.Breached)
-            .Select(wi => new {
+            .Select(wi => new
+            {
                 wi.Id,
                 Type = "WorkItem",
                 wi.NextAction,
@@ -42,7 +43,8 @@ public class SlaOverviewProvider : IWidgetProvider
             .Take(5)
             .ToList();
 
-        return new {
+        return new
+        {
             Total = workItems.Count,
             Warnings = warningItems,
             Breaches = breachedItems,

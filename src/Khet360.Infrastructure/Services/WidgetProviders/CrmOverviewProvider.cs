@@ -33,7 +33,8 @@ public class CrmOverviewProvider : IWidgetProvider
         var convertedLeads = await _db.Leads.CountAsync(l => l.Status == LeadStatus.Converted);
         double conversionRate = totalLeads == 0 ? 0 : (double)convertedLeads / totalLeads * 100;
 
-        return new {
+        return new
+        {
             NewLeads = newLeads,
             OpenOpportunities = openOpportunities,
             PipelineValue = pipelineValue,

@@ -28,13 +28,15 @@ public class FinanceVerificationController : ControllerBase
 
             if (result.IsBalanced)
             {
-                return Ok(new {
+                return Ok(new
+                {
                     Status = "Balanced",
                     Message = "All financial transactions are balanced."
                 });
             }
 
-            return BadRequest(new {
+            return BadRequest(new
+            {
                 Status = "Unbalanced",
                 Message = "Financial invariant violations detected.",
                 Violations = result.Violations

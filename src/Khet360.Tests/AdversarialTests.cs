@@ -99,7 +99,8 @@ public class AdversarialTests
         db.PayItems.Add(new PayItem { Id = Guid.NewGuid(), Name = "Basic Salary", Code = "BASIC", Type = PayItemType.Earning, IsStatutory = false });
 
         var employeeId = Guid.NewGuid();
-        var employee = new Employee {
+        var employee = new Employee
+        {
             Id = employeeId,
             FirstName = "No",
             LastName = "Profile",
@@ -110,7 +111,8 @@ public class AdversarialTests
         };
         db.Employees.Add(employee);
 
-        db.EmploymentContracts.Add(new EmploymentContract {
+        db.EmploymentContracts.Add(new EmploymentContract
+        {
             Id = Guid.NewGuid(),
             EmployeeId = employeeId,
             Salary = 5000m
@@ -141,7 +143,8 @@ public class AdversarialTests
         var sp = await GetServiceProviderAsync(db);
         var financeService = sp.GetRequiredService<IFinanceVerificationService>();
 
-        var transaction = new FinancialTransaction {
+        var transaction = new FinancialTransaction
+        {
             Id = Guid.NewGuid(),
             Description = "Unbalanced TX",
             Entries = new List<FinancialEntry> {

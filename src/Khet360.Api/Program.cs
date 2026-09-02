@@ -193,7 +193,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseMetricServer();
-    app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // Tenant Resolver Middleware - Must run BEFORE authorization and controllers
 app.UseMiddleware<TenantResolverMiddleware>();

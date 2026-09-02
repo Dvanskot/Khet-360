@@ -75,7 +75,8 @@ public class AdversarialSecurityTests
         var userBranch = new UserBranch { UserId = userId, BranchId = branchA };
         context.UserBranches.Add(userBranch);
 
-        var leadA = new Lead {
+        var leadA = new Lead
+        {
             Id = Guid.NewGuid(),
             FirstName = "LeadA",
             LastName = "Doe A",
@@ -83,7 +84,8 @@ public class AdversarialSecurityTests
             Phone = "123",
             BranchId = branchA
         };
-        var leadB = new Lead {
+        var leadB = new Lead
+        {
             Id = Guid.NewGuid(),
             FirstName = "LeadB",
             LastName = "Doe B",

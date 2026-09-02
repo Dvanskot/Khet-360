@@ -26,7 +26,8 @@ public class FleetStatusProvider : IWidgetProvider
         var activeVehicles = await _db.TripAssignments.CountAsync(ta => !ta.IsCompleted);
         var maintenanceDue = await _db.MaintenanceSchedules.CountAsync(ms => ms.NextDueDate <= DateTime.UtcNow);
 
-        return new {
+        return new
+        {
             TotalVehicles = vehicles.Count,
             ActiveVehicles = activeVehicles,
             IdleVehicles = vehicles.Count - activeVehicles,

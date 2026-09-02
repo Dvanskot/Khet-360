@@ -62,6 +62,8 @@ public class TenantDbContext : DbContext
     public DbSet<PaymentConfiguration> PaymentConfigurations { get; set; } = null!;
     public DbSet<Invoice> Invoices { get; set; } = null!;
     public DbSet<Payment> Payments { get; set; } = null!;
+    public DbSet<PaymentTransaction> PaymentTransactions { get; set; } = null!;
+    public DbSet<InboxMessage> InboxMessages { get; set; } = null!;
     public DbSet<ArrangementWizardState> ArrangementWizardStates { get; set; } = null!;
 
 
@@ -260,6 +262,14 @@ public class TenantDbContext : DbContext
             entity.HasOne(p => p.Invoice)
                 .WithMany(i => i.Payments)
                 .HasForeignKey(p => p.InvoiceId);
+        });
+
+        modelBuilder.Entity<PaymentTransaction>(entity =>
+        {
+            entity.HasOne(pt => pt.Invoice)
+                .WithMany()
+                .HasForeignKey(pt => pt.InvoiceId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
 

@@ -3,6 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Khet360.Infrastructure.Services;
+using Khet360.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Khet360.Infrastructure.Persistence;
 
 namespace Khet360.Api.Controllers;
 
@@ -11,10 +15,14 @@ namespace Khet360.Api.Controllers;
 public class PaymentController : ControllerBase
 {
     private readonly IPaymentService _paymentService;
+    private readonly IWebhookValidator _webhookValidator;
+    private readonly TenantDbContext _db;
 
-    public PaymentController(IPaymentService paymentService)
+    public PaymentController(IPaymentService paymentService, IWebhookValidator webhookValidator, TenantDbContext db)
     {
         _paymentService = paymentService;
+        _webhookValidator = webhookValidator;
+        _db = db;
     }
 
     [HttpPost("invoice")]
@@ -46,8 +54,21 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost("webhook")]
-    public async Task<IActionResult> ProcessWebhook([FromBody] WebhookRequest request)
+    public async Task<IActionResult> ProcessWebhook([FromBody] WebhookRequest request, [FromHeader(Name = "X-Payment-Signature")] string signature)
     {
+        var config = await _db.PaymentConfigurations.FirstOrDefaultAsync();
+        if (config == null) return BadRequest("Payment gateway not configured.");
+
+        // Read request body for signature validation
+        // In a real production app, we'd use a custom middleware or a request filter to capture the raw body
+        // For this implementation, we assume the payload is reconstructed from the request object
+        var payload = System.Text.Json.JsonSerializer.Serialize(request);
+
+        if (!await _webhookValidator.ValidateSignatureAsync(config, payload, signature))
+        {
+            return Unauthorized("Invalid webhook signature.");
+        }
+
         await _paymentService.ProcessWebhookAsync(request.InvoiceId, request.Amount, request.TransactionRef);
         return Ok();
     }

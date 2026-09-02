@@ -91,6 +91,7 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<ICommandPaletteService, CommandPaletteService>();
 builder.Services.AddScoped<IDealBoardService, DealBoardService>();
 builder.Services.AddScoped<IArrangementWizardService, ArrangementWizardService>();
+builder.Services.AddScoped<IWebhookValidator, WebhookValidator>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IPaymentConfigurationService, PaymentConfigurationService>();
 builder.Services.AddScoped<IPaymentGatewayProvider, NetcashGatewayProvider>();
@@ -123,6 +124,7 @@ builder.Services.AddHostedService<EventConsumerService>();
 builder.Services.AddHostedService<NotificationConsumerService>();
 builder.Services.AddHostedService<OutboxPublisherWorker>();
 builder.Services.AddHostedService<BackupJobWorker>();
+builder.Services.AddHostedService<InboxCleanupService>();
 builder.Services.AddScoped<TenantDbContextFactory>();
 builder.Services.AddScoped<PlatformAuthService>();
 

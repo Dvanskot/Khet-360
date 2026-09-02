@@ -57,6 +57,20 @@ public class PaymentService : IPaymentService
             throw new InvalidOperationException("Payment gateway not configured for this tenant. Please set up your gateway in the administration portal.");
         }
 
+        // Create a pending transaction for auditing
+        var transaction = new PaymentTransaction
+        {
+            Id = Guid.NewGuid(),
+            InvoiceId = invoiceId,
+            Amount = invoice.TotalAmount,
+            Status = TransactionStatus.Pending,
+            BranchId = invoice.BranchId,
+            CreatedAt = DateTime.UtcNow,
+            TransactionReference = $"PEND-{Guid.NewGuid().ToString()[..8].ToUpper()}" // Temporary ref until gateway provides one
+        };
+        _db.PaymentTransactions.Add(transaction);
+        await _db.SaveChangesAsync();
+
         // Find the provider implementation that matches the config
         var provider = _gatewayProviders.FirstOrDefault(p =>
             p.ProviderName.Equals(config.Provider.ToString(), StringComparison.OrdinalIgnoreCase));
@@ -82,9 +96,46 @@ public class PaymentService : IPaymentService
 
         if (provider == null) throw new NotSupportedException($"Payment provider {config.Provider} not supported.");
 
+        // Idempotency Check: Prevent duplicate processing if transaction is already successful
+        var existingTx = await _db.PaymentTransactions
+            .FirstOrDefaultAsync(t => t.TransactionReference == transactionRef && t.Status == TransactionStatus.Success);
+        if (existingTx != null) return;
+
         // Verify the payment with the provider
         var isValid = await provider.VerifyPaymentAsync(config, transactionRef, amount);
-        if (!isValid) throw new InvalidOperationException("Payment verification failed.");
+        if (!isValid)
+        {
+            // Log failure in transactions
+            _db.PaymentTransactions.Add(new PaymentTransaction
+            {
+                Id = Guid.NewGuid(),
+                InvoiceId = invoiceId,
+                TransactionReference = transactionRef,
+                Amount = amount,
+                Status = TransactionStatus.Failed,
+                ErrorMessage = "Payment verification failed via gateway provider.",
+                BranchId = invoice.BranchId,
+                CreatedAt = DateTime.UtcNow
+            });
+            await _db.SaveChangesAsync();
+            throw new InvalidOperationException("Payment verification failed.");
+        }
+
+        // Update or create successful transaction
+        var transaction = await _db.PaymentTransactions
+            .FirstOrDefaultAsync(t => t.TransactionReference == transactionRef)
+            ?? new PaymentTransaction
+            {
+                Id = Guid.NewGuid(),
+                InvoiceId = invoiceId,
+                TransactionReference = transactionRef,
+                Amount = amount,
+                BranchId = invoice.BranchId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+        transaction.Status = TransactionStatus.Success;
+        if (_db.Entry(transaction).State == EntityState.Detached) _db.PaymentTransactions.Add(transaction);
 
         var payment = new Payment
         {

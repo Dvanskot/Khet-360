@@ -18,6 +18,8 @@ public class PaymentConfiguration : BaseEntity
     [Required]
     public string MerchantId { get; set; } = string.Empty;
 
+    public string? WebhookSecret { get; set; }
+
     public bool IsSandbox { get; set; } = true;
 
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;

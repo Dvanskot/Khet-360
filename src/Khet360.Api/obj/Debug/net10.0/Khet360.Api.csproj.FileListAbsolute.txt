@@ -86,7 +86,6 @@ C:\2026\Projects\August\Khet-360\src\Khet360.Api\bin\Debug\net10.0\Khet360.Infra
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\bin\Debug\net10.0\Khet360.Application.pdb
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\bin\Debug\net10.0\Khet360.Infrastructure.pdb
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\bin\Debug\net10.0\Khet360.Domain.pdb
-C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\Khet360.Api.MvcApplicationPartsAssemblyInfo.cs
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\rjimswa.dswa.cache.json
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\rjsmrazor.dswa.cache.json
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\rjsmcshtml.dswa.cache.json
@@ -102,3 +101,4 @@ C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\refint\Khet36
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\Khet360.Api.pdb
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\Khet360.Api.genruntimeconfig.cache
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\ref\Khet360.Api.dll
+C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\Khet360.Api.MvcApplicationPartsAssemblyInfo.cs

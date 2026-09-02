@@ -41,8 +41,8 @@ public class WorkItemService : IWorkItemService
         _tenantDb.WorkItems.Add(workItem);
         await _tenantDb.SaveChangesAsync();
 
-		// Intelligent Routing: Attempt to auto-assign to the best available user based on entity type and branch
-		var bestUserId = await _routingService.FindBestUserAsync(entityType, branchId);
+        // Intelligent Routing: Attempt to auto-assign to the best available user based on entity type and branch
+        var bestUserId = await _routingService.FindBestUserAsync(entityType, branchId);
         if (bestUserId.HasValue)
         {
             await AssignWorkItemAsync(workItem.Id, bestUserId.Value);

@@ -34,5 +34,4 @@ public class FamilyRelationship : IBranchScoped
     [Required]
     public Guid BranchId { get; set; }
 
-    public Guid TenantId { get; set; }
 }

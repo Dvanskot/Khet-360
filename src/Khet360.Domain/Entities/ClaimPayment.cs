@@ -13,6 +13,5 @@ public class ClaimPayment : IBranchScoped
     public Guid ClaimId { get; set; }
     public virtual InsuranceClaim Claim { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 }

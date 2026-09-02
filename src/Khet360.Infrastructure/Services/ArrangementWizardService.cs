@@ -43,7 +43,6 @@ public class ArrangementWizardService : IArrangementWizardService
             IsCompleted = false,
             LastUpdated = DateTime.UtcNow,
             FormDataJson = "{}",
-            TenantId = tenantId,
             BranchId = branchId
         };
 
@@ -95,7 +94,6 @@ public class ArrangementWizardService : IArrangementWizardService
         {
             Id = Guid.NewGuid(),
             FuneralCaseId = state.FuneralCaseId,
-            TenantId = state.TenantId,
             BranchId = state.BranchId,
             ScheduledDate = DateTime.UtcNow
         };

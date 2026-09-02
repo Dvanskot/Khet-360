@@ -14,7 +14,6 @@ public class InsurancePolicy : IBranchScoped
     public PolicyStatus Status { get; set; }
 
     public Guid CustomerId { get; set; }
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 
     public virtual ICollection<InsuranceClaim> Claims { get; set; } = new List<InsuranceClaim>();

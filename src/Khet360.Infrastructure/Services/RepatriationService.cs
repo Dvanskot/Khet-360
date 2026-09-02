@@ -38,7 +38,6 @@ public class RepatriationService : IRepatriationService
             RequestedAt = DateTime.UtcNow,
             Notes = dto.Notes,
             FuneralCaseId = dto.FuneralCaseId,
-            TenantId = tenantId,
             BranchId = branchId
         };
 

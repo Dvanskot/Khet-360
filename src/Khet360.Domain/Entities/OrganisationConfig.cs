@@ -40,7 +40,6 @@ public class OrganisationConfig
 
     public string DocumentNumberingPrefix { get; set; } = "KHT";
 
-    public Guid TenantId { get; set; }
     public Tenant Tenant { get; set; } = null!;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

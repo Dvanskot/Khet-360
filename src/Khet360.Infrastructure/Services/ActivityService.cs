@@ -35,7 +35,6 @@ public class ActivityService : IActivityService
             OpportunityId = activityDto.RelatedOpportunityId,
             WorkItemId = activityDto.RelatedCaseId, // CaseId is mapped to WorkItemId as per current domain
             BranchId = branchId,
-            TenantId = tenantId,
             Status = ActivityStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };

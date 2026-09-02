@@ -16,7 +16,6 @@ public class Memorial : IBranchScoped
     public Guid FuneralCaseId { get; set; }
     public virtual FuneralCase FuneralCase { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 
     public virtual Obituary? Obituary { get; set; }
@@ -34,7 +33,6 @@ public class Obituary : IBranchScoped
     public Guid MemorialId { get; set; }
     public virtual Memorial Memorial { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 }
 
@@ -49,6 +47,5 @@ public class MemorialTribute : IBranchScoped
     public Guid MemorialId { get; set; }
     public virtual Memorial Memorial { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 }

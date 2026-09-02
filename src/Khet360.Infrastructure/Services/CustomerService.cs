@@ -36,7 +36,6 @@ public class CustomerService : ICustomerService
             IdentityNumber = request.IdentityNumber,
             IdentityType = request.IdentityType,
             BranchId = request.BranchId,
-            TenantId = tenantId,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -82,7 +81,6 @@ public class CustomerService : ICustomerService
             TaxNumber = request.TaxNumber,
             Industry = request.Industry,
             BranchId = request.BranchId,
-            TenantId = tenantId,
             CreatedAt = DateTime.UtcNow
         };
 

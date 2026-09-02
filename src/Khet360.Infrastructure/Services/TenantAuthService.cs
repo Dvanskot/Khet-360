@@ -33,7 +33,7 @@ public class TenantAuthService : ITenantAuthService
         }
 
         // Ensure the user belongs to the requested tenant
-        if (user.TenantId != tenantId)
+        if (user.UserBranches == null)
         {
             return null;
         }
@@ -65,7 +65,7 @@ public class TenantAuthService : ITenantAuthService
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim("tenant_id", user.TenantId.ToString()),
+            new Claim("linked_branches", string.Join(",", user.UserBranches.Select(ub => ub.BranchId))),
             new Claim("username", user.Username)
         };
 

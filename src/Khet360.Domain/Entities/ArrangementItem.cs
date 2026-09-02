@@ -14,6 +14,5 @@ public class ArrangementItem : IBranchScoped
     public Guid ServiceArrangementId { get; set; }
     public virtual ServiceArrangement ServiceArrangement { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 }

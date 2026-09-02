@@ -60,7 +60,6 @@ public class LeadService : ILeadService
             CompanyName = leadDto.CompanyName,
             Status = LeadStatus.New,
             BranchId = branchId,
-            TenantId = tenantId,
             CreatedAt = DateTime.UtcNow
         };
 

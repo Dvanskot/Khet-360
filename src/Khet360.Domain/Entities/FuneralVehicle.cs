@@ -12,6 +12,5 @@ public class FuneralVehicle : IBranchScoped
     public VehicleStatus Status { get; set; }
     public DateTime? LastMaintenanceDate { get; set; }
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 }

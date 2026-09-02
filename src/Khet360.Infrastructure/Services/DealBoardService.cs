@@ -30,7 +30,7 @@ public class DealBoardService : IDealBoardService
             ?? throw new InvalidOperationException("Tenant context not found.");
 
         var leads = await _db.Leads
-            .Where(l => l.TenantId == tenantId && l.BranchId == branchId)
+            .Where(l => l.BranchId == branchId)
             .ToListAsync();
 
         var columns = Enum.GetValues(typeof(LeadStatus))
@@ -58,7 +58,7 @@ public class DealBoardService : IDealBoardService
             ?? throw new InvalidOperationException("Tenant context not found.");
 
         var opportunities = await _db.Opportunities
-            .Where(o => o.TenantId == tenantId && o.BranchId == branchId)
+            .Where(o => o.BranchId == branchId)
             .ToListAsync();
 
         var columns = Enum.GetValues(typeof(OpportunityStage))

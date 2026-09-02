@@ -37,7 +37,6 @@ public class PolicyService : IPolicyService
             EndDate = dto.EndDate,
             Status = PolicyStatus.Active,
             CustomerId = dto.CustomerId,
-            TenantId = tenantId,
             BranchId = branchId
         };
 

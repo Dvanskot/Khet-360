@@ -38,7 +38,6 @@ public class VendorService : IVendorService
             Status = VendorStatus.Pending,
             TaxId = dto.TaxId,
             BankDetails = dto.BankDetails,
-            TenantId = tenantId,
             BranchId = branchId
         };
 
@@ -87,7 +86,6 @@ public class VendorService : IVendorService
             VendorId = dto.VendorId,
             FuneralCaseId = dto.FuneralCaseId,
             Notes = dto.Notes,
-            TenantId = tenantId,
             BranchId = branchId
         };
 
@@ -102,7 +100,6 @@ public class VendorService : IVendorService
                     Quantity = itemDto.Quantity,
                     UnitPrice = itemDto.UnitPrice,
                     IsConfirmed = false,
-                    TenantId = tenantId,
                     BranchId = branchId
                 });
             }

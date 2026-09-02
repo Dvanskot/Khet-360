@@ -83,7 +83,6 @@ public class MemorialService : IMemorialService
             Type = dto.Type,
             Theme = dto.Theme,
             FuneralCaseId = dto.FuneralCaseId,
-            TenantId = tenantId,
             BranchId = branchId,
             IsPublic = false
         };
@@ -137,7 +136,6 @@ public class MemorialService : IMemorialService
             Status = ObituaryStatus.Draft,
             PublishedAt = DateTime.UtcNow,
             MemorialId = dto.MemorialId,
-            TenantId = tenantId,
             BranchId = branchId
         };
 
@@ -158,7 +156,6 @@ public class MemorialService : IMemorialService
             PostedAt = DateTime.UtcNow,
             IsApproved = false,
             MemorialId = dto.MemorialId,
-            TenantId = tenantId,
             BranchId = branchId
         };
 

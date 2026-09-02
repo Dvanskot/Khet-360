@@ -18,23 +18,14 @@ public class OrganisationService : IOrganisationService
 
     public async Task<OrganisationConfig?> GetConfigAsync()
     {
-        var tenantId = _tenantService.CurrentTenant?.Id;
-        if (tenantId == null) return null;
-
-        return await _tenantDb.OrganisationConfigs
-            .FirstOrDefaultAsync(c => c.TenantId == tenantId);
+        return await _tenantDb.OrganisationConfigs.FirstOrDefaultAsync();
     }
 
     public async Task UpdateConfigAsync(OrganisationConfig config)
     {
-        var tenantId = _tenantService.CurrentTenant?.Id;
-        if (tenantId == null) throw new InvalidOperationException("No tenant resolved.");
-
-        config.TenantId = tenantId.Value;
         config.UpdatedAt = DateTime.UtcNow;
 
-        var existing = await _tenantDb.OrganisationConfigs
-            .FirstOrDefaultAsync(c => c.TenantId == tenantId);
+        var existing = await _tenantDb.OrganisationConfigs.FirstOrDefaultAsync();
 
         if (existing == null)
         {

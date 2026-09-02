@@ -30,7 +30,7 @@ public class DashboardService : IDashboardService
 
         // 1. SLA Overview
         var workItems = await _db.WorkItems
-            .Where(wi => wi.TenantId == tenantId && wi.Status != WorkItemStatus.Completed)
+            .Where(wi => wi.Status != WorkItemStatus.Completed)
             .ToListAsync();
 
         var warningItems = workItems.Count(wi => wi.SlaStatus == SlaStatus.Warning);
@@ -55,17 +55,15 @@ public class DashboardService : IDashboardService
 
         // 2. Fleet Overview
         var vehicles = await _db.FuneralVehicles
-            .Where(v => v.TenantId == tenantId)
             .ToListAsync();
 
         var activeVehicles = await _db.TripAssignments
-            .CountAsync(ta => ta.TenantId == tenantId && !ta.IsCompleted);
+            .CountAsync(ta => !ta.IsCompleted);
 
         var maintenanceDue = await _db.MaintenanceSchedules
-            .CountAsync(ms => ms.TenantId == tenantId && ms.NextDueDate <= DateTime.UtcNow);
+            .CountAsync(ms => ms.NextDueDate <= DateTime.UtcNow);
 
         var fuelLogs = await _db.FuelLogs
-            .Where(fl => fl.TenantId == tenantId)
             .ToListAsync();
 
         decimal avgFuelEfficiency = 0; // Simplified for now as it requires multi-log calculation
@@ -79,7 +77,7 @@ public class DashboardService : IDashboardService
 
         // 3. Vendor Overview
         var pendingOrders = await _db.VendorOrders
-            .Where(vo => vo.TenantId == tenantId && vo.Status != VendorOrderStatus.Delivered)
+            .Where(vo => vo.Status != VendorOrderStatus.Delivered)
             .ToListAsync();
 
         var overdueOrders = pendingOrders.Count(vo => vo.OrderedAt < DateTime.UtcNow.AddDays(-7));
@@ -92,17 +90,17 @@ public class DashboardService : IDashboardService
 
         // 4. CRM Overview
         var newLeads = await _db.Leads
-            .CountAsync(l => l.TenantId == tenantId && l.Status == LeadStatus.New);
+            .CountAsync(l => l.Status == LeadStatus.New);
 
         var openOpportunities = await _db.Opportunities
-            .CountAsync(o => o.TenantId == tenantId && o.Stage != OpportunityStage.ClosedWon && o.Stage != OpportunityStage.ClosedLost);
+            .CountAsync(o => o.Stage != OpportunityStage.ClosedWon && o.Stage != OpportunityStage.ClosedLost);
 
         var pipelineValue = await _db.Opportunities
-            .Where(o => o.TenantId == tenantId && o.Stage != OpportunityStage.ClosedWon && o.Stage != OpportunityStage.ClosedLost)
+            .Where(o => o.Stage != OpportunityStage.ClosedWon && o.Stage != OpportunityStage.ClosedLost)
             .SumAsync(o => o.EstimatedValue);
 
-        var totalLeads = await _db.Leads.CountAsync(l => l.TenantId == tenantId);
-        var convertedLeads = await _db.Leads.CountAsync(l => l.TenantId == tenantId && l.Status == LeadStatus.Converted);
+        var totalLeads = await _db.Leads.CountAsync();
+        var convertedLeads = await _db.Leads.CountAsync(l => l.Status == LeadStatus.Converted);
         double conversionRate = totalLeads == 0 ? 0 : (double)convertedLeads / totalLeads * 100;
 
         var crmOverview = new CrmOverviewDto(
@@ -124,7 +122,7 @@ public class DashboardService : IDashboardService
             ?? throw new InvalidOperationException("Tenant context not found.");
 
         var config = await _db.UserDashboardConfigs
-            .FirstOrDefaultAsync(c => c.UserId == userId && c.TenantId == tenantId);
+            .FirstOrDefaultAsync(c => c.UserId == userId);
 
         if (config == null)
         {
@@ -143,15 +141,14 @@ public class DashboardService : IDashboardService
             ?? throw new InvalidOperationException("Tenant context not found.");
 
         var config = await _db.UserDashboardConfigs
-            .FirstOrDefaultAsync(c => c.UserId == layout.UserId && c.TenantId == tenantId);
+            .FirstOrDefaultAsync(c => c.UserId == layout.UserId);
 
         if (config == null)
         {
             config = new UserDashboardConfig
             {
                 Id = Guid.NewGuid(),
-                UserId = layout.UserId,
-                TenantId = tenantId
+                UserId = layout.UserId
             };
             _db.UserDashboardConfigs.Add(config);
         }

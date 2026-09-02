@@ -22,7 +22,6 @@ public class ServiceArrangement : IBranchScoped
     public Guid FuneralCaseId { get; set; }
     public virtual FuneralCase FuneralCase { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 
     public virtual ICollection<ArrangementItem> Items { get; set; } = new List<ArrangementItem>();

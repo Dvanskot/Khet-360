@@ -35,7 +35,6 @@ public class FamilyPortalService : IFamilyPortalService
             Token = token,
             ExpiryDate = expiry,
             FuneralCaseId = caseId,
-            TenantId = caseEntity.TenantId,
             BranchId = caseEntity.BranchId
         };
 

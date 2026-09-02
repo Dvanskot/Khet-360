@@ -32,7 +32,6 @@ public class MortuaryService : IMortuaryService
             SlotNumber = slotNumber,
             IsColdStorage = isColdStorage,
             Status = MortuarySlotStatus.Available,
-            TenantId = tenantId,
             BranchId = branchId
         };
 

@@ -16,6 +16,5 @@ public class VehicleTelematics : IBranchScoped
     public Guid VehicleId { get; set; }
     public virtual FuneralVehicle Vehicle { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 }

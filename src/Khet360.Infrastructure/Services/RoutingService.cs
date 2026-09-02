@@ -28,7 +28,7 @@ public class RoutingService : IRoutingService
 
         // 1. Identify required role for this entity type
         var rule = await _tenantDb.RoutingRules
-            .FirstOrDefaultAsync(r => r.SourceEntityType == entityType && r.IsActive && r.TenantId == tenantId);
+            .FirstOrDefaultAsync(r => r.SourceEntityType == entityType && r.IsActive);
 
         if (rule == null)
         {

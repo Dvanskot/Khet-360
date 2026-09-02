@@ -28,8 +28,7 @@ public class OutboxService : IOutboxService
             Id = Guid.NewGuid(),
             EventType = typeof(T).FullName ?? typeof(T).Name,
             Content = JsonSerializer.Serialize(eventMessage),
-            CreatedAtUtc = DateTime.UtcNow,
-            TenantId = tenantId
+            CreatedAtUtc = DateTime.UtcNow
         };
 
         _db.OutboxMessages.Add(message);

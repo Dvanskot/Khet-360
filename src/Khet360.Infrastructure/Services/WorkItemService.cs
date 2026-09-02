@@ -35,7 +35,6 @@ public class WorkItemService : IWorkItemService
             DueDate = dueDate,
             Status = WorkItemStatus.Pending,
             BranchId = branchId,
-            TenantId = tenantId,
             CreatedAt = DateTime.UtcNow
         };
 

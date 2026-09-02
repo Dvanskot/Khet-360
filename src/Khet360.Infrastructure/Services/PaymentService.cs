@@ -22,9 +22,6 @@ public class PaymentService : IPaymentService
 
     public async Task<Invoice> CreateInvoiceAsync(Guid funeralCaseId, decimal amount, DateTime dueDate)
     {
-        var tenantId = _tenantService.CurrentTenant?.Id
-            ?? throw new InvalidOperationException("Tenant context not found.");
-
         var funeralCase = await _db.FuneralCases.FindAsync(funeralCaseId);
         if (funeralCase == null) throw new KeyNotFoundException("Funeral Case not found.");
 
@@ -36,7 +33,6 @@ public class PaymentService : IPaymentService
             DueDate = dueDate,
             Status = InvoiceStatus.Sent,
             FuneralCaseId = funeralCaseId,
-            TenantId = tenantId,
             BranchId = funeralCase.BranchId
         };
 
@@ -69,7 +65,6 @@ public class PaymentService : IPaymentService
             TransactionReference = transactionRef,
             PaymentMethod = "Netcash",
             InvoiceId = invoiceId,
-            TenantId = invoice.TenantId,
             BranchId = invoice.BranchId
         };
 

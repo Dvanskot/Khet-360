@@ -40,7 +40,6 @@ public class ServiceArrangementService : IServiceArrangementService
             CateringNotes = dto.CateringNotes,
             CateringStatus = CateringStatus.Pending,
             FuneralCaseId = dto.FuneralCaseId,
-            TenantId = tenantId,
             BranchId = branchId
         };
 
@@ -56,7 +55,6 @@ public class ServiceArrangementService : IServiceArrangementService
                     UnitPrice = itemDto.UnitPrice,
                     Quantity = itemDto.Quantity,
                     IsProvidedByFamily = itemDto.IsProvidedByFamily,
-                    TenantId = tenantId,
                     BranchId = branchId
                 });
             }

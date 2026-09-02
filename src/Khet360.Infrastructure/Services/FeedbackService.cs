@@ -23,14 +23,10 @@ public class FeedbackService : IFeedbackService
 
     public async Task SubmitFeedbackAsync(Guid userId, FeedbackCreateDto feedbackDto)
     {
-        var tenantId = _tenantService.CurrentTenant?.Id
-            ?? throw new InvalidOperationException("Tenant context not found.");
-
         var feedback = new Feedback
         {
             Id = Guid.NewGuid(),
             UserId = userId,
-            TenantId = tenantId,
             Category = feedbackDto.Category,
             Message = feedbackDto.Message,
             Rating = feedbackDto.Rating,
@@ -43,11 +39,7 @@ public class FeedbackService : IFeedbackService
 
     public async Task<List<FeedbackDto>> GetTenantFeedbackAsync()
     {
-        var tenantId = _tenantService.CurrentTenant?.Id
-            ?? throw new InvalidOperationException("Tenant context not found.");
-
         return await _db.Feedbacks
-            .Where(f => f.TenantId == tenantId)
             .OrderByDescending(f => f.CreatedAtUtc)
             .Select(f => new FeedbackDto(
                 f.Id,

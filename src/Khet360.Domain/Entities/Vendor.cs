@@ -16,7 +16,6 @@ public class Vendor : IBranchScoped
     public string? TaxId { get; set; }
     public string? BankDetails { get; set; }
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 }
 
@@ -37,7 +36,6 @@ public class VendorOrder : IBranchScoped
     public Guid FuneralCaseId { get; set; }
     public virtual FuneralCase FuneralCase { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 
     public virtual ICollection<VendorOrderItem> Items { get; set; } = new List<VendorOrderItem>();
@@ -54,6 +52,5 @@ public class VendorOrderItem : IBranchScoped
     public Guid VendorOrderId { get; set; }
     public virtual VendorOrder VendorOrder { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 }

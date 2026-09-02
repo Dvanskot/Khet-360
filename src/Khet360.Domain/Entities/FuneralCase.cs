@@ -36,7 +36,6 @@ public class FuneralCase : IBranchScoped
     [Required]
     public Guid BranchId { get; set; }
 
-    public Guid TenantId { get; set; }
 
     public virtual ICollection<FuneralCaseMilestone> Milestones { get; set; } = new List<FuneralCaseMilestone>();
 }

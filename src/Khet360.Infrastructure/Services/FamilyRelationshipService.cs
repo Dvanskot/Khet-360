@@ -29,9 +29,6 @@ public class FamilyRelationshipService : IFamilyRelationshipService
         if (fromCustomer == null || toCustomer == null)
             throw new KeyNotFoundException("One or both customers not found.");
 
-        if (fromCustomer.TenantId != tenantId || toCustomer.TenantId != tenantId)
-            throw new UnauthorizedAccessException("Cross-tenant relationships are prohibited.");
-
         // Handle temporal auditing: Terminate any existing active relationship of the same type
         var existingActive = await _tenantDb.FamilyRelationships
             .FirstOrDefaultAsync(r => r.FromCustomerId == fromCustomerId &&
@@ -53,7 +50,6 @@ public class FamilyRelationshipService : IFamilyRelationshipService
             Type = type,
             ValidFrom = DateTime.UtcNow,
             IsActive = true,
-            TenantId = tenantId,
             BranchId = fromCustomer.BranchId // Defaults to the subject's branch
         };
 

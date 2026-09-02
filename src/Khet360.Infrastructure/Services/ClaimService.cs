@@ -37,7 +37,6 @@ public class ClaimService : IClaimService
             Notes = dto.Notes,
             PolicyId = dto.PolicyId,
             FuneralCaseId = dto.FuneralCaseId,
-            TenantId = tenantId,
             BranchId = branchId
         };
 
@@ -123,7 +122,6 @@ public class ClaimService : IClaimService
             TransactionReference = dto.TransactionReference,
             Notes = dto.Notes,
             ClaimId = dto.ClaimId,
-            TenantId = tenantId,
             BranchId = branchId
         };
 

@@ -17,6 +17,5 @@ public class ArrangementWizardState : IBranchScoped
     // Store form data as JSON
     public string FormDataJson { get; set; } = "{}";
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 }

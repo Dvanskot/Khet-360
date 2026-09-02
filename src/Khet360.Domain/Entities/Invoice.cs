@@ -28,7 +28,6 @@ public class Invoice : IBranchScoped
     public Guid FuneralCaseId { get; set; }
     public virtual FuneralCase FuneralCase { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();

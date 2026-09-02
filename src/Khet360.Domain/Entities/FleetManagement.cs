@@ -18,7 +18,6 @@ public class DriverProfile : IBranchScoped
     public Guid UserId { get; set; }
     public virtual User User { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 }
 
@@ -42,7 +41,6 @@ public class TripAssignment : IBranchScoped
     public Guid FuneralCaseId { get; set; }
     public virtual FuneralCase FuneralCase { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 }
 
@@ -57,6 +55,5 @@ public class VehicleDocument : IBranchScoped
     public Guid VehicleId { get; set; }
     public virtual FuneralVehicle Vehicle { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 }

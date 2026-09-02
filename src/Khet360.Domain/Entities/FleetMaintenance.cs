@@ -15,7 +15,6 @@ public class MaintenanceSchedule : IBranchScoped
     public Guid VehicleId { get; set; }
     public virtual FuneralVehicle Vehicle { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 }
 
@@ -33,7 +32,6 @@ public class WorkOrder : IBranchScoped
     public Guid VehicleId { get; set; }
     public virtual FuneralVehicle Vehicle { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 }
 
@@ -50,6 +48,5 @@ public class FuelLog : IBranchScoped
     public Guid VehicleId { get; set; }
     public virtual FuneralVehicle Vehicle { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 }

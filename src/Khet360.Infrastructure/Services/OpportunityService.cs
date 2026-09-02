@@ -32,7 +32,6 @@ public class OpportunityService : IOpportunityService
             Stage = opportunityDto.Stage,
             CustomerId = customerId,
             BranchId = branchId,
-            TenantId = tenantId,
             Notes = opportunityDto.Notes,
             CreatedAt = DateTime.UtcNow
         };

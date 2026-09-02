@@ -34,7 +34,6 @@ public class FleetService : IFleetService
             Model = dto.Model,
             Capacity = dto.Capacity,
             Status = VehicleStatus.Available,
-            TenantId = tenantId,
             BranchId = branchId
         };
 
@@ -124,7 +123,6 @@ public class FleetService : IFleetService
             VehicleId = vehicleId,
             DriverId = driverId,
             FuneralCaseId = caseId,
-            TenantId = tenantId,
             BranchId = vehicle.BranchId,
             IsCompleted = false
         };

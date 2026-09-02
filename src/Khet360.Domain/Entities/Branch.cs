@@ -13,7 +13,6 @@ public class Branch
     public string Phone { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
 
-    public Guid TenantId { get; set; }
     public Tenant Tenant { get; set; } = null!;
 
     public bool IsMainBranch { get; set; }

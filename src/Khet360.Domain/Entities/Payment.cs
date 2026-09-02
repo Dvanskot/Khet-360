@@ -15,6 +15,5 @@ public class Payment : IBranchScoped
     public Guid InvoiceId { get; set; }
     public virtual Invoice Invoice { get; set; } = null!;
 
-    public Guid TenantId { get; set; }
     public Guid BranchId { get; set; }
 }

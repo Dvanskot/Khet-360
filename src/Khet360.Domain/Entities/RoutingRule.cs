@@ -18,7 +18,6 @@ public class RoutingRule
     public string RequiredRole { get; set; } = null!; // e.g., "SalesAgent", "FuneralDirector"
 
     [Required]
-    public Guid TenantId { get; set; }
 
     public bool IsActive { get; set; } = true;
 }

@@ -18,7 +18,6 @@ public abstract class Customer : IBranchScoped
     public string? CommunicationPreferences { get; set; } // JSON blob for flexible prefs
     public string? ConsentMetadata { get; set; } // JSON blob for regulatory consent
 
-    public Guid TenantId { get; set; }
 
     [Required]
     public Guid BranchId { get; set; }

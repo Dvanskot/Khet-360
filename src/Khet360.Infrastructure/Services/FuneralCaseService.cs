@@ -35,7 +35,6 @@ public class FuneralCaseService : IFuneralCaseService
             CustomerId = customerId,
             DeceasedCustomerId = deceasedId,
             BranchId = branchId,
-            TenantId = tenantId,
             OpenedAt = DateTime.UtcNow
         };
 

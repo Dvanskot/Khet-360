@@ -10,6 +10,7 @@ public class FinancialTransaction : BaseEntity
     public DateTime TransactionDate { get; set; } = DateTime.UtcNow;
     public Guid SourceEntityId { get; set; } // Link to Invoice, Payment, PayrollRun, etc.
     public string SourceEntityType { get; set; } = string.Empty; // "Invoice", "Payment", "Payroll"
+    public bool IsPosted { get; set; } = false;
 
     public virtual ICollection<FinancialEntry> Entries { get; set; } = new List<FinancialEntry>();
 }

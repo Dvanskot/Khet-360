@@ -3,6 +3,7 @@ using Khet360.Domain.Entities;
 using Khet360.Application.Interfaces;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text.Json;
 
 namespace Khet360.Infrastructure.Persistence;
 
@@ -38,6 +39,12 @@ public class TenantDbContext : DbContext
     public DbSet<FuneralCaseMilestone> FuneralCaseMilestones { get; set; } = null!;
     public DbSet<RoutingRule> RoutingRules { get; set; } = null!;
     public DbSet<InsurancePolicy> InsurancePolicies { get; set; } = null!;
+    public DbSet<InsurancePolicyMember> InsurancePolicyMembers { get; set; } = null!;
+    public DbSet<InsurancePolicyPlan> InsurancePolicyPlans { get; set; } = null!;
+    public DbSet<InsurancePolicyPlanBenefit> InsurancePolicyPlanBenefits { get; set; } = null!;
+    public DbSet<InsurancePolicyPlanBenefitItem> InsurancePolicyPlanBenefitItems { get; set; } = null!;
+    public DbSet<InsurancePolicyPlanItem> InsurancePolicyPlanItems { get; set; } = null!;
+    public DbSet<FuneralProduct> FuneralProducts { get; set; } = null!;
     public DbSet<InsuranceClaim> InsuranceClaims { get; set; } = null!;
     public DbSet<ClaimPayment> ClaimPayments { get; set; } = null!;
     public DbSet<ServiceArrangement> ServiceArrangements { get; set; } = null!;
@@ -85,6 +92,8 @@ public class TenantDbContext : DbContext
     public DbSet<Invoice> Invoices { get; set; } = null!;
     public DbSet<Payment> Payments { get; set; } = null!;
     public DbSet<PaymentTransaction> PaymentTransactions { get; set; } = null!;
+    public DbSet<InventoryStock> InventoryStocks { get; set; } = null!;
+    public DbSet<InventoryTransaction> InventoryTransactions { get; set; } = null!;
     public DbSet<InboxMessage> InboxMessages { get; set; } = null!;
     public DbSet<ArrangementWizardState> ArrangementWizardStates { get; set; } = null!;
 
@@ -212,6 +221,59 @@ public class TenantDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        modelBuilder.Entity<InsurancePolicy>(entity =>
+        {
+            entity.HasOne(p => p.PolicyPlan)
+                .WithMany()
+                .HasForeignKey(p => p.PolicyPlanId);
+
+            entity.HasMany(p => p.Members)
+                .WithOne(m => m.Policy)
+                .HasForeignKey(m => m.PolicyId);
+        });
+
+        modelBuilder.Entity<InsurancePolicyMember>(entity =>
+        {
+            entity.HasOne(m => m.Customer)
+                .WithMany()
+                .HasForeignKey(m => m.CustomerId);
+        });
+
+        modelBuilder.Entity<InsurancePolicyPlan>(entity =>
+        {
+            entity.HasMany(p => p.PlanItems)
+                .WithOne(pi => pi.PolicyPlan)
+                .HasForeignKey(pi => pi.PolicyPlanId);
+
+            entity.HasMany(p => p.Benefits)
+                .WithOne(b => b.PolicyPlan)
+                .HasForeignKey(b => b.PolicyPlanId);
+
+            entity.Property(e => e.BenefitDetails)
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
+                    v => JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions)null) ?? new Dictionary<string, object>());
+
+            entity.Property(e => e.AgeBandRules)
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
+                    v => JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions)null));
+        });
+
+        modelBuilder.Entity<InsurancePolicyPlanBenefit>(entity =>
+        {
+            entity.HasMany(b => b.BenefitItems)
+                .WithOne(bi => bi.Benefit)
+                .HasForeignKey(bi => bi.BenefitId);
+        });
+
+        modelBuilder.Entity<InsurancePolicyPlanBenefitItem>(entity =>
+        {
+            entity.HasOne(bi => bi.FuneralProduct)
+                .WithMany()
+                .HasForeignKey(bi => bi.FuneralProductId);
+        });
+
         modelBuilder.Entity<ClaimPayment>(entity =>
         {
             entity.HasOne(p => p.Claim)
@@ -239,6 +301,10 @@ public class TenantDbContext : DbContext
             entity.HasOne(i => i.VendorOrder)
                 .WithMany(o => o.Items)
                 .HasForeignKey(i => i.VendorOrderId);
+
+            entity.HasOne(i => i.Product)
+                .WithMany()
+                .HasForeignKey(i => i.ProductId);
         });
 
         modelBuilder.Entity<MortuarySlot>(entity =>
@@ -454,6 +520,20 @@ public class TenantDbContext : DbContext
                 }
             }
         }
+        modelBuilder.Entity<InventoryStock>(entity =>
+        {
+            entity.HasIndex(isock => new { isock.ProductId, isock.BranchId }).IsUnique();
+            entity.HasOne(isock => isock.Product)
+                .WithMany()
+                .HasForeignKey(isock => isock.ProductId);
+        });
+
+        modelBuilder.Entity<InventoryTransaction>(entity =>
+        {
+            entity.HasOne(it => it.Product)
+                .WithMany()
+                .HasForeignKey(it => it.ProductId);
+        });
     }
 
     private void ApplyBranchScopeFilter(ModelBuilder modelBuilder, Type type)

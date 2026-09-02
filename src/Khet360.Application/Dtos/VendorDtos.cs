@@ -41,12 +41,14 @@ public record VendorOrderCreateDto(
 
 public record VendorOrderItemDto(
     Guid Id,
+    Guid? ProductId,
     string ItemDescription,
     int Quantity,
     decimal UnitPrice,
     bool IsConfirmed);
 
 public record VendorOrderItemCreateDto(
+    Guid? ProductId,
     string ItemDescription,
     int Quantity,
     decimal UnitPrice);

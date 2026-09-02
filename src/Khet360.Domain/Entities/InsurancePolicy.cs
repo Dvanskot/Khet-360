@@ -11,10 +11,12 @@ public class InsurancePolicy : IBranchScoped
     public decimal CoverageAmount { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime? EndDate { get; set; }
+    public Guid PolicyPlanId { get; set; }
+    public virtual InsurancePolicyPlan PolicyPlan { get; set; } = null!;
     public PolicyStatus Status { get; set; }
 
-    public Guid CustomerId { get; set; }
     public Guid BranchId { get; set; }
 
+    public virtual ICollection<InsurancePolicyMember> Members { get; set; } = new List<InsurancePolicyMember>();
     public virtual ICollection<InsuranceClaim> Claims { get; set; } = new List<InsuranceClaim>();
 }

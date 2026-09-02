@@ -15,11 +15,15 @@ public class VendorService : IVendorService
 {
     private readonly TenantDbContext _db;
     private readonly ITenantService _tenantService;
+    private readonly IInventoryService _inventoryService;
+    private readonly ITenantUserContext _userContext;
 
-    public VendorService(TenantDbContext db, ITenantService tenantService)
+    public VendorService(TenantDbContext db, ITenantService tenantService, IInventoryService inventoryService, ITenantUserContext userContext)
     {
         _db = db;
         _tenantService = tenantService;
+        _inventoryService = inventoryService;
+        _userContext = userContext;
     }
 
     public async Task<Guid> RegisterVendorAsync(VendorCreateDto dto, Guid branchId)
@@ -96,6 +100,7 @@ public class VendorService : IVendorService
                 order.Items.Add(new VendorOrderItem
                 {
                     Id = Guid.NewGuid(),
+                    ProductId = itemDto.ProductId,
                     ItemDescription = itemDto.ItemDescription,
                     Quantity = itemDto.Quantity,
                     UnitPrice = itemDto.UnitPrice,
@@ -129,18 +134,41 @@ public class VendorService : IVendorService
             order.TotalAmount,
             order.VendorId,
             order.FuneralCaseId,
-            order.Items.Select(i => new VendorOrderItemDto(i.Id, i.ItemDescription, i.Quantity, i.UnitPrice, i.IsConfirmed)).ToList());
+            order.Items.Select(i => new VendorOrderItemDto(i.Id, i.ProductId, i.ItemDescription, i.Quantity, i.UnitPrice, i.IsConfirmed)).ToList());
     }
 
     public async Task UpdateOrderStatusAsync(Guid id, VendorOrderUpdateDto dto)
     {
-        var order = await _db.VendorOrders.FindAsync(id);
+        var order = await _db.VendorOrders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) throw new KeyNotFoundException("Order not found.");
 
+        var oldStatus = order.Status;
         order.Status = dto.Status;
         order.ConfirmedAt = dto.ConfirmedAt ?? order.ConfirmedAt;
         order.DeliveredAt = dto.DeliveredAt ?? order.DeliveredAt;
         order.Notes = dto.Notes ?? order.Notes;
+
+        // If status changed to Delivered, update inventory stock
+        if (oldStatus != VendorOrderStatus.Delivered && order.Status == VendorOrderStatus.Delivered)
+        {
+            foreach (var item in order.Items)
+            {
+                if (item.ProductId.HasValue)
+                {
+                    await _inventoryService.UpdateStockAsync(
+                        item.ProductId.Value,
+                        order.BranchId,
+                        item.Quantity,
+                        InventoryTransactionType.Purchase,
+                        _userContext.UserId ?? throw new UnauthorizedAccessException("User identity not found."),
+                        $"VENDOR-ORDER-{order.OrderReference}",
+                        item.ProductId.Value.ToString(),
+                        $"Stock received from vendor order {order.OrderReference}");
+                }
+            }
+        }
 
         await _db.SaveChangesAsync();
     }
@@ -176,6 +204,6 @@ public class VendorService : IVendorService
             o.TotalAmount,
             o.VendorId,
             o.FuneralCaseId,
-            o.Items.Select(i => new VendorOrderItemDto(i.Id, i.ItemDescription, i.Quantity, i.UnitPrice, i.IsConfirmed)).ToList()));
+            o.Items.Select(i => new VendorOrderItemDto(i.Id, i.ProductId, i.ItemDescription, i.Quantity, i.UnitPrice, i.IsConfirmed)).ToList()));
     }
 }

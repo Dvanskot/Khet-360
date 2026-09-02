@@ -27,6 +27,14 @@ public class PolicyService : IPolicyService
         var tenantId = _tenantService.CurrentTenant?.Id
             ?? throw new InvalidOperationException("Tenant context not found.");
 
+        var plan = await _db.InsurancePolicyPlans.FindAsync(dto.PolicyPlanId)
+            ?? throw new KeyNotFoundException("Policy plan not found.");
+
+        if (dto.Members.Count > plan.MaxMembers)
+        {
+            throw new InvalidOperationException($"Policy plan {plan.Name} allows a maximum of {plan.MaxMembers} members. {dto.Members.Count} members were provided.");
+        }
+
         var policy = new InsurancePolicy
         {
             Id = Guid.NewGuid(),
@@ -36,8 +44,16 @@ public class PolicyService : IPolicyService
             StartDate = dto.StartDate,
             EndDate = dto.EndDate,
             Status = PolicyStatus.Active,
-            CustomerId = dto.CustomerId,
-            BranchId = branchId
+            BranchId = branchId,
+            PolicyPlanId = dto.PolicyPlanId,
+            Members = dto.Members.Select(m => new InsurancePolicyMember
+            {
+                Id = Guid.NewGuid(),
+                CustomerId = m.CustomerId,
+                Role = m.Role,
+                JoinedAt = DateTime.UtcNow,
+                BranchId = branchId
+            }).ToList()
         };
 
         _db.InsurancePolicies.Add(policy);
@@ -48,7 +64,10 @@ public class PolicyService : IPolicyService
 
     public async Task<PolicyDto?> GetPolicyAsync(Guid id)
     {
-        var policy = await _db.InsurancePolicies.FindAsync(id);
+        var policy = await _db.InsurancePolicies
+            .Include(p => p.PolicyPlan)
+            .Include(p => p.Members)
+            .FirstOrDefaultAsync(p => p.Id == id);
         if (policy == null) return null;
 
         return new PolicyDto(
@@ -59,13 +78,15 @@ public class PolicyService : IPolicyService
             policy.StartDate,
             policy.EndDate,
             policy.Status,
-            policy.CustomerId);
+            policy.PolicyPlanId,
+            policy.Members.Select(m => new PolicyMemberDto(m.Id, m.CustomerId, m.Role, m.JoinedAt)).ToList());
     }
 
     public async Task<IEnumerable<PolicyDto>> GetPoliciesByCustomerAsync(Guid customerId)
     {
         return await _db.InsurancePolicies
-            .Where(p => p.CustomerId == customerId)
+            .Include(p => p.Members)
+            .Where(p => p.Members.Any(m => m.CustomerId == customerId))
             .Select(p => new PolicyDto(
                 p.Id,
                 p.PolicyNumber,
@@ -74,7 +95,8 @@ public class PolicyService : IPolicyService
                 p.StartDate,
                 p.EndDate,
                 p.Status,
-                p.CustomerId))
+                p.PolicyPlanId,
+                p.Members.Select(m => new PolicyMemberDto(m.Id, m.CustomerId, m.Role, m.JoinedAt)).ToList()))
             .ToListAsync();
     }
 

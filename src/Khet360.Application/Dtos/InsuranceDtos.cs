@@ -3,6 +3,16 @@ using Khet360.Domain.Enums;
 
 namespace Khet360.Application.Dtos;
 
+public record PolicyMemberDto(
+    Guid Id,
+    Guid CustomerId,
+    MemberRole Role,
+    DateTime JoinedAt);
+
+public record PolicyMemberCreateDto(
+    Guid CustomerId,
+    MemberRole Role);
+
 public record PolicyDto(
     Guid Id,
     string PolicyNumber,
@@ -11,7 +21,8 @@ public record PolicyDto(
     DateTime StartDate,
     DateTime? EndDate,
     PolicyStatus Status,
-    Guid CustomerId);
+    Guid PolicyPlanId,
+    IReadOnlyList<PolicyMemberDto> Members);
 
 public record PolicyCreateDto(
     string PolicyNumber,
@@ -19,7 +30,8 @@ public record PolicyCreateDto(
     decimal CoverageAmount,
     DateTime StartDate,
     DateTime? EndDate,
-    Guid CustomerId);
+    Guid PolicyPlanId,
+    IReadOnlyList<PolicyMemberCreateDto> Members);
 
 public record PolicyUpdateDto(
     string PolicyNumber,

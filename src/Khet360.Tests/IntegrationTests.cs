@@ -19,24 +19,27 @@ namespace Khet360.Tests;
 
 public class IntegrationTests
 {
-    private TenantDbContext GetDbContext()
+    private TenantDbContext GetDbContext(ITenantUserContext userContext)
     {
         var options = new DbContextOptionsBuilder<TenantDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning))
             .Options;
-        var mockUserContext = new Mock<ITenantUserContext>();
-        return new TenantDbContext(options, mockUserContext.Object);
+        return new TenantDbContext(options, userContext);
     }
 
-    private IServiceProvider GetServiceProvider(TenantDbContext db)
+    private (IServiceProvider, TenantDbContext, List<Guid>) GetServiceProvider()
     {
-        var services = new ServiceCollection();
-        services.AddSingleton(db);
-
         var mockUserContext = new Mock<ITenantUserContext>();
         mockUserContext.Setup(uc => uc.IsAuthenticated).Returns(true);
         mockUserContext.Setup(uc => uc.UserId).Returns(Guid.NewGuid());
+        var assignedBranches = new List<Guid>();
+        mockUserContext.Setup(uc => uc.AssignedBranchIds).Returns(assignedBranches);
+
+        var db = GetDbContext(mockUserContext.Object);
+
+        var services = new ServiceCollection();
+        services.AddSingleton(db);
         services.AddSingleton(mockUserContext.Object);
 
         var mockTenantService = new Mock<ITenantService>();
@@ -60,6 +63,11 @@ public class IntegrationTests
         services.AddSingleton(new Mock<ILogger<PayrollService>>().Object);
         services.AddSingleton(new Mock<ILogger<ServiceArrangementService>>().Object);
         services.AddSingleton(new Mock<ILogger<PaymentService>>().Object);
+        services.AddSingleton(new Mock<ILogger<InventoryService>>().Object);
+        services.AddSingleton(new Mock<ILogger<POSService>>().Object);
+        services.AddSingleton(new Mock<ILogger<NotificationService>>().Object);
+        services.AddSingleton(new Mock<ILogger<ClaimService>>().Object);
+        services.AddSingleton(new Mock<ILogger<VendorService>>().Object);
 
         services.AddScoped<ILeadService, LeadService>();
         services.AddScoped<IOpportunityService, OpportunityService>();
@@ -74,16 +82,19 @@ public class IntegrationTests
         services.AddScoped<IPolicyService, PolicyService>();
         services.AddScoped<IClaimService, ClaimService>();
         services.AddScoped<IRoutingService, RoutingService>();
+        services.AddScoped<IInventoryService, InventoryService>();
+        services.AddScoped<IPOSService, POSService>();
+        services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IFinancialService, FinancialService>();
 
-        return services.BuildServiceProvider();
+        return (services.BuildServiceProvider(), db, assignedBranches);
     }
 
     [Fact]
     public async Task Ultimate_Funeral_Lifecycle_GoldenPath_Should_Complete_Successfully()
     {
         // Arrange
-        var db = GetDbContext();
-        var sp = GetServiceProvider(db);
+        var (sp, db, assignedBranches) = GetServiceProvider();
         var leadService = sp.GetRequiredService<ILeadService>();
         var caseService = sp.GetRequiredService<IFuneralCaseService>();
         var arrangementService = sp.GetRequiredService<IServiceArrangementService>();
@@ -92,6 +103,8 @@ public class IntegrationTests
         var paymentService = sp.GetRequiredService<IPaymentService>();
 
         var branchId = Guid.NewGuid();
+        // Add branch to mock user context to bypass global filter
+        assignedBranches.Add(branchId);
         db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
         await db.SaveChangesAsync();
 
@@ -176,13 +189,44 @@ public class IntegrationTests
     public async Task InsuranceClaim_GoldenPath_Should_Complete_Successfully()
     {
         // Arrange
-        var db = GetDbContext();
-        var sp = GetServiceProvider(db);
+        var (sp, db, assignedBranches) = GetServiceProvider();
         var policyService = sp.GetRequiredService<IPolicyService>();
         var claimService = sp.GetRequiredService<IClaimService>();
         var branchId = Guid.NewGuid();
 
+        // Add branch to mock user context to bypass global filter
+        assignedBranches.Add(branchId);
         db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
+        await db.SaveChangesAsync();
+
+        // Setup Burial Plan and Products
+        var product = new FuneralProduct { Id = Guid.NewGuid(), Name = "Premium Casket", DefaultPrice = 2000m, Description = "High-end wood casket" };
+        db.FuneralProducts.Add(product);
+
+        var plan = new InsurancePolicyPlan {
+            Id = Guid.NewGuid(),
+            Name = "Premium Burial Plan",
+            PremiumAmount = 100m,
+            WaitingPeriodMonths = 1,
+            CoverType = InsuranceCoverType.Burial
+        };
+        db.InsurancePolicyPlans.Add(plan);
+
+        var benefit = new InsurancePolicyPlanBenefit {
+            Id = Guid.NewGuid(),
+            PolicyPlanId = plan.Id,
+            Role = MemberRole.Main,
+            IsFixed = true,
+            CoverAmount = 15000m
+        };
+        db.InsurancePolicyPlanBenefits.Add(benefit);
+
+        db.InsurancePolicyPlanBenefitItems.Add(new InsurancePolicyPlanBenefitItem {
+            BenefitId = benefit.Id,
+            FuneralProductId = product.Id,
+            Quantity = 1
+        });
+
         await db.SaveChangesAsync();
 
         var customer = new IndividualCustomer {
@@ -195,7 +239,13 @@ public class IntegrationTests
         db.Customers.Add(customer);
         await db.SaveChangesAsync();
 
-        var funeralCase = new FuneralCase { Id = Guid.NewGuid(), CaseNumber = "CLAIM-CASE-123", CustomerId = customer.Id, BranchId = branchId };
+        var funeralCase = new FuneralCase {
+            Id = Guid.NewGuid(),
+            CaseNumber = "CLAIM-CASE-123",
+            CustomerId = customer.Id,
+            DeceasedCustomerId = customer.Id,
+            BranchId = branchId
+        };
         db.FuneralCases.Add(funeralCase);
         await db.SaveChangesAsync();
 
@@ -206,7 +256,11 @@ public class IntegrationTests
             CoverageAmount: 15000m,
             StartDate: DateTime.UtcNow.AddMonths(-1),
             EndDate: null,
-            CustomerId: customer.Id
+            PolicyPlanId: plan.Id,
+            Members: new List<PolicyMemberCreateDto>
+            {
+                new PolicyMemberCreateDto(customer.Id, MemberRole.Main)
+            }
         );
         var policyId = await policyService.CreatePolicyAsync(policyDto, branchId);
 
@@ -222,39 +276,43 @@ public class IntegrationTests
 
         // 3. Process Claim (Update Status to Approved)
         await claimService.UpdateClaimStatusAsync(claimId, new ClaimUpdateDto(
+            Status: ClaimStatus.UnderReview,
+            ProcessedAt: DateTime.UtcNow,
+            Notes: "Reviewing documents"));
+
+        await claimService.UpdateClaimStatusAsync(claimId, new ClaimUpdateDto(
             Status: ClaimStatus.Approved,
             ProcessedAt: DateTime.UtcNow,
-            Notes: "Documents verified"
-        ));
+            Notes: "Documents verified"));
 
-        // 4. Payout (Add payment to claim)
-        var paymentDto = new ClaimPaymentCreateDto(
-            Amount: 5000m,
-            PaymentDate: DateTime.UtcNow,
-            TransactionReference: "TXN-CLAIM-123",
-            Notes: "Insurance payout",
-            ClaimId: claimId
-        );
-        var paymentId = await claimService.AddPaymentAsync(paymentDto, branchId);
+        // 4. Execute Payout
+        await claimService.ExecutePayoutAsync(claimId);
 
         // Assert
         var finalClaim = await db.InsuranceClaims.FindAsync(claimId);
-        finalClaim!.Status.Should().Be(ClaimStatus.Approved);
+        finalClaim!.Status.Should().Be(ClaimStatus.Paid);
 
-        var payment = await db.ClaimPayments.FindAsync(paymentId);
-        payment.Should().NotBeNull();
-        payment!.Amount.Should().Be(5000m);
+        // Verify Burial Items were added to the case
+        var arrangement = await db.ServiceArrangements
+            .FirstOrDefaultAsync(a => a.FuneralCaseId == funeralCase.Id);
+        arrangement.Should().NotBeNull();
+
+        var arrangementItems = await db.ArrangementItems
+            .Where(ai => ai.ServiceArrangementId == arrangement!.Id)
+            .ToListAsync();
+        arrangementItems.Should().Contain(ai => ai.ItemName == "Premium Casket");
     }
 
     [Fact]
     public async Task OperationalExcellence_GoldenPath_Should_Complete_Successfully()
     {
         // Arrange
-        var db = GetDbContext();
-        var sp = GetServiceProvider(db);
+        var (sp, db, assignedBranches) = GetServiceProvider();
         var workItemService = sp.GetRequiredService<IWorkItemService>();
         var branchId = Guid.NewGuid();
 
+        // Add branch to mock user context to bypass global filter
+        assignedBranches.Add(branchId);
         db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
         await db.SaveChangesAsync();
 
@@ -286,13 +344,13 @@ public class IntegrationTests
     public async Task LeadToCase_GoldenPath_Should_Complete_Successfully()
     {
         // Arrange
-        var db = GetDbContext();
-        var sp = GetServiceProvider(db);
+        var (sp, db, assignedBranches) = GetServiceProvider();
         var leadService = sp.GetRequiredService<ILeadService>();
         var caseService = sp.GetRequiredService<IFuneralCaseService>();
         var branchId = Guid.NewGuid();
 
-        // Setup branch in DB
+        // Add branch to mock user context to bypass global filter
+        assignedBranches.Add(branchId);
         db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
         await db.SaveChangesAsync();
 
@@ -338,10 +396,15 @@ public class IntegrationTests
     public async Task ProductionToFinance_GoldenPath_Should_Complete_Successfully()
     {
         // Arrange
-        var db = GetDbContext();
-        var sp = GetServiceProvider(db);
+        var (sp, db, assignedBranches) = GetServiceProvider();
         var prodService = sp.GetRequiredService<IProductionService>();
         var financeService = sp.GetRequiredService<IFinanceVerificationService>();
+        var branchId = Guid.NewGuid();
+
+        // Add branch to mock user context to bypass global filter
+        assignedBranches.Add(branchId);
+        db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
+        await db.SaveChangesAsync();
 
         var memorialId = Guid.NewGuid();
         var artisanId = Guid.NewGuid();
@@ -392,15 +455,15 @@ public class IntegrationTests
     public async Task PeopleToPayroll_GoldenPath_Should_Complete_Successfully()
     {
         // Arrange
-        var db = GetDbContext();
-        var sp = GetServiceProvider(db);
+        var (sp, db, assignedBranches) = GetServiceProvider();
         var empService = sp.GetRequiredService<IEmployeeService>();
         var payrollService = sp.GetRequiredService<IPayrollService>();
         var branchId = Guid.NewGuid();
         var deptId = Guid.NewGuid();
         var posId = Guid.NewGuid();
 
-        // Setup prerequisites
+        // Add branch to mock user context to bypass global filter
+        assignedBranches.Add(branchId);
         db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
         db.Departments.Add(new Department { Id = deptId, Name = "HR", BranchId = branchId });
         db.Positions.Add(new Position { Id = posId, Title = "HR Manager" });
@@ -464,5 +527,111 @@ public class IntegrationTests
         payslip.EmployeeId.Should().Be(employeeId);
         payslip.PayrollRunId.Should().Be(runId);
         payslip.NetPay.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task InsuranceClaim_CashPayout_Success()
+    {
+        // Arrange
+        var (sp, db, assignedBranches) = GetServiceProvider();
+        var policyService = sp.GetRequiredService<IPolicyService>();
+        var claimService = sp.GetRequiredService<IClaimService>();
+        var branchId = Guid.NewGuid();
+
+        // Add branch to mock user context to bypass global filter
+        assignedBranches.Add(branchId);
+        db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
+        await db.SaveChangesAsync();
+
+        var plan = new InsurancePolicyPlan {
+            Id = Guid.NewGuid(),
+            Name = "Cash Payout Plan",
+            PremiumAmount = 50m,
+            WaitingPeriodMonths = 1,
+            CoverType = InsuranceCoverType.Cash
+        };
+        db.InsurancePolicyPlans.Add(plan);
+
+        var benefit = new InsurancePolicyPlanBenefit {
+            Id = Guid.NewGuid(),
+            PolicyPlanId = plan.Id,
+            Role = MemberRole.Main,
+            IsFixed = true,
+            CoverAmount = 10000m
+        };
+        db.InsurancePolicyPlanBenefits.Add(benefit);
+
+        await db.SaveChangesAsync();
+
+        var customer = new IndividualCustomer {
+            Id = Guid.NewGuid(),
+            FirstName = "Cash",
+            LastName = "User",
+            BranchId = branchId,
+            IdentityNumber = "ID54321"
+        };
+        db.Customers.Add(customer);
+        await db.SaveChangesAsync();
+
+        var funeralCase = new FuneralCase {
+            Id = Guid.NewGuid(),
+            CaseNumber = "CASH-CASE-123",
+            CustomerId = customer.Id,
+            DeceasedCustomerId = customer.Id,
+            BranchId = branchId
+        };
+        db.FuneralCases.Add(funeralCase);
+        await db.SaveChangesAsync();
+
+        var policyDto = new PolicyCreateDto(
+            PolicyNumber: "POL-CASH-123",
+            ProviderName: "CashLife Insurance",
+            CoverageAmount: 10000m,
+            StartDate: DateTime.UtcNow.AddMonths(-1),
+            EndDate: null,
+            PolicyPlanId: plan.Id,
+            Members: new List<PolicyMemberCreateDto>
+            {
+                new PolicyMemberCreateDto(customer.Id, MemberRole.Main)
+            }
+        );
+        var policyId = await policyService.CreatePolicyAsync(policyDto, branchId);
+
+        var claimDto = new ClaimCreateDto(
+            ClaimNumber: "CLM-CASH-999",
+            ClaimAmount: 5000m,
+            PolicyId: policyId,
+            FuneralCaseId: funeralCase.Id,
+            Notes: "Cash payout claim"
+        );
+        var claimId = await claimService.CreateClaimAsync(claimDto, branchId);
+
+        await claimService.UpdateClaimStatusAsync(claimId, new ClaimUpdateDto(
+            Status: ClaimStatus.UnderReview,
+            ProcessedAt: DateTime.UtcNow,
+            Notes: "Reviewing documents"));
+
+        await claimService.UpdateClaimStatusAsync(claimId, new ClaimUpdateDto(
+            Status: ClaimStatus.Approved,
+            ProcessedAt: DateTime.UtcNow,
+            Notes: "Verified"));
+
+        // Act
+        await claimService.ExecutePayoutAsync(claimId);
+
+        // Assert
+        var finalClaim = await db.InsuranceClaims.FindAsync(claimId);
+        finalClaim!.Status.Should().Be(ClaimStatus.Paid);
+
+        var transaction = await db.FinancialTransactions
+            .FirstOrDefaultAsync(t => t.SourceEntityId == claimId && t.SourceEntityType == "InsuranceClaim");
+        transaction.Should().NotBeNull();
+
+        var entries = await db.FinancialEntries
+            .Where(e => e.FinancialTransactionId == transaction!.Id)
+            .ToListAsync();
+        entries.Count.Should().Be(2);
+        entries.Should().Contain(e => e.AccountCode == "INS-EXP" && e.Debit == 10000m);
+        entries.Should().Contain(e => e.AccountCode == "CASH-BANK" && e.Credit == 10000m);
     }
 }

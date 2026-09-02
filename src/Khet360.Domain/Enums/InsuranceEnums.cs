@@ -7,6 +7,12 @@ public enum PolicyStatus
     Cancelled
 }
 
+public enum InsuranceCoverType
+{
+    Burial,
+    Cash
+}
+
 public enum ClaimStatus
 {
     Submitted,
@@ -14,4 +20,13 @@ public enum ClaimStatus
     Approved,
     Paid,
     Rejected
+}
+
+public enum MemberRole
+{
+    Main,
+    Spouse,
+    Child,
+    Parent,
+    Extended
 }

@@ -122,6 +122,10 @@ builder.Services.AddScoped<ILeaveService, LeaveService>();
 builder.Services.AddScoped<IPayrollService, PayrollService>();
 builder.Services.AddScoped<IProductionService, ProductionService>();
 builder.Services.AddScoped<IInstallationService, InstallationService>();
+builder.Services.AddScoped<IInventoryService, InventoryService>();
+builder.Services.AddScoped<IPOSService, POSService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IFinancialService, FinancialService>();
 builder.Services.AddScoped<IFinanceVerificationService, FinanceVerificationService>();
 
 builder.Services.AddHttpClient<IProductivityScorecardService, ProductivityScorecardService>(client =>
@@ -139,6 +143,7 @@ builder.Services.AddHostedService<OutboxPublisherWorker>();
 builder.Services.AddHostedService<BackupJobWorker>();
 builder.Services.AddHostedService<InboxCleanupService>();
 builder.Services.AddHostedService<MigrationJobWorker>();
+builder.Services.AddHostedService<LowStockAlertWorker>();
 builder.Services.AddScoped<TenantDbContextFactory>();
 builder.Services.AddScoped<PlatformAuthService>();
 

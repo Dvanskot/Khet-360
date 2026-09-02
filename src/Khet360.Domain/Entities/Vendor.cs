@@ -44,6 +44,8 @@ public class VendorOrder : IBranchScoped
 public class VendorOrderItem : IBranchScoped
 {
     public Guid Id { get; set; }
+    public Guid? ProductId { get; set; }
+    public virtual FuneralProduct? Product { get; set; }
     public string ItemDescription { get; set; } = string.Empty;
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }

@@ -14,4 +14,5 @@ public interface IClaimService
     Task<IEnumerable<ClaimDto>> GetClaimsByCaseAsync(Guid funeralCaseId);
     Task<Guid> AddPaymentAsync(ClaimPaymentCreateDto dto, Guid branchId);
     Task<IEnumerable<ClaimPaymentDto>> GetPaymentsForClaimAsync(Guid claimId);
+    Task ExecutePayoutAsync(Guid claimId);
 }

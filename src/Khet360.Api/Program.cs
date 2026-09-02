@@ -100,6 +100,7 @@ builder.Services.AddScoped<IHubContextWrapper, HubContextWrapper>();
 builder.Services.AddScoped<IOutboxService, OutboxService>();
 builder.Services.AddScoped<IBackupService, BackupService>();
 builder.Services.AddScoped<IMigrationService, MigrationService>();
+builder.Services.AddScoped<IIntelligenceService, IntelligenceService>();
 
 builder.Services.AddHttpClient<IProductivityScorecardService, ProductivityScorecardService>(client =>
 {

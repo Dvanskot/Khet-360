@@ -1,4 +1,5 @@
 using MediatR;
+using Khet360.Domain.Entities;
 
 namespace Khet360.Application.Tenants.Commands;
 
@@ -6,5 +7,5 @@ public record CreateTenantCommand(
     string Name,
     string Slug,
     Guid SubscriptionPlanId,
-    string ConnectionString
+    IsolationTier Tier
 ) : IRequest<Guid>;

@@ -19,7 +19,7 @@ public class CreateTenantHandler : IRequestHandler<CreateTenantCommand, Guid>
             request.Name,
             request.Slug,
             request.SubscriptionPlanId,
-            request.ConnectionString);
+            request.Tier);
 
         return tenant.Id;
     }

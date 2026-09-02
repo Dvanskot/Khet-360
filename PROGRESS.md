@@ -63,8 +63,8 @@ This document serves as the authoritative record of implementation progress for 
 - [x] Offline Outbox/Inbox & Synchronization (Outbox implemented) ✅
 - [x] Per-Tenant Backup & Restore ✅
 - [x] Tenant Migration Tooling ✅
-- [ ] Enterprise Isolation Tiers
-- [ ] Advanced Reporting/Intelligence
+- [x] Enterprise Isolation Tiers ✅
+- [x] Advanced Reporting/Intelligence ✅
 
 ---
 

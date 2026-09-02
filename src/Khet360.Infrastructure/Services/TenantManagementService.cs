@@ -16,29 +16,33 @@ public class TenantManagementService : ITenantManagementService
         _provisioningService = provisioningService;
     }
 
-    public async Task<Tenant> CreateTenantAsync(string name, string slug, Guid subscriptionPlanId, string connectionString)
+    public async Task<Tenant> CreateTenantAsync(string name, string slug, Guid subscriptionPlanId, IsolationTier tier)
     {
         if (await _platformDb.Tenants.AnyAsync(t => t.Slug == slug))
         {
             throw new InvalidOperationException($"Tenant with slug {slug} already exists.");
         }
 
+        var tenantId = Guid.NewGuid();
+
+        // 1. Provision the tenant database first to get the connection string
+        var connectionString = await _provisioningService.ProvisionTenantAsync(tenantId, slug, tier);
+
+        // 2. Create the tenant record in the platform database
         var tenant = new Tenant
         {
-            Id = Guid.NewGuid(),
+            Id = tenantId,
             Name = name,
             Slug = slug,
             ConnectionString = connectionString,
             SubscriptionPlanId = subscriptionPlanId,
+            Tier = tier,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
 
         _platformDb.Tenants.Add(tenant);
         await _platformDb.SaveChangesAsync();
-
-        // Provision the tenant database
-        await _provisioningService.ProvisionTenantAsync(tenant.Id, tenant.Slug, tenant.ConnectionString);
 
         return tenant;
     }

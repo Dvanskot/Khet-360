@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Khet360.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+300b2d0bc18693201788dc0ec89abcf9ca3d0a32")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7fb691762fcc82b3e9f8d62e414df31363dd4da3")]
 [assembly: System.Reflection.AssemblyProductAttribute("Khet360.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Khet360.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

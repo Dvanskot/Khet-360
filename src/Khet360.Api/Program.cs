@@ -110,6 +110,7 @@ builder.Services.AddScoped<IOutboxService, OutboxService>();
 builder.Services.AddScoped<IBackupService, BackupService>();
 builder.Services.AddScoped<IMigrationService, MigrationService>();
 builder.Services.AddScoped<IIntelligenceService, IntelligenceService>();
+builder.Services.AddScoped<ITenantAnalyticsService, TenantAnalyticsService>();
 
 builder.Services.AddHttpClient<IProductivityScorecardService, ProductivityScorecardService>(client =>
 {

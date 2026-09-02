@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Khet360.Api.Services;
 using Prometheus;
+using Khet360.Infrastructure.Services.WidgetProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -102,6 +103,11 @@ builder.Services.AddScoped<IPaymentGatewayProvider, OzowGatewayProvider>();
 builder.Services.AddScoped<IPaymentGatewayProvider, YocoGatewayProvider>();
 builder.Services.AddScoped<IPaymentGatewayProvider, PaystackGatewayProvider>();
 builder.Services.AddScoped<IFileStorageService, MinioStorageService>();
+builder.Services.AddScoped<IWidgetProvider, SlaOverviewProvider>();
+builder.Services.AddScoped<IWidgetProvider, FleetStatusProvider>();
+builder.Services.AddScoped<IWidgetProvider, VendorOverviewProvider>();
+builder.Services.AddScoped<IWidgetProvider, CrmOverviewProvider>();
+builder.Services.AddScoped<IWidgetProvider, ProductivityScorecardProvider>();
 builder.Services.AddScoped<IStateSyncService, StateSyncService>();
 builder.Services.AddScoped<IProductivityScorecardService, ProductivityScorecardService>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
@@ -111,6 +117,12 @@ builder.Services.AddScoped<IBackupService, BackupService>();
 builder.Services.AddScoped<IMigrationService, MigrationService>();
 builder.Services.AddScoped<IIntelligenceService, IntelligenceService>();
 builder.Services.AddScoped<ITenantAnalyticsService, TenantAnalyticsService>();
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<ILeaveService, LeaveService>();
+builder.Services.AddScoped<IPayrollService, PayrollService>();
+builder.Services.AddScoped<IProductionService, ProductionService>();
+builder.Services.AddScoped<IInstallationService, InstallationService>();
+builder.Services.AddScoped<IFinanceVerificationService, FinanceVerificationService>();
 
 builder.Services.AddHttpClient<IProductivityScorecardService, ProductivityScorecardService>(client =>
 {

@@ -66,6 +66,20 @@ This document serves as the authoritative record of implementation progress for 
 - [x] Enterprise Isolation Tiers ✅
 - [x] Advanced Reporting/Intelligence ✅
 
+### Phase 8: People, Payroll & Production
+- [ ] HR & Employee Management (Profiles, Contracts, Branch Assignments)
+- [ ] Leave Management (Accrual, Applications, Approval Workflow)
+- [ ] Payroll System (Pay Profiles, Earnings/Deductions, Payroll Runs, Payslips)
+- [ ] Memorial Manufacturing (Shop Floor Management, Production Lifecycle, Quality Gates)
+- [ ] Installation Workflow (Field Operations, Site Readiness, Sign-off)
+
+### Phase 9: Final Hardening & Production Readiness
+- [ ] Finance Invariant Verification (Total Debits = Total Credits)
+- [ ] Security Audit & Hardening (Tenant Isolation Tests, RBAC Verification)
+- [ ] Production Readiness Gates (Backup/Restore Validation, Migration Testing)
+- [ ] Performance Tuning & Scaling (Load Testing, Cache Optimization)
+- [ ] Final API Documentation & Developer Portal
+
 ---
 
 ## ✅ Completed Tasks Log

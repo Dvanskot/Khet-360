@@ -14,6 +14,8 @@ public class TenantDbContext : DbContext
     }
 
     public DbSet<User> Users { get; set; } = null!;
+    public DbSet<FinancialTransaction> FinancialTransactions { get; set; } = null!;
+    public DbSet<FinancialEntry> FinancialEntries { get; set; } = null!;
     public DbSet<Role> Roles { get; set; } = null!;
     public DbSet<UserRole> UserRoles { get; set; } = null!;
     public DbSet<Permission> Permissions { get; set; } = null!;
@@ -58,7 +60,25 @@ public class TenantDbContext : DbContext
     public DbSet<MemorialTribute> MemorialTributes { get; set; } = null!;
     public DbSet<UserDashboardConfig> UserDashboardConfigs { get; set; } = null!;
     public DbSet<Feedback> Feedbacks { get; set; } = null!;
+    public DbSet<Employee> Employees { get; set; } = null!;
+    public DbSet<Department> Departments { get; set; } = null!;
+    public DbSet<Position> Positions { get; set; } = null!;
+    public DbSet<EmploymentContract> EmploymentContracts { get; set; } = null!;
     public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
+    public DbSet<LeaveType> LeaveTypes { get; set; } = null!;
+    public DbSet<LeaveBalance> LeaveBalances { get; set; } = null!;
+    public DbSet<LeaveApplication> LeaveApplications { get; set; } = null!;
+    public DbSet<PayProfile> PayProfiles { get; set; } = null!;
+    public DbSet<PayItem> PayItems { get; set; } = null!;
+    public DbSet<PayrollRun> PayrollRuns { get; set; } = null!;
+    public DbSet<PayrollEntry> PayrollEntries { get; set; } = null!;
+    public DbSet<Payslip> Payslips { get; set; } = null!;
+    public DbSet<ProductionOrder> ProductionOrders { get; set; } = null!;
+    public DbSet<ProductionLog> ProductionLogs { get; set; } = null!;
+    public DbSet<QualityCheck> QualityChecks { get; set; } = null!;
+    public DbSet<InstallationJob> InstallationJobs { get; set; } = null!;
+    public DbSet<InstallationChecklist> InstallationChecklists { get; set; } = null!;
+    public DbSet<InstallationSignOff> InstallationSignOffs { get; set; } = null!;
     public DbSet<PaymentConfiguration> PaymentConfigurations { get; set; } = null!;
     public DbSet<Invoice> Invoices { get; set; } = null!;
     public DbSet<Payment> Payments { get; set; } = null!;
@@ -272,6 +292,146 @@ public class TenantDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+
+        modelBuilder.Entity<Employee>(entity =>
+        {
+            entity.HasOne(e => e.User)
+                .WithOne()
+                .HasForeignKey("UserId")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Department)
+                .WithMany(d => d.Employees)
+                .HasForeignKey(e => e.DepartmentId);
+
+            entity.HasOne(e => e.Position)
+                .WithMany(p => p.Employees)
+                .HasForeignKey(e => e.PositionId);
+
+            entity.HasOne(e => e.Branch)
+                .WithMany()
+                .HasForeignKey(e => e.BranchId);
+
+            entity.HasOne(e => e.Manager)
+                .WithMany()
+                .HasForeignKey(e => e.ManagerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Contract)
+                .WithOne()
+                .HasForeignKey("EmployeeId");
+        });
+
+        modelBuilder.Entity<Department>(entity =>
+        {
+            entity.HasOne(d => d.Branch)
+                .WithMany()
+                .HasForeignKey(d => d.BranchId);
+        });
+
+        modelBuilder.Entity<Employee>(entity =>
+        {
+            entity.HasIndex(e => e.EmployeeCode).IsUnique();
+        });
+
+        modelBuilder.Entity<PayProfile>(entity =>
+        {
+            entity.HasOne(pp => pp.Employee)
+                .WithOne()
+                .HasForeignKey("EmployeeId");
+        });
+
+        modelBuilder.Entity<InstallationJob>(entity =>
+        {
+            entity.HasOne(ij => ij.Memorial)
+                .WithMany()
+                .HasForeignKey(ij => ij.MemorialId);
+
+            entity.HasOne(ij => ij.Branch)
+                .WithMany()
+                .HasForeignKey(ij => ij.BranchId);
+
+            entity.HasOne(ij => ij.Vehicle)
+                .WithMany()
+                .HasForeignKey(ij => ij.VehicleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(ij => ij.LeadArtisan)
+                .WithMany()
+                .HasForeignKey(ij => ij.LeadArtisanId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(ij => ij.SignOff)
+                .WithOne()
+                .HasForeignKey("InstallationJobId");
+        });
+
+        modelBuilder.Entity<InstallationChecklist>(entity =>
+        {
+            entity.HasOne(ic => ic.InstallationJob)
+                .WithMany(ij => ij.Checklist)
+                .HasForeignKey(ic => ic.InstallationJobId);
+        });
+
+        modelBuilder.Entity<InstallationSignOff>(entity =>
+        {
+            entity.HasOne(isoff => isoff.InstallationJob)
+                .WithOne()
+                .HasForeignKey("InstallationJobId");
+        });
+
+        modelBuilder.Entity<PayrollEntry>(entity =>
+        {
+            entity.HasOne(pe => pe.PayrollRun)
+                .WithMany(pr => pr.Entries)
+                .HasForeignKey(pe => pe.PayrollRunId);
+
+            entity.HasOne(pe => pe.Employee)
+                .WithMany()
+                .HasForeignKey(pe => pe.EmployeeId);
+
+            entity.HasOne(pe => pe.PayItem)
+                .WithMany()
+                .HasForeignKey(pe => pe.PayItemId);
+        });
+
+        modelBuilder.Entity<Payslip>(entity =>
+        {
+            entity.HasOne(ps => ps.Employee)
+                .WithMany()
+                .HasForeignKey(ps => ps.EmployeeId);
+
+            entity.HasOne(ps => ps.PayrollRun)
+                .WithMany()
+                .HasForeignKey(ps => ps.PayrollRunId);
+        });
+
+        modelBuilder.Entity<LeaveBalance>(entity =>
+        {
+            entity.HasOne(lb => lb.Employee)
+                .WithMany()
+                .HasForeignKey(lb => lb.EmployeeId);
+
+            entity.HasOne(lb => lb.LeaveType)
+                .WithMany()
+                .HasForeignKey(lb => lb.LeaveTypeId);
+        });
+
+        modelBuilder.Entity<LeaveApplication>(entity =>
+        {
+            entity.HasOne(la => la.Employee)
+                .WithMany()
+                .HasForeignKey(la => la.EmployeeId);
+
+            entity.HasOne(la => la.LeaveType)
+                .WithMany()
+                .HasForeignKey(la => la.LeaveTypeId);
+
+            entity.HasOne(la => la.Approver)
+                .WithMany()
+                .HasForeignKey(la => la.ApprovedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
 
         // Apply Branch Scope filters to all IBranchScoped entities
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())

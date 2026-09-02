@@ -16,11 +16,11 @@ public class DashboardController : ControllerBase
         _dashboardService = dashboardService;
     }
 
-    [HttpGet("operational-overview")]
-    public async Task<ActionResult<OperationalDashboardDto>> GetOperationalOverview()
+    [HttpGet("data")]
+    public async Task<IActionResult> GetDashboardData([FromQuery] Guid userId)
     {
-        var overview = await _dashboardService.GetOperationalOverviewAsync();
-        return Ok(overview);
+        var data = await _dashboardService.GetDashboardDataAsync(userId);
+        return Ok(data);
     }
 
     [HttpGet("layout")]

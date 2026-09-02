@@ -59,6 +59,7 @@ public class TenantDbContext : DbContext
     public DbSet<UserDashboardConfig> UserDashboardConfigs { get; set; } = null!;
     public DbSet<Feedback> Feedbacks { get; set; } = null!;
     public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
+    public DbSet<PaymentConfiguration> PaymentConfigurations { get; set; } = null!;
     public DbSet<Invoice> Invoices { get; set; } = null!;
     public DbSet<Payment> Payments { get; set; } = null!;
     public DbSet<ArrangementWizardState> ArrangementWizardStates { get; set; } = null!;

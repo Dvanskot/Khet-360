@@ -96,7 +96,6 @@ C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\staticwebasse
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\staticwebassets.development.json
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\staticwebassets.build.endpoints.json
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\swae.build.ex.cache
-C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\Khet360..145146F3.Up2Date
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\Khet360.Api.dll
 C:\2026\Projects\August\Khet-360\src\Khet360.Api\obj\Debug\net10.0\refint\Khet360.Api.dll

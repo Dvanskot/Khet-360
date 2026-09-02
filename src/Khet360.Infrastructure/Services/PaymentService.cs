@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Interfaces;
 using Khet360.Domain.Entities;
+using Khet360.Domain.Enums;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,11 +14,13 @@ public class PaymentService : IPaymentService
 {
     private readonly TenantDbContext _db;
     private readonly ITenantService _tenantService;
+    private readonly IEnumerable<IPaymentGatewayProvider> _gatewayProviders;
 
-    public PaymentService(TenantDbContext db, ITenantService tenantService)
+    public PaymentService(TenantDbContext db, ITenantService tenantService, IEnumerable<IPaymentGatewayProvider> gatewayProviders)
     {
         _db = db;
         _tenantService = tenantService;
+        _gatewayProviders = gatewayProviders;
     }
 
     public async Task<Invoice> CreateInvoiceAsync(Guid funeralCaseId, decimal amount, DateTime dueDate)
@@ -47,9 +50,23 @@ public class PaymentService : IPaymentService
         var invoice = await _db.Invoices.FindAsync(invoiceId);
         if (invoice == null) throw new KeyNotFoundException("Invoice not found.");
 
-        // Mocking Netcash integration. In production, this would call the Netcash API
-        // using a secret key and invoice details to get a hosted payment page URL.
-        return $"https://pay.netcash.co.za/pay/{invoice.InvoiceNumber}?amount={invoice.TotalAmount}";
+        // Resolve the tenant's specific payment configuration
+        var config = await _db.PaymentConfigurations.FirstOrDefaultAsync();
+        if (config == null)
+        {
+            throw new InvalidOperationException("Payment gateway not configured for this tenant. Please set up your gateway in the administration portal.");
+        }
+
+        // Find the provider implementation that matches the config
+        var provider = _gatewayProviders.FirstOrDefault(p =>
+            p.ProviderName.Equals(config.Provider.ToString(), StringComparison.OrdinalIgnoreCase));
+
+        if (provider == null)
+        {
+            throw new NotSupportedException($"Payment provider {config.Provider} is not currently supported.");
+        }
+
+        return await provider.CreatePaymentLinkAsync(config, invoice.TotalAmount, invoice.InvoiceNumber);
     }
 
     public async Task ProcessWebhookAsync(Guid invoiceId, decimal amount, string transactionRef)
@@ -57,13 +74,25 @@ public class PaymentService : IPaymentService
         var invoice = await _db.Invoices.FindAsync(invoiceId);
         if (invoice == null) throw new KeyNotFoundException("Invoice not found.");
 
+        var config = await _db.PaymentConfigurations.FirstOrDefaultAsync();
+        if (config == null) throw new InvalidOperationException("Payment gateway not configured.");
+
+        var provider = _gatewayProviders.FirstOrDefault(p =>
+            p.ProviderName.Equals(config.Provider.ToString(), StringComparison.OrdinalIgnoreCase));
+
+        if (provider == null) throw new NotSupportedException($"Payment provider {config.Provider} not supported.");
+
+        // Verify the payment with the provider
+        var isValid = await provider.VerifyPaymentAsync(config, transactionRef, amount);
+        if (!isValid) throw new InvalidOperationException("Payment verification failed.");
+
         var payment = new Payment
         {
             Id = Guid.NewGuid(),
             Amount = amount,
             PaymentDate = DateTime.UtcNow,
             TransactionReference = transactionRef,
-            PaymentMethod = "Netcash",
+            PaymentMethod = config.Provider.ToString(),
             InvoiceId = invoiceId,
             BranchId = invoice.BranchId
         };

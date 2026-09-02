@@ -40,7 +40,7 @@ builder.Services.AddAuthentication(options =>
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:PlatformKey"] ?? "DefaultPlatformKey_MustChangeInProduction_12345!"))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:PlatformKey"] ?? throw new InvalidOperationException("Jwt:PlatformKey is missing from configuration")))
         };
     })
     .AddJwtBearer("TenantJwt", options =>
@@ -53,7 +53,7 @@ builder.Services.AddAuthentication(options =>
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:TenantKey"] ?? "DefaultTenantKey_MustChangeInProduction_56789!"))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:TenantKey"] ?? throw new InvalidOperationException("Jwt:TenantKey is missing from configuration")))
         };
     });
 
@@ -129,7 +129,7 @@ builder.Services.AddHttpClient<IProductivityScorecardService, ProductivityScorec
     client.BaseAddress = new Uri(builder.Configuration["Prometheus:Url"] ?? "http://localhost:9090");
 });
 
-builder.Services.AddScoped<ICacheService, CacheService>();
+builder.Services.AddSingleton<ICacheService, CacheService>();
 builder.Services.AddSingleton<IMessageBus, MessageBus>();
 
 builder.Services.AddHostedService<SlaEscalationWorker>();

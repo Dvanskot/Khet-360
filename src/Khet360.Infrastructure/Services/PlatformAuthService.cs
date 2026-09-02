@@ -17,7 +17,13 @@ public class PlatformAuthService
 
     public string GeneratePlatformToken(string username, string role)
     {
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:PlatformKey"] ?? "DefaultPlatformKey_MustChangeInProduction_12345!"));
+        var keyString = _configuration["Jwt:PlatformKey"];
+        if (string.IsNullOrEmpty(keyString))
+        {
+            throw new InvalidOperationException("JWT PlatformKey is not configured in appsettings.json. This is a critical security requirement.");
+        }
+
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]

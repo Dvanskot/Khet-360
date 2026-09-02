@@ -18,9 +18,9 @@ public class MinioStorageService : IFileStorageService
 
     public MinioStorageService(IConfiguration configuration)
     {
-        var endpoint = configuration["Minio:Endpoint"] ?? "localhost:9000";
-        var accessKey = configuration["Minio:AccessKey"] ?? "minioadmin";
-        var secretKey = configuration["Minio:SecretKey"] ?? "minioadmin";
+        var endpoint = configuration["Minio:Endpoint"] ?? throw new InvalidOperationException("Minio Endpoint is not configured.");
+        var accessKey = configuration["Minio:AccessKey"] ?? throw new InvalidOperationException("Minio AccessKey is not configured.");
+        var secretKey = configuration["Minio:SecretKey"] ?? throw new InvalidOperationException("Minio SecretKey is not configured.");
         _bucketName = configuration["Minio:Bucket"] ?? "khet360-assets";
 
         _minioClient = new MinioClient()

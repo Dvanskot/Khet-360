@@ -85,64 +85,84 @@ public class SlaEscalationWorker : BackgroundService
         var db = scope.ServiceProvider.GetRequiredService<TenantDbContext>();
         var metrics = scope.ServiceProvider.GetRequiredService<IMetricsService>();
 
-        // 1. WorkItem SLA checks
-        var pendingWork = await db.WorkItems
-            .Where(wi => wi.Status != WorkItemStatus.Completed && wi.Status != WorkItemStatus.Cancelled)
-            .ToListAsync();
+        // 1. WorkItem SLA checks - Process in batches to avoid memory pressure
+        int batchSize = 500;
+        int processedCount = 0;
+        bool hasMore = true;
 
-        foreach (var wi in pendingWork)
+        while (hasMore)
         {
-            var currentSla = CalculateSlaStatus(wi);
-            if (currentSla != wi.SlaStatus)
+            var batch = await db.WorkItems
+                .Where(wi => wi.Status != WorkItemStatus.Completed && wi.Status != WorkItemStatus.Cancelled)
+                .OrderBy(wi => wi.DueDate)
+                .Skip(processedCount)
+                .Take(batchSize)
+                .ToListAsync();
+
+            if (batch.Count == 0)
             {
-                var oldStatus = wi.SlaStatus;
-                wi.SlaStatus = currentSla;
-                wi.LastSlaUpdate = DateTime.UtcNow;
+                hasMore = false;
+                continue;
+            }
 
-                db.WorkItemHistories.Add(new WorkItemHistory
+            foreach (var wi in batch)
+            {
+                var currentSla = CalculateSlaStatus(wi);
+                if (currentSla != wi.SlaStatus)
                 {
-                    Id = Guid.NewGuid(),
-                    WorkItemId = wi.Id,
-                    Note = $"SLA Status transitioned from {oldStatus} to {currentSla}",
-                    TimestampUtc = DateTime.UtcNow
-                });
+                    var oldStatus = wi.SlaStatus;
+                    wi.SlaStatus = currentSla;
+                    wi.LastSlaUpdate = DateTime.UtcNow;
 
-                if (currentSla == SlaStatus.Breached)
-                {
-                    _logger.LogWarning("SLA BREACH: WorkItem {Id} ({NextAction}) has breached its SLA!", wi.Id, wi.NextAction);
-                    metrics.IncrementSlaBreach();
-                }
-                else if (currentSla == SlaStatus.Warning)
-                {
-                    _logger.LogInformation("SLA Warning: WorkItem {Id} is approaching its due date.", wi.Id);
+                    db.WorkItemHistories.Add(new WorkItemHistory
+                    {
+                        Id = Guid.NewGuid(),
+                        WorkItemId = wi.Id,
+                        Note = $"SLA Status transitioned from {oldStatus} to {currentSla}",
+                        TimestampUtc = DateTime.UtcNow
+                    });
+
+                    if (currentSla == SlaStatus.Breached)
+                    {
+                        _logger.LogWarning("SLA BREACH: WorkItem {Id} ({NextAction}) has breached its SLA!", wi.Id, wi.NextAction);
+                        metrics.IncrementSlaBreach();
+                    }
+                    else if (currentSla == SlaStatus.Warning)
+                    {
+                        _logger.LogInformation("SLA Warning: WorkItem {Id} is approaching its due date.", wi.Id);
+                    }
                 }
             }
+
+            await db.SaveChangesAsync();
+            processedCount += batch.Count;
+            if (batch.Count < batchSize) hasMore = false;
         }
 
         // 2. Fleet SLA checks (Maintenance & Trip Delays)
         var now = DateTime.UtcNow;
 
-        // Check for overdue maintenance
+        // Check for overdue maintenance - use a limited query if possible
         var overdueMaintenance = await db.MaintenanceSchedules
             .Where(s => s.NextDueDate <= now)
+            .Take(1000) // Limit to top 1000 alerts per run
             .ToListAsync();
 
         foreach (var sched in overdueMaintenance)
         {
-            _logger.LogWarning("FLEET ALERT: Vehicle {VehicleId} is overdue for maintenance! Due Date: {DueDate}", sched.VehicleId, sched.NextDueDate);
+            _logger.LogWarning("FLEET ALERT: Vehicle {VehicleId} is overdue for maintenance! Due Date {DueDate}", sched.VehicleId, sched.NextDueDate);
         }
 
         // Check for delayed trips (e.g., Trip not started within 30 mins of scheduled time)
         var delayedTrips = await db.TripAssignments
             .Where(t => !t.IsCompleted && t.ActualStartTime == null && t.ScheduledStartTime < now.AddMinutes(-30))
+            .Take(1000)
             .ToListAsync();
 
         foreach (var trip in delayedTrips)
         {
             _logger.LogWarning("LOGISTICS ALERT: Trip {TripId} for Case {CaseId} is delayed! Scheduled Start: {StartTime}", trip.Id, trip.FuneralCaseId, trip.ScheduledStartTime);
         }
-
-        await db.SaveChangesAsync();
     }
 
     private SlaStatus CalculateSlaStatus(WorkItem wi)

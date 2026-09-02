@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Khet360.Domain.Entities;
 using Khet360.Application.Interfaces;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace Khet360.Infrastructure.Persistence;
 
@@ -297,7 +299,7 @@ public class TenantDbContext : DbContext
         {
             entity.HasOne(e => e.User)
                 .WithOne()
-                .HasForeignKey("UserId")
+                .HasForeignKey<Employee>(e => e.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(e => e.Department)
@@ -319,7 +321,7 @@ public class TenantDbContext : DbContext
 
             entity.HasOne(e => e.Contract)
                 .WithOne()
-                .HasForeignKey("EmployeeId");
+                .HasForeignKey<EmploymentContract>(c => c.EmployeeId);
         });
 
         modelBuilder.Entity<Department>(entity =>
@@ -338,7 +340,7 @@ public class TenantDbContext : DbContext
         {
             entity.HasOne(pp => pp.Employee)
                 .WithOne()
-                .HasForeignKey("EmployeeId");
+                .HasForeignKey<PayProfile>(pp => pp.EmployeeId);
         });
 
         modelBuilder.Entity<InstallationJob>(entity =>
@@ -363,7 +365,7 @@ public class TenantDbContext : DbContext
 
             entity.HasOne(ij => ij.SignOff)
                 .WithOne()
-                .HasForeignKey("InstallationJobId");
+                .HasForeignKey<InstallationSignOff>(isoff => isoff.InstallationJobId);
         });
 
         modelBuilder.Entity<InstallationChecklist>(entity =>
@@ -377,7 +379,7 @@ public class TenantDbContext : DbContext
         {
             entity.HasOne(isoff => isoff.InstallationJob)
                 .WithOne()
-                .HasForeignKey("InstallationJobId");
+                .HasForeignKey<InstallationSignOff>(isoff => isoff.InstallationJobId);
         });
 
         modelBuilder.Entity<PayrollEntry>(entity =>
@@ -434,26 +436,73 @@ public class TenantDbContext : DbContext
         });
 
         // Apply Branch Scope filters to all IBranchScoped entities
+        var processedRootTypes = new HashSet<Type>();
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (typeof(IBranchScoped).IsAssignableFrom(entityType.ClrType))
             {
-                ApplyBranchScopeFilter(modelBuilder, entityType.ClrType);
+                var currentType = entityType;
+                while (currentType.BaseType != null)
+                {
+                    currentType = currentType.BaseType;
+                }
+                var rootType = currentType.ClrType;
+
+                if (processedRootTypes.Add(rootType))
+                {
+                    ApplyBranchScopeFilter(modelBuilder, rootType);
+                }
             }
         }
     }
 
     private void ApplyBranchScopeFilter(ModelBuilder modelBuilder, Type type)
     {
-        // This is a simplified version. In a real production app,
-        // we'd use Expression trees to build the filter:
-        // e => _userContext.AssignedBranchIds.Contains(e.BranchId)
+        // Create expression: e => _userContext.AssignedBranchIds.Contains(e.BranchId)
 
-        // Since we are in a plan-execution phase, I will implement the filter
-        // specifically for entities as they are added to avoid complex Expression tree logic here,
-        // OR I will implement a robust dynamic filter if needed.
+        // Parameter 'e' of type 'type'
+        var parameter = Expression.Parameter(type, "e");
 
-        // For now, let's stick to a manual application per entity to ensure stability.
+        // Property 'BranchId' on 'e'
+        var branchIdProperty = type.GetProperty("BranchId");
+        if (branchIdProperty == null) return;
+        var branchIdExpression = Expression.Property(parameter, branchIdProperty);
+
+        // Field '_userContext' on the DbContext
+        var userContextField = typeof(TenantDbContext).GetField("_userContext", BindingFlags.NonPublic | BindingFlags.Instance);
+        if (userContextField == null) return;
+        var userContextExpression = Expression.Field(Expression.Constant(this), userContextField);
+
+        // Property 'AssignedBranchIds' on '_userContext'
+        var assignedBranchesProperty = typeof(ITenantUserContext).GetProperty("AssignedBranchIds");
+        if (assignedBranchesProperty == null) return;
+        var assignedBranchesExpression = Expression.Property(userContextExpression, assignedBranchesProperty);
+
+        // Method 'Contains' on IReadOnlyList<Guid> or Enumerable.Contains
+        var containsMethod = typeof(IReadOnlyList<Guid>).GetMethod("Contains");
+        bool isStatic = false;
+
+        if (containsMethod == null)
+        {
+            isStatic = true;
+            containsMethod = typeof(Enumerable).GetMethods()
+                .First(m => m.Name == "Contains" && m.GetParameters().Length == 2)
+                .MakeGenericMethod(typeof(Guid));
+        }
+
+        Expression containsExpression;
+        if (isStatic)
+        {
+            containsExpression = Expression.Call(null, containsMethod, assignedBranchesExpression, branchIdExpression);
+        }
+        else
+        {
+            containsExpression = Expression.Call(assignedBranchesExpression, containsMethod, branchIdExpression);
+        }
+
+        var lambda = Expression.Lambda(containsExpression, parameter);
+
+        modelBuilder.Entity(type).HasQueryFilter(lambda);
     }
 }
 

@@ -58,7 +58,13 @@ public class TenantAuthService : ITenantAuthService
 
     private string GenerateJwtToken(Khet360.Domain.Entities.User user, string[] roles)
     {
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:TenantKey"] ?? "DefaultTenantKey_MustChangeInProduction_56789!"));
+        var keyString = _configuration["Jwt:TenantKey"];
+        if (string.IsNullOrEmpty(keyString))
+        {
+            throw new InvalidOperationException("JWT TenantKey is not configured in appsettings.json. This is a critical security requirement.");
+        }
+
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
         var claims = new List<Claim>
@@ -86,8 +92,14 @@ public class TenantAuthService : ITenantAuthService
 
     private bool VerifyPassword(string password, string hash)
     {
-        // In production, use BCrypt or Argon2
-        // Simplified for initial setup:
-        return password == hash;
+        try
+        {
+            return BCrypt.Net.BCrypt.Verify(password, hash);
+        }
+        catch
+        {
+            // Handle cases where legacy plain-text passwords might still exist during migration
+            return password == hash;
+        }
     }
 }

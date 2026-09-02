@@ -4,5 +4,6 @@
     <Project Path="src/Khet360.Application/Khet360.Application.csproj" />
     <Project Path="src/Khet360.Domain/Khet360.Domain.csproj" />
     <Project Path="src/Khet360.Infrastructure/Khet360.Infrastructure.csproj" />
+    <Project Path="src/Khet360.Tests/Khet360.Tests.csproj" />
   </Folder>
 </Solution>

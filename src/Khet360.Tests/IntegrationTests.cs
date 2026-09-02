@@ -49,7 +49,7 @@ public class IntegrationTests
         services.AddSingleton(new Mock<IStateSyncService>().Object);
         services.AddSingleton(new Mock<IMetricsService>().Object);
         services.AddSingleton(new Mock<IOutboxService>().Object);
-        services.AddSingleton(new Mock<IWorkItemService>().Object);
+        services.AddScoped<IWorkItemService, WorkItemService>();
         services.AddSingleton(new Mock<ILogger<LeadService>>().Object);
         services.AddSingleton(new Mock<ILogger<OpportunityService>>().Object);
         services.AddSingleton(new Mock<ILogger<CustomerService>>().Object);
@@ -58,6 +58,8 @@ public class IntegrationTests
         services.AddSingleton(new Mock<ILogger<FinanceVerificationService>>().Object);
         services.AddSingleton(new Mock<ILogger<EmployeeService>>().Object);
         services.AddSingleton(new Mock<ILogger<PayrollService>>().Object);
+        services.AddSingleton(new Mock<ILogger<ServiceArrangementService>>().Object);
+        services.AddSingleton(new Mock<ILogger<PaymentService>>().Object);
 
         services.AddScoped<ILeadService, LeadService>();
         services.AddScoped<IOpportunityService, OpportunityService>();
@@ -67,8 +69,217 @@ public class IntegrationTests
         services.AddScoped<IFinanceVerificationService, FinanceVerificationService>();
         services.AddScoped<IEmployeeService, EmployeeService>();
         services.AddScoped<IPayrollService, PayrollService>();
+        services.AddScoped<IServiceArrangementService, ServiceArrangementService>();
+        services.AddScoped<IPaymentService, PaymentService>();
+        services.AddScoped<IPolicyService, PolicyService>();
+        services.AddScoped<IClaimService, ClaimService>();
+        services.AddScoped<IRoutingService, RoutingService>();
 
         return services.BuildServiceProvider();
+    }
+
+    [Fact]
+    public async Task Ultimate_Funeral_Lifecycle_GoldenPath_Should_Complete_Successfully()
+    {
+        // Arrange
+        var db = GetDbContext();
+        var sp = GetServiceProvider(db);
+        var leadService = sp.GetRequiredService<ILeadService>();
+        var caseService = sp.GetRequiredService<IFuneralCaseService>();
+        var arrangementService = sp.GetRequiredService<IServiceArrangementService>();
+        var prodService = sp.GetRequiredService<IProductionService>();
+        var financeService = sp.GetRequiredService<IFinanceVerificationService>();
+        var paymentService = sp.GetRequiredService<IPaymentService>();
+
+        var branchId = Guid.NewGuid();
+        db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
+        await db.SaveChangesAsync();
+
+        // 1. Lead Intake
+        var lead = new Lead {
+            Id = Guid.NewGuid(),
+            FirstName = "Ultimate",
+            LastName = "Test",
+            Email = "ultimate@test.com",
+            Phone = "123-456-7890",
+            Status = LeadStatus.New,
+            BranchId = branchId
+        };
+        db.Leads.Add(lead);
+        await db.SaveChangesAsync();
+
+        // 2. Convert Lead to Customer & Opportunity
+        var conversionDto = new LeadConversionDto(true, true, "Individual", 10000, "Premium Package");
+        var customerId = await leadService.ConvertLeadAsync(lead.Id, conversionDto);
+
+        // 3. Open Funeral Case
+        var caseId = await caseService.OpenCaseAsync(customerId, null, branchId);
+
+        // 4. Create Arrangement
+        var arrangementDto = new ServiceArrangementCreateDto(
+            ArrangementName: "Standard Arrangement",
+            ScheduledDate: DateTime.UtcNow.AddDays(7),
+            Location: "City Cemetery",
+            Type: ArrangementType.Burial,
+            Description: "Standard package arrangement",
+            HasCatering: true,
+            ExpectedGuestCount: 100,
+            CateringNotes: "Standard catering",
+            FuneralCaseId: caseId,
+            Items: new List<ArrangementItemCreateDto> {
+                new("Casket", "Premium Wood", 2000m, 1, false)
+            }
+        );
+        var arrangementId = await arrangementService.CreateArrangementAsync(arrangementDto, branchId);
+
+        // 5. Production (Memorial)
+        var memorialId = Guid.NewGuid();
+        var orderId = await prodService.CreateProductionOrderAsync(memorialId);
+
+        var order = await db.ProductionOrders.FindAsync(orderId);
+        order!.CurrentStage = ProductionStage.QualityCheck;
+        await db.SaveChangesAsync();
+
+        var inspectorId = Guid.NewGuid();
+        db.Employees.Add(new Employee { Id = inspectorId, FirstName = "Inspector", LastName = "One", BranchId = branchId, DepartmentId = Guid.NewGuid(), PositionId = Guid.NewGuid() });
+        await db.SaveChangesAsync();
+
+        await prodService.PerformQualityCheckAsync(orderId, inspectorId, passed: true, comments: "Passed");
+
+        // 6. Financials
+        var txId = Guid.NewGuid();
+        var transaction = new FinancialTransaction {
+            Id = txId,
+            Description = "Final Payment",
+            Entries = new List<FinancialEntry> {
+                new() { Id = Guid.NewGuid(), AccountCode = "1001", Debit = 5000m, Credit = 0 },
+                new() { Id = Guid.NewGuid(), AccountCode = "4001", Debit = 0, Credit = 5000m }
+            }
+        };
+        db.FinancialTransactions.Add(transaction);
+        await db.SaveChangesAsync();
+
+        // 7. Verify Invariants
+        var verification = await financeService.VerifyInvariantsAsync();
+
+        // Assert
+        verification.IsBalanced.Should().BeTrue();
+
+        var finalOrder = await db.ProductionOrders.FindAsync(orderId);
+        finalOrder!.Status.Should().Be(ProductionStatus.Completed);
+
+        var createdCase = await db.FuneralCases.FindAsync(caseId);
+        createdCase.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task InsuranceClaim_GoldenPath_Should_Complete_Successfully()
+    {
+        // Arrange
+        var db = GetDbContext();
+        var sp = GetServiceProvider(db);
+        var policyService = sp.GetRequiredService<IPolicyService>();
+        var claimService = sp.GetRequiredService<IClaimService>();
+        var branchId = Guid.NewGuid();
+
+        db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
+        await db.SaveChangesAsync();
+
+        var customer = new IndividualCustomer {
+            Id = Guid.NewGuid(),
+            FirstName = "Insured",
+            LastName = "User",
+            BranchId = branchId,
+            IdentityNumber = "ID12345"
+        };
+        db.Customers.Add(customer);
+        await db.SaveChangesAsync();
+
+        var funeralCase = new FuneralCase { Id = Guid.NewGuid(), CaseNumber = "CLAIM-CASE-123", CustomerId = customer.Id, BranchId = branchId };
+        db.FuneralCases.Add(funeralCase);
+        await db.SaveChangesAsync();
+
+        // 1. Link Customer to Policy
+        var policyDto = new PolicyCreateDto(
+            PolicyNumber: "POL-123",
+            ProviderName: "SafeLife Insurance",
+            CoverageAmount: 15000m,
+            StartDate: DateTime.UtcNow.AddMonths(-1),
+            EndDate: null,
+            CustomerId: customer.Id
+        );
+        var policyId = await policyService.CreatePolicyAsync(policyDto, branchId);
+
+        // 2. Submit Claim
+        var claimDto = new ClaimCreateDto(
+            ClaimNumber: "CLM-999",
+            ClaimAmount: 5000m,
+            PolicyId: policyId,
+            FuneralCaseId: funeralCase.Id,
+            Notes: "Standard claim for funeral expenses"
+        );
+        var claimId = await claimService.CreateClaimAsync(claimDto, branchId);
+
+        // 3. Process Claim (Update Status to Approved)
+        await claimService.UpdateClaimStatusAsync(claimId, new ClaimUpdateDto(
+            Status: ClaimStatus.Approved,
+            ProcessedAt: DateTime.UtcNow,
+            Notes: "Documents verified"
+        ));
+
+        // 4. Payout (Add payment to claim)
+        var paymentDto = new ClaimPaymentCreateDto(
+            Amount: 5000m,
+            PaymentDate: DateTime.UtcNow,
+            TransactionReference: "TXN-CLAIM-123",
+            Notes: "Insurance payout",
+            ClaimId: claimId
+        );
+        var paymentId = await claimService.AddPaymentAsync(paymentDto, branchId);
+
+        // Assert
+        var finalClaim = await db.InsuranceClaims.FindAsync(claimId);
+        finalClaim!.Status.Should().Be(ClaimStatus.Approved);
+
+        var payment = await db.ClaimPayments.FindAsync(paymentId);
+        payment.Should().NotBeNull();
+        payment!.Amount.Should().Be(5000m);
+    }
+
+    [Fact]
+    public async Task OperationalExcellence_GoldenPath_Should_Complete_Successfully()
+    {
+        // Arrange
+        var db = GetDbContext();
+        var sp = GetServiceProvider(db);
+        var workItemService = sp.GetRequiredService<IWorkItemService>();
+        var branchId = Guid.NewGuid();
+
+        db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
+        await db.SaveChangesAsync();
+
+        // 1. Work Item Trigger (Simulate a case milestone creating a task)
+        var entityId = Guid.NewGuid();
+        var workItemId = await workItemService.CreateWorkItemAsync(
+            entityType: "FuneralCase",
+            entityId: entityId,
+            nextAction: "Verify Death Certificate",
+            priority: WorkItemPriority.High,
+            dueDate: DateTime.UtcNow.AddHours(2), // Set to be close to SLA breach
+            branchId: branchId
+        );
+
+        // 2. Assignment
+        var userId = Guid.NewGuid();
+        await workItemService.AssignWorkItemAsync(workItemId, userId);
+
+        // 3. Resolution
+        await workItemService.CompleteWorkItemAsync(workItemId, "Certificate verified and uploaded");
+
+        // Assert
+        var workItem = await db.WorkItems.FindAsync(workItemId);
+        workItem.Should().NotBeNull();
+        workItem!.Status.Should().Be(WorkItemStatus.Completed);
     }
 
     [Fact]

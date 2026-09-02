@@ -110,6 +110,10 @@ public class PayrollService : IPayrollService
         {
             if (emp.Contract == null) continue;
 
+            // Verify employee has a pay profile
+            var profile = await _db.PayProfiles.AnyAsync(p => p.EmployeeId == emp.Id);
+            if (!profile) throw new InvalidOperationException($"Employee {emp.EmployeeCode} has no pay profile configured.");
+
             // 1. Base Salary
             var entry = new PayrollEntry
             {

@@ -10,6 +10,7 @@ public class PlatformDbContext : DbContext
     public DbSet<Tenant> Tenants { get; set; } = null!;
     public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; } = null!;
     public DbSet<Entitlement> Entitlements { get; set; } = null!;
+    public DbSet<PlatformPaymentConfig> PlatformPaymentConfigs { get; set; } = null!;
     public DbSet<PlatformBackupJob> BackupJobs { get; set; } = null!;
     public DbSet<PlatformMigrationJob> MigrationJobs { get; set; } = null!;
     public DbSet<TaxYear> TaxYears { get; set; } = null!;

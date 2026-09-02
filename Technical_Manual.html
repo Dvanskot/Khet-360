@@ -1,0 +1,377 @@
+<title>Khet-360 Technical Manual</title>
+<style>
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-alt: #f1f5f9;
+  --accent: #0d9488;
+  --accent-soft: #ccfbf1;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --code-bg: #1e293b;
+  --code-text: #f8fafc;
+  --critical: #be123c;
+  --warning: #b45309;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-alt: #0f172a;
+    --accent: #2dd4bf;
+    --accent-soft: #134e4a;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border: #334155;
+    --code-bg: #020617;
+    --code-text: #e2e8f0;
+    --critical: #fb7185;
+    --warning: #fbbf24;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-alt: #0f172a;
+  --accent: #2dd4bf;
+  --accent-soft: #134e4a;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --border: #334155;
+  --code-bg: #020617;
+  --code-text: #e2e8f0;
+  --critical: #fb7185;
+  --warning: #fbbf24;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg);
+  color: var(--text-main);
+  line-height: 1.6;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+aside {
+  background-color: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 2rem 1.5rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+main {
+  padding: 3rem 4rem;
+  max-width: 1000px;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  line-height: 1.2;
+  text-wrap: balance;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+h1 { font-size: 2.5rem; color: var(--accent); margin-top: 0; }
+h2 { font-size: 1.75rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; }
+h3 { font-size: 1.25rem; color: var(--accent); }
+
+p { margin-bottom: 1.25rem; color: var(--text-main); max-width: 70rem; }
+
+.sidebar-nav { list-style: none; padding: 0; margin: 0; }
+.sidebar-nav li { margin-bottom: 0.5rem; }
+.sidebar-nav a {
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  display: block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+.sidebar-nav a:hover {
+  background-color: var(--surface-alt);
+  color: var(--accent);
+}
+.sidebar-nav .active {
+  background-color: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.callout {
+  padding: 1rem 1.5rem;
+  border-left: 4px solid var(--accent);
+  background-color: var(--surface-alt);
+  margin: 2rem 0;
+  border-radius: 0 8px 8px 0;
+}
+.callout.critical { border-left-color: var(--critical); }
+.callout.warning { border-left-color: var(--warning); }
+.callout-label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text-muted);
+}
+
+code {
+  font-family: 'JetBrains Mono', monospace;
+  background-color: var(--surface-alt);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+pre {
+  background-color: var(--code-bg);
+  color: var(--code-text);
+  padding: 1.5rem;
+  border-radius: 12px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 1.5rem 0;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+}
+
+.step {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+.step-number {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  background-color: var(--accent);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.step-content { flex: 1; }
+
+.env-grid {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+}
+.env-key { color: var(--accent); font-weight: 600; }
+.env-desc { color: var(--text-muted); }
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background-color: var(--surface-alt);
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 800px) {
+  body { grid-template-columns: 1fr; }
+  aside { display: none; }
+}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+
+<body>
+  <aside>
+    <div style="margin-bottom: 2rem; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent);">KHET-360 <span style="color: var(--text-muted); font-weight: 400;">v1.0</span></div>
+    <ul class="sidebar-nav">
+      <li><a href="#architecture" class="active">System Architecture</a></li>
+      <li><a href="#prerequisites">Prerequisites</a></li>
+      <li><a href="#infrastructure">Infrastructure Setup</a></li>
+      <li><a href="#backend">Backend Configuration</a></li>
+      <li><a href="#frontend">Frontend Setup</a></li>
+      <li><a href="#environment">Environment Variables</a></li>
+      <li><a href="#validation">Smoke Testing</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <h1>Technical Installation Manual</h1>
+    <p>The Khet-360 ERP is a layered multi-tenant system. This manual provides the sequence for deploying the Platform Control Plane and the Tenant Business Plane.</p>
+
+    <section id="architecture">
+      <h2>System Architecture</h2>
+      <p>Khet-360 employs a strict isolation model to ensure data security and regulatory compliance.</p>
+
+      <div class="callout">
+        <span class="callout-label">Architectural Note</span>
+        The system is split into two planes:
+        <ul>
+          <li><strong>Platform Control Plane:</strong> A shared database managing tenant registration, subscription entitlements, and global lookups (e.g., Positions, Leave Types).</li>
+          <li><strong>Tenant Business Plane:</strong> A dedicated, isolated SQL Server database per tenant containing all business truth.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="prerequisites">
+      <h2>Prerequisites</h2>
+      <p>Ensure the following tools are installed on the host machine before proceeding:</p>
+      <div class="env-grid">
+        <div class="env-key">.NET 8 SDK</div>
+        <div class="env-desc">Core runtime for the Backend API.</div>
+        <div class="env-key">Docker Desktop</div>
+        <div class="env-desc">For SQL Server, Redis, RabbitMQ, and MinIO containers.</div>
+        <div class="env-key">Node.js & NPM</div>
+        <div class="env-desc">Runtime for the Vue 3 Frontend.</div>
+        <div class="env-key">Git</div>
+        <div class="env-desc">Version control for codebase management.</div>
+      </div>
+    </section>
+
+    <section id="infrastructure">
+      <h2>Infrastructure Setup</h2>
+      <p>The infrastructure layer provides the required stateful services using Docker Compose.</p>
+
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <strong>Start Docker Desktop</strong>
+          <p>Ensure the Docker daemon is running and accessible via the CLI.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <strong>Deploy Containers</strong>
+          <pre>docker compose up -d</pre>
+          <p>This initializes the following services:</p>
+          <ul>
+            <li><span class="badge">SQL Server</span> : Port 1433</li>
+            <li><span class="badge">Redis</span> : Port 6379</li>
+            <li><span class="badge">RabbitMQ</span> : Port 5672 (UI: 15672)</li>
+            <li><span class="badge">MinIO</span> : Port 9000 (UI: 9001)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="backend">
+      <h2>Backend Configuration</h2>
+      <p>The .NET 8 API handles the orchestration of both the Platform and Tenant planes.</p>
+
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <strong>Navigate to API</strong>
+          <pre>cd src/Khet360.Api</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <strong>Run the Application</strong>
+          <pre>dotnet run</pre>
+          <p>The API will start on <code>http://localhost:5226</code> by default.</p>
+        </div>
+      </div>
+
+      <div class="callout warning">
+        <span class="callout-label">Database Initialization</span>
+        The first run will automatically seed the Platform Database with essential global data (Tax Brackets, Positions, and Leave Types).
+      </div>
+    </section>
+
+    <section id="frontend">
+      <h2>Frontend Setup</h2>
+      <p>The user interface is a Vue 3 Single Page Application (SPA) using the Composition API.</p>
+
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <strong>Install Dependencies</strong>
+          <pre>cd frontend
+npm install</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <strong>Launch Development Server</strong>
+          <pre>npm run dev</pre>
+          <p>The frontend will typically be available at <code>http://localhost:5173</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="environment">
+      <h2>Environment Variables</h2>
+      <p>Configure the <code>.env</code> file in the root directory to manage secrets and connection strings.</p>
+
+      <div class="env-grid">
+        <div class="env-key">MSSQL_SA_PASSWORD</div>
+        <div class="env-desc">Root password for the SQL Server instance.</div>
+        <div class="env-key">REDIS_PASSWORD</div>
+        <div class="env-desc">Authentication key for the Redis cache.</div>
+        <div class="env-key">RABBITMQ_DEFAULT_USER</div>
+        <div class="env-desc">Admin username for RabbitMQ.</div>
+        <div class="env-key">MINIO_ROOT_USER</div>
+        <div class="env-desc">Admin credentials for S3 Object Storage.</div>
+        <div class="env-key">Jwt:PlatformKey</div>
+        <div class="env-desc">Secret key for Platform-level JWT signing.</div>
+        <div class="env-key">Jwt:TenantKey</div>
+        <div class="env-desc">Secret key for Tenant-level JWT signing.</div>
+      </div>
+    </section>
+
+    <section id="validation">
+      <h2>Smoke Testing</h2>
+      <p>Perform these checks to ensure the system is correctly configured.</p>
+
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <strong>API Health Check</strong>
+          <p>Navigate to <code>http://localhost:5226/swagger</code>. You should see the Swagger UI documenting all available endpoints.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <strong>Infrastructure Check</strong>
+          <p>Access the MinIO console at <code>http://localhost:9001</code> and RabbitMQ management at <code>http://localhost:15672</code> using the credentials defined in your <code>.env</code>.</p>
+        </div>
+      </div>
+
+      <div class="callout critical">
+        <span class="callout-label">Critical Warning</span>
+        Never commit your <code>.env</code> file to version control. Always use a <code>.env.example</code> template for new developers.
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -8,6 +8,10 @@ public class DbInitializer
 {
     public static async Task InitializeDatabase(PlatformDbContext context, ILogger logger)
     {
+        Guid basicPlanId = Guid.Empty;
+        Guid proPlanId = Guid.Empty;
+        Guid enterprisePlanId = Guid.Empty;
+
         try
         {
             logger.LogInformation("Initializing Platform Database...");
@@ -27,6 +31,43 @@ public class DbInitializer
                     IsActive = true
                 };
                 context.TaxYears.Add(taxYear);
+
+                // Seed Subscription Plans & Entitlements
+                logger.LogInformation("Seeding subscription plans...");
+                basicPlanId = Guid.NewGuid();
+                proPlanId = Guid.NewGuid();
+                enterprisePlanId = Guid.NewGuid();
+
+                context.SubscriptionPlans.AddRange(
+                    new SubscriptionPlan { Id = basicPlanId, Name = "Basic Plan", Description = "Essential tools for small operations", Category = PlanCategory.Basic, MonthlyPrice = 499m, AnnualPrice = 5000m, TrialPeriodDays = 14, IsActive = true, CreatedAt = DateTime.UtcNow },
+                    new SubscriptionPlan { Id = proPlanId, Name = "Professional Plan", Description = "Advanced features for growing businesses", Category = PlanCategory.Professional, MonthlyPrice = 1499m, AnnualPrice = 15000m, TrialPeriodDays = 30, IsActive = true, CreatedAt = DateTime.UtcNow },
+                    new SubscriptionPlan { Id = enterprisePlanId, Name = "Enterprise Plan", Description = "Unlimited scale and dedicated support", Category = PlanCategory.Enterprise, MonthlyPrice = 4999m, AnnualPrice = 50000m, TrialPeriodDays = 0, IsActive = true, CreatedAt = DateTime.UtcNow }
+                );
+
+                context.Entitlements.AddRange(
+                    // Basic Limits
+                    new Entitlement { Id = Guid.NewGuid(), SubscriptionPlanId = basicPlanId, Code = "MAX_BRANCHES", Description = "Maximum Branches", LimitValue = 2, IsActive = true },
+                    new Entitlement { Id = Guid.NewGuid(), SubscriptionPlanId = basicPlanId, Code = "MAX_EMPLOYEES", Description = "Maximum Employees", LimitValue = 10, IsActive = true },
+                    // Pro Limits
+                    new Entitlement { Id = Guid.NewGuid(), SubscriptionPlanId = proPlanId, Code = "MAX_BRANCHES", Description = "Maximum Branches", LimitValue = 10, IsActive = true },
+                    new Entitlement { Id = Guid.NewGuid(), SubscriptionPlanId = proPlanId, Code = "MAX_EMPLOYEES", Description = "Maximum Employees", LimitValue = 100, IsActive = true },
+                    new Entitlement { Id = Guid.NewGuid(), SubscriptionPlanId = proPlanId, Code = "ADVANCED_REPORTING", Description = "Access to Advanced Reports", LimitValue = 1, IsActive = true },
+                    // Enterprise Limits
+                    new Entitlement { Id = Guid.NewGuid(), SubscriptionPlanId = enterprisePlanId, Code = "MAX_BRANCHES", Description = "Unlimited Branches", LimitValue = 9999, IsActive = true },
+                    new Entitlement { Id = Guid.NewGuid(), SubscriptionPlanId = enterprisePlanId, Code = "MAX_EMPLOYEES", Description = "Unlimited Employees", LimitValue = 9999, IsActive = true },
+                    new Entitlement { Id = Guid.NewGuid(), SubscriptionPlanId = enterprisePlanId, Code = "DEDICATED_SUPPORT", Description = "Dedicated Account Manager", LimitValue = 1, IsActive = true }
+                );
+
+                // Seed Platform Payment Config
+                context.PlatformPaymentConfigs.Add(new PlatformPaymentConfig
+                {
+                    Id = Guid.NewGuid(),
+                    ProviderName = "Stripe",
+                    ApiKey = "sk_test_default",
+                    SecretKey = "secret_test_default",
+                    WebhookSecret = "whsec_default",
+                    IsActive = true
+                });
 
                 context.TaxBrackets.AddRange(
                     new TaxBracket { Id = Guid.NewGuid(), TaxYearId = taxYear.Id, LowerLimit = 0, UpperLimit = 237100, BaseAmount = 0, PercentageOverLowerLimit = 0.18m },
@@ -82,7 +123,10 @@ public class DbInitializer
                         Slug = "tenanta",
                         ConnectionString = "Server=localhost;Database=Khet360_TenantA;Trusted_Connection=True; TrustServerCertificate=True;",
                         IsActive = true,
-                        SubscriptionPlanId = Guid.Parse("00000000-0000-0000-0000-000000000001"),
+                        SubscriptionPlanId = basicPlanId,
+                        SubscriptionStatus = SubscriptionStatus.Active,
+                        SubscriptionStartDate = DateTime.UtcNow.AddMonths(-1),
+                        SubscriptionEndDate = DateTime.UtcNow.AddMonths(11),
                         CreatedAt = DateTime.UtcNow
                     },
                     new Tenant
@@ -92,7 +136,10 @@ public class DbInitializer
                         Slug = "tenantb",
                         ConnectionString = "Server=localhost;Database=Khet360_TenantB;Trusted_Connection=True; TrustServerCertificate=True;",
                         IsActive = true,
-                        SubscriptionPlanId = Guid.Parse("00000000-0000-0000-0000-000000000002"),
+                        SubscriptionPlanId = proPlanId,
+                        SubscriptionStatus = SubscriptionStatus.Active,
+                        SubscriptionStartDate = DateTime.UtcNow.AddMonths(-2),
+                        SubscriptionEndDate = DateTime.UtcNow.AddMonths(10),
                         CreatedAt = DateTime.UtcNow
                     }
                 };

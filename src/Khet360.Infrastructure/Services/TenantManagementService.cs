@@ -23,12 +23,19 @@ public class TenantManagementService : ITenantManagementService
             throw new InvalidOperationException($"Tenant with slug {slug} already exists.");
         }
 
+        var plan = await _platformDb.SubscriptionPlans.FindAsync(subscriptionPlanId);
+        if (plan == null)
+        {
+            throw new KeyNotFoundException($"Subscription plan with ID {subscriptionPlanId} not found.");
+        }
+
         var tenantId = Guid.NewGuid();
 
         // 1. Provision the tenant database first to get the connection string
         var connectionString = await _provisioningService.ProvisionTenantAsync(tenantId, slug, tier);
 
         // 2. Create the tenant record in the platform database
+        var now = DateTime.UtcNow;
         var tenant = new Tenant
         {
             Id = tenantId,
@@ -38,7 +45,11 @@ public class TenantManagementService : ITenantManagementService
             SubscriptionPlanId = subscriptionPlanId,
             Tier = tier,
             IsActive = true,
-            CreatedAt = DateTime.UtcNow
+            SubscriptionStatus = plan.TrialPeriodDays > 0 ? SubscriptionStatus.Trial : SubscriptionStatus.Active,
+            SubscriptionStartDate = now,
+            TrialEndDate = plan.TrialPeriodDays > 0 ? now.AddDays(plan.TrialPeriodDays) : null,
+            SubscriptionEndDate = plan.TrialPeriodDays > 0 ? now.AddDays(plan.TrialPeriodDays) : now.AddMonths(1),
+            CreatedAt = now
         };
 
         _platformDb.Tenants.Add(tenant);

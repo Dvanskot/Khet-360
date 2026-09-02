@@ -81,6 +81,8 @@ builder.Services.AddScoped<ITenantManagementService, TenantManagementService>();
 builder.Services.AddScoped<ITenantUserContext, TenantUserContext>();
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 builder.Services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
+builder.Services.AddScoped<IWorkItemService, WorkItemService>();
+builder.Services.AddScoped<IMetricsService, MetricsService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<ILeadService, LeadService>();
 builder.Services.AddScoped<IOpportunityService, OpportunityService>();
@@ -137,6 +139,8 @@ builder.Services.AddScoped<IFinancialService, FinancialService>();
 builder.Services.AddScoped<ITaxService, TaxService>();
 builder.Services.AddScoped<ISARSReportingService, SARSReportingService>();
 builder.Services.AddScoped<IFinanceVerificationService, FinanceVerificationService>();
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+builder.Services.AddScoped<IPlatformPaymentService, PlatformPaymentService>();
 
 builder.Services.AddHttpClient<IProductivityScorecardService, ProductivityScorecardService>(client =>
 {

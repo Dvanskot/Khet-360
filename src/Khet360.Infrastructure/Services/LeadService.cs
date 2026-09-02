@@ -18,6 +18,7 @@ public class LeadService : ILeadService
     private readonly IMessageBus _messageBus;
     private readonly IStateSyncService _stateSync;
     private readonly IMetricsService _metrics;
+    private readonly IOutboxService _outbox;
 
     public LeadService(
         TenantDbContext tenantDb,
@@ -27,7 +28,8 @@ public class LeadService : ILeadService
         ICacheService cache,
         IMessageBus messageBus,
         IStateSyncService stateSync,
-        IMetricsService metrics)
+        IMetricsService metrics,
+        IOutboxService outbox)
     {
         _tenantDb = tenantDb;
         _tenantService = tenantService;
@@ -37,6 +39,7 @@ public class LeadService : ILeadService
         _messageBus = messageBus;
         _stateSync = stateSync;
         _metrics = metrics;
+        _outbox = outbox;
     }
 
     public async Task<Guid> CreateLeadAsync(LeadCreateDto leadDto, Guid branchId)
@@ -222,8 +225,8 @@ public class LeadService : ILeadService
 
             _metrics.IncrementLeadConverted();
 
-            // Publish LeadConvertedEvent for async processing
-            await _messageBus.PublishAsync(new LeadConvertedEvent(
+            // Use Outbox for reliable event delivery
+            await _outbox.EnqueueAsync(new LeadConvertedEvent(
                 leadId,
                 customerId ?? Guid.Empty,
                 createdOppId,

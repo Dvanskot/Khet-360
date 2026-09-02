@@ -87,6 +87,7 @@ This document serves as the authoritative record of implementation progress for 
 | 2026-09-01 | Operational Command Centre | Analytics | Implemented Dashboard APIs for SLA, Fleet, Vendor, and CRM overview. |
 | 2026-09-02 | Observability Stack | Monitoring | Implemented Prometheus metrics integration, custom business counters, and SignalR state synchronization. |
 | 2026-09-02 | Tenant-Managed Payments | Finance | Implemented extensible `IPaymentGatewayProvider` architecture allowing tenants to configure their own payment gateways (Netcash, Stripe, PayFast). |
+| 2026-09-02 | System Hardening & Reliability | Resilience | Implemented Payment audit trail (PaymentTransaction), Webhook HMAC verification, and the Reliable Messaging Inbox Pattern for exactly-once event processing. Tagged as `v1.1-hardened-payments-reliable-messaging`. |
 
 ---
 

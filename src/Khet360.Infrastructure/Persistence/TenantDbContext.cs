@@ -58,6 +58,8 @@ public class TenantDbContext : DbContext
     public DbSet<MemorialTribute> MemorialTributes { get; set; } = null!;
     public DbSet<Invoice> Invoices { get; set; } = null!;
     public DbSet<Payment> Payments { get; set; } = null!;
+    public DbSet<ArrangementWizardState> ArrangementWizardStates { get; set; } = null!;
+
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

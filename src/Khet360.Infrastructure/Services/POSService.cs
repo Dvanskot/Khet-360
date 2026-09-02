@@ -45,10 +45,9 @@ public class POSService : IPOSService
         {
             Id = Guid.NewGuid(),
             FuneralCaseId = Guid.Empty, // POS sales might not have a case, but the entity requires it.
-            // In a real scenario, we might create a dummy case or make it optional.
-            // For now, using a "POS-Sale" marker if possible, but the current entity has [Required].
-            // I'll create a dummy FuneralCase for the POS transaction.
+            BranchId = request.BranchId
         };
+
 
         var dummyCase = new FuneralCase
         {
@@ -72,7 +71,8 @@ public class POSService : IPOSService
             InvoiceId = invoice.Id,
             Amount = request.PaymentAmount,
             PaymentDate = DateTime.UtcNow,
-            TransactionReference = request.PaymentReference
+            TransactionReference = request.PaymentReference,
+            BranchId = request.BranchId
         };
         _db.Payments.Add(payment);
 

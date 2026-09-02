@@ -634,4 +634,81 @@ public class IntegrationTests
         entries.Should().Contain(e => e.AccountCode == "INS-EXP" && e.Debit == 10000m);
         entries.Should().Contain(e => e.AccountCode == "CASH-BANK" && e.Credit == 10000m);
     }
+
+    [Fact]
+    public async Task POS_QuickSale_Should_CreateInvoiceAndDecrementStock()
+    {
+        // Arrange
+        var (sp, db, assignedBranches) = GetServiceProvider();
+        var posService = sp.GetRequiredService<IPOSService>();
+        var inventoryService = sp.GetRequiredService<IInventoryService>();
+        var branchId = Guid.NewGuid();
+        assignedBranches.Add(branchId);
+        db.Branches.Add(new Branch { Id = branchId, Name = "Retail Branch" });
+
+        var customer = new IndividualCustomer { Id = Guid.NewGuid(), FirstName = "Retail", LastName = "Customer", BranchId = branchId, IdentityNumber = "ID-POS-001" };
+        db.Customers.Add(customer);
+
+        var product = new FuneralProduct { Id = Guid.NewGuid(), Name = "Standard Casket", DefaultPrice = 1000m };
+        db.FuneralProducts.Add(product);
+
+        await inventoryService.InitializeStockAsync(product.Id, branchId, 10, Guid.NewGuid());
+        await db.SaveChangesAsync();
+
+        var request = new POSSaleRequest(
+            CustomerId: customer.Id,
+            BranchId: branchId,
+            Items: new List<POSSaleItemRequest> { new(product.Id, 2) },
+            PaymentAmount: 2000m,
+            PaymentReference: "POS-REF-001"
+        );
+
+        // Act
+        var invoiceId = await posService.CreateQuickSaleAsync(request);
+
+        // Assert
+        var invoice = await db.Invoices.FindAsync(invoiceId);
+        invoice.Should().NotBeNull();
+
+        var payment = await db.Payments.FirstOrDefaultAsync(p => p.InvoiceId == invoiceId);
+        payment.Should().NotBeNull();
+        payment!.Amount.Should().Be(2000m);
+
+        var transaction = await db.FinancialTransactions.FirstOrDefaultAsync(t => t.SourceEntityId == invoiceId);
+        transaction.Should().NotBeNull();
+
+        var entries = await db.FinancialEntries.Where(e => e.FinancialTransactionId == transaction!.Id).ToListAsync();
+        entries.Should().Contain(e => e.AccountCode == "CASH-BANK" && e.Debit == 2000m);
+        entries.Should().Contain(e => e.AccountCode == "SALES-REVENUE" && e.Credit == 2000m);
+
+        var stock = await inventoryService.GetStockLevelAsync(product.Id, branchId);
+        stock.Should().Be(8); // 10 - 2
+    }
+
+    [Fact]
+    public async Task Inventory_LowStockAlert_Should_ReturnCorrectItems()
+    {
+        // Arrange
+        var (sp, db, assignedBranches) = GetServiceProvider();
+        var inventoryService = sp.GetRequiredService<IInventoryService>();
+        var branchId = Guid.NewGuid();
+        assignedBranches.Add(branchId);
+        db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
+
+        var p1 = new FuneralProduct { Id = Guid.NewGuid(), Name = "Item 1" };
+        var p2 = new FuneralProduct { Id = Guid.NewGuid(), Name = "Item 2" };
+        db.FuneralProducts.AddRange(p1, p2);
+
+        // p1: low stock (3 < 5), p2: healthy stock (10 > 5)
+        await inventoryService.InitializeStockAsync(p1.Id, branchId, 3, Guid.NewGuid());
+        await inventoryService.InitializeStockAsync(p2.Id, branchId, 10, Guid.NewGuid());
+        await db.SaveChangesAsync();
+
+        // Act
+        var lowStockItems = await inventoryService.GetLowStockItemsAsync(branchId);
+
+        // Assert
+        lowStockItems.Should().ContainSingle();
+        lowStockItems.First().ProductId.Should().Be(p1.Id);
+    }
 }

@@ -16,4 +16,7 @@ public class PayrollEntry : BaseEntity
 
     public decimal Amount { get; set; }
     public double Quantity { get; set; } // e.g., hours of overtime
+
+    public bool IsStatutory { get; set; }
+    public bool IsEmployerContribution { get; set; }
 }

@@ -13,17 +13,18 @@ namespace Khet360.Infrastructure.Services;
 public class EmployeeService : IEmployeeService
 {
     private readonly TenantDbContext _db;
+    private readonly PlatformDbContext _platformDb;
 
-    public EmployeeService(TenantDbContext db)
+    public EmployeeService(TenantDbContext db, PlatformDbContext platformDb)
     {
         _db = db;
+        _platformDb = platformDb;
     }
 
     public async Task<EmployeeDto> GetEmployeeByIdAsync(Guid id)
     {
         var employee = await _db.Employees
             .Include(e => e.Department)
-            .Include(e => e.Position)
             .Include(e => e.Branch)
             .Include(e => e.Manager)
             .Include(e => e.Contract)
@@ -31,7 +32,8 @@ public class EmployeeService : IEmployeeService
 
         if (employee == null) throw new KeyNotFoundException("Employee not found.");
 
-        return MapToDto(employee);
+        var position = await _platformDb.Positions.FindAsync(employee.PositionId);
+        return MapToDto(employee, position?.Title ?? "Unknown");
     }
 
     public async Task<List<EmployeeDto>> GetEmployeesByBranchAsync(Guid branchId)
@@ -39,13 +41,15 @@ public class EmployeeService : IEmployeeService
         var employees = await _db.Employees
             .Where(e => e.BranchId == branchId)
             .Include(e => e.Department)
-            .Include(e => e.Position)
             .Include(e => e.Branch)
             .Include(e => e.Manager)
             .Include(e => e.Contract)
             .ToListAsync();
 
-        return employees.Select(MapToDto).ToList();
+        var positions = await _platformDb.Positions.ToListAsync();
+        var positionMap = positions.ToDictionary(p => p.Id, p => p.Title);
+
+        return employees.Select(e => MapToDto(e, positionMap.GetValueOrDefault(e.PositionId, "Unknown"))).ToList();
     }
 
     public async Task<Guid> CreateEmployeeAsync(EmployeeCreateDto dto)
@@ -123,15 +127,7 @@ public class EmployeeService : IEmployeeService
     {
         var dept = await _db.Departments.FindAsync(id);
         if (dept == null) throw new KeyNotFoundException("Department not found.");
-        return new DepartmentDto(dept.Id, dept.Name, dept.Description, dept.BranchId);
-    }
-
-    public async Task<List<DepartmentDto>> GetDepartmentsByBranchAsync(Guid branchId)
-    {
-        return await _db.Departments
-            .Where(d => d.BranchId == branchId)
-            .Select(d => new DepartmentDto(d.Id, d.Name, d.Description, d.BranchId))
-            .ToListAsync();
+        return new DepartmentDto(dept.Id, dept.Name, dept.Description);
     }
 
     public async Task<Guid> CreateDepartmentAsync(DepartmentCreateDto dto)
@@ -140,8 +136,7 @@ public class EmployeeService : IEmployeeService
         {
             Id = Guid.NewGuid(),
             Name = dto.Name,
-            Description = dto.Description,
-            BranchId = dto.BranchId
+            Description = dto.Description
         };
         _db.Departments.Add(dept);
         await _db.SaveChangesAsync();
@@ -150,14 +145,14 @@ public class EmployeeService : IEmployeeService
 
     public async Task<PositionDto> GetPositionByIdAsync(Guid id)
     {
-        var pos = await _db.Positions.FindAsync(id);
+        var pos = await _platformDb.Positions.FindAsync(id);
         if (pos == null) throw new KeyNotFoundException("Position not found.");
         return new PositionDto(pos.Id, pos.Title, pos.Description, pos.Grade);
     }
 
     public async Task<List<PositionDto>> GetPositionsAsync()
     {
-        return await _db.Positions
+        return await _platformDb.Positions
             .Select(p => new PositionDto(p.Id, p.Title, p.Description, p.Grade))
             .ToListAsync();
     }
@@ -171,12 +166,12 @@ public class EmployeeService : IEmployeeService
             Description = dto.Description,
             Grade = dto.Grade
         };
-        _db.Positions.Add(pos);
-        await _db.SaveChangesAsync();
+        _platformDb.Positions.Add(pos);
+        await _platformDb.SaveChangesAsync();
         return pos.Id;
     }
 
-    private static EmployeeDto MapToDto(Employee e)
+    private static EmployeeDto MapToDto(Employee e, string positionTitle)
     {
         return new EmployeeDto(
             e.Id,
@@ -191,7 +186,7 @@ public class EmployeeService : IEmployeeService
             e.DepartmentId,
             e.Department?.Name ?? "Unknown",
             e.PositionId,
-            e.Position?.Title ?? "Unknown",
+            positionTitle,
             e.BranchId,
             e.ManagerId,
             e.Manager?.FirstName + " " + e.Manager?.LastName,

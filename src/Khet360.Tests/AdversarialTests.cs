@@ -28,10 +28,18 @@ public class AdversarialTests
         return new TenantDbContext(options, mockUserContext.Object);
     }
 
-    private IServiceProvider GetServiceProvider(TenantDbContext db)
+    private async Task<IServiceProvider> GetServiceProviderAsync(TenantDbContext db)
     {
         var services = new ServiceCollection();
         services.AddSingleton(db);
+
+        // Platform DB for Tax Service
+        var platformOptions = new DbContextOptionsBuilder<PlatformDbContext>()
+            .UseInMemoryDatabase(databaseName: "PlatformDB_" + Guid.NewGuid().ToString())
+            .Options;
+        var platformDb = new PlatformDbContext(platformOptions);
+        await TestDataSeeder.SeedPlatformTaxData(platformDb);
+        services.AddSingleton(platformDb);
 
         var mockUserContext = new Mock<ITenantUserContext>();
         mockUserContext.Setup(uc => uc.IsAuthenticated).Returns(true);
@@ -73,6 +81,8 @@ public class AdversarialTests
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IPolicyService, PolicyService>();
         services.AddScoped<IClaimService, ClaimService>();
+        services.AddScoped<ITaxService, TaxService>();
+        services.AddScoped<IFinancialService, FinancialService>();
 
         return services.BuildServiceProvider();
     }
@@ -82,7 +92,7 @@ public class AdversarialTests
     {
         // Arrange
         var db = GetDbContext();
-        var sp = GetServiceProvider(db);
+        var sp = await GetServiceProviderAsync(db);
         var payrollService = sp.GetRequiredService<IPayrollService>();
 
         // Setup BASIC pay item
@@ -128,7 +138,7 @@ public class AdversarialTests
     {
         // Arrange
         var db = GetDbContext();
-        var sp = GetServiceProvider(db);
+        var sp = await GetServiceProviderAsync(db);
         var financeService = sp.GetRequiredService<IFinanceVerificationService>();
 
         var transaction = new FinancialTransaction {

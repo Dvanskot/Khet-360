@@ -61,7 +61,7 @@ public record EmployeeUpdateDto(
     string? Qualifications
 );
 
-public record DepartmentDto(Guid Id, string Name, string? Description, Guid BranchId);
-public record DepartmentCreateDto(string Name, string? Description, Guid BranchId);
+public record DepartmentDto(Guid Id, string Name, string? Description);
+public record DepartmentCreateDto(string Name, string? Description);
 public record PositionDto(Guid Id, string Title, string? Description, string? Grade);
 public record PositionCreateDto(string Title, string? Description, string? Grade);

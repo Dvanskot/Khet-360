@@ -11,8 +11,6 @@ public class Role
 
     public string Description { get; set; } = string.Empty;
 
-    public Tenant Tenant { get; set; } = null!;
-
     public virtual ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
     public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
 

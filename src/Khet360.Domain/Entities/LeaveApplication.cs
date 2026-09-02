@@ -9,7 +9,6 @@ public class LeaveApplication : BaseEntity
     public virtual Employee Employee { get; set; } = null!;
 
     public Guid LeaveTypeId { get; set; }
-    public virtual LeaveType LeaveType { get; set; } = null!;
 
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }

@@ -13,7 +13,6 @@ public class Employee : BaseEntity
     public virtual Department Department { get; set; } = null!;
 
     public Guid PositionId { get; set; }
-    public virtual Position Position { get; set; } = null!;
 
     public Guid BranchId { get; set; }
     public virtual Branch Branch { get; set; } = null!;
@@ -26,6 +25,8 @@ public class Employee : BaseEntity
     public string Email { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
     public string EmployeeCode { get; set; } = string.Empty;
+    public DateTime DateOfBirth { get; set; } = DateTime.UtcNow;
+
 
     public EmployeeStatus Status { get; set; } = EmployeeStatus.Active;
     public DateTime HireDate { get; set; } = DateTime.UtcNow;

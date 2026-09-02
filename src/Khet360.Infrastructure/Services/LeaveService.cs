@@ -13,15 +13,17 @@ namespace Khet360.Infrastructure.Services;
 public class LeaveService : ILeaveService
 {
     private readonly TenantDbContext _db;
+    private readonly PlatformDbContext _platformDb;
 
-    public LeaveService(TenantDbContext db)
+    public LeaveService(TenantDbContext db, PlatformDbContext platformDb)
     {
         _db = db;
+        _platformDb = platformDb;
     }
 
     public async Task<List<LeaveTypeDto>> GetLeaveTypesAsync()
     {
-        return await _db.LeaveTypes
+        return await _platformDb.LeaveTypes
             .Select(lt => new LeaveTypeDto(lt.Id, lt.Name, lt.Code, lt.IsPaid, lt.AnnualAccrualRate))
             .ToListAsync();
     }
@@ -36,18 +38,26 @@ public class LeaveService : ILeaveService
             IsPaid = dto.IsPaid,
             AnnualAccrualRate = dto.AnnualAccrualRate
         };
-        _db.LeaveTypes.Add(lt);
-        await _db.SaveChangesAsync();
+        _platformDb.LeaveTypes.Add(lt);
+        await _platformDb.SaveChangesAsync();
         return lt.Id;
     }
 
     public async Task<List<LeaveBalanceDto>> GetEmployeeBalancesAsync(Guid employeeId)
     {
-        return await _db.LeaveBalances
+        var balances = await _db.LeaveBalances
             .Where(lb => lb.EmployeeId == employeeId)
-            .Include(lb => lb.LeaveType)
-            .Select(lb => new LeaveBalanceDto(lb.Id, lb.EmployeeId, lb.LeaveTypeId, lb.LeaveType.Name, lb.Balance))
             .ToListAsync();
+
+        var leaveTypes = await _platformDb.LeaveTypes.ToListAsync();
+        var typeMap = leaveTypes.ToDictionary(lt => lt.Id, lt => lt.Name);
+
+        return balances.Select(lb => new LeaveBalanceDto(
+            lb.Id,
+            lb.EmployeeId,
+            lb.LeaveTypeId,
+            typeMap.GetValueOrDefault(lb.LeaveTypeId, "Unknown"),
+            lb.Balance)).ToList();
     }
 
     public async Task AdjustBalanceAsync(Guid employeeId, Guid leaveTypeId, double adjustment)
@@ -101,13 +111,13 @@ public class LeaveService : ILeaveService
     {
         var app = await _db.LeaveApplications
             .Include(la => la.Employee)
-            .Include(la => la.LeaveType)
             .Include(la => la.Approver)
             .FirstOrDefaultAsync(la => la.Id == id);
 
         if (app == null) throw new KeyNotFoundException("Leave application not found.");
 
-        return MapToDto(app);
+        var leaveType = await _platformDb.LeaveTypes.FindAsync(app.LeaveTypeId);
+        return MapToDto(app, leaveType?.Name ?? "Unknown");
     }
 
     public async Task<List<LeaveApplicationDto>> GetLeaveApplicationsByEmployeeAsync(Guid employeeId)
@@ -115,11 +125,13 @@ public class LeaveService : ILeaveService
         var apps = await _db.LeaveApplications
             .Where(la => la.EmployeeId == employeeId)
             .Include(la => la.Employee)
-            .Include(la => la.LeaveType)
             .Include(la => la.Approver)
             .ToListAsync();
 
-        return apps.Select(MapToDto).ToList();
+        var leaveTypes = await _platformDb.LeaveTypes.ToListAsync();
+        var typeMap = leaveTypes.ToDictionary(lt => lt.Id, lt => lt.Name);
+
+        return apps.Select(la => MapToDto(la, typeMap.GetValueOrDefault(la.LeaveTypeId, "Unknown"))).ToList();
     }
 
     public async Task<List<LeaveApplicationDto>> GetPendingApplicationsAsync()
@@ -127,11 +139,13 @@ public class LeaveService : ILeaveService
         var apps = await _db.LeaveApplications
             .Where(la => la.Status == LeaveStatus.Submitted)
             .Include(la => la.Employee)
-            .Include(la => la.LeaveType)
             .Include(la => la.Approver)
             .ToListAsync();
 
-        return apps.Select(MapToDto).ToList();
+        var leaveTypes = await _platformDb.LeaveTypes.ToListAsync();
+        var typeMap = leaveTypes.ToDictionary(lt => lt.Id, lt => lt.Name);
+
+        return apps.Select(la => MapToDto(la, typeMap.GetValueOrDefault(la.LeaveTypeId, "Unknown"))).ToList();
     }
 
     public async Task ProcessLeaveApplicationAsync(Guid id, LeaveApprovalDto approval)
@@ -184,14 +198,14 @@ public class LeaveService : ILeaveService
         await _db.SaveChangesAsync();
     }
 
-    private static LeaveApplicationDto MapToDto(LeaveApplication la)
+    private static LeaveApplicationDto MapToDto(LeaveApplication la, string leaveTypeName)
     {
         return new LeaveApplicationDto(
             la.Id,
             la.EmployeeId,
             la.Employee?.FirstName + " " + la.Employee?.LastName,
             la.LeaveTypeId,
-            la.LeaveType?.Name ?? "Unknown",
+            leaveTypeName,
             la.StartDate,
             la.EndDate,
             la.TotalDays,

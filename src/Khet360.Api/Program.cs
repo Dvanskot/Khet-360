@@ -1,5 +1,6 @@
 using Khet360.Api.Middleware;
 using Khet360.Application.Interfaces;
+using Khet360.Application.Validators;
 using Khet360.Infrastructure.Persistence;
 using Khet360.Infrastructure.Services;
 using Khet360.Infrastructure.BackgroundServices;
@@ -11,15 +12,22 @@ using System.Text;
 using Khet360.Api.Services;
 using Prometheus;
 using Khet360.Infrastructure.Services.WidgetProviders;
+using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<Khet360.Api.Filters.ValidationFilter>();
+});
 builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpContextAccessor();
+
+// Validation
+builder.Services.AddValidatorsFromAssemblyContaining<EmployeeCreateDtoValidator>();
 
 // MediatR Configuration
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Khet360.Application.Interfaces.ITenantService).Assembly));
@@ -126,6 +134,8 @@ builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IPOSService, POSService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IFinancialService, FinancialService>();
+builder.Services.AddScoped<ITaxService, TaxService>();
+builder.Services.AddScoped<ISARSReportingService, SARSReportingService>();
 builder.Services.AddScoped<IFinanceVerificationService, FinanceVerificationService>();
 
 builder.Services.AddHttpClient<IProductivityScorecardService, ProductivityScorecardService>(client =>
@@ -183,6 +193,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseMetricServer();
+    app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // Tenant Resolver Middleware - Must run BEFORE authorization and controllers
 app.UseMiddleware<TenantResolverMiddleware>();

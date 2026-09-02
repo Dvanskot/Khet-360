@@ -12,6 +12,13 @@ public class PlatformDbContext : DbContext
     public DbSet<Entitlement> Entitlements { get; set; } = null!;
     public DbSet<PlatformBackupJob> BackupJobs { get; set; } = null!;
     public DbSet<PlatformMigrationJob> MigrationJobs { get; set; } = null!;
+    public DbSet<TaxYear> TaxYears { get; set; } = null!;
+    public DbSet<TaxBracket> TaxBrackets { get; set; } = null!;
+    public DbSet<TaxRebate> TaxRebates { get; set; } = null!;
+    public DbSet<StatutoryRate> StatutoryRates { get; set; } = null!;
+    public DbSet<Position> Positions { get; set; } = null!;
+    public DbSet<LeaveType> LeaveTypes { get; set; } = null!;
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

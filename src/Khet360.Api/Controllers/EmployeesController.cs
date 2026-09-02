@@ -74,13 +74,6 @@ public class EmployeesController : ControllerBase
         }
     }
 
-    [HttpGet("departments/branch/{branchId}")]
-    public async Task<ActionResult<List<DepartmentDto>>> GetDepartments(Guid branchId)
-    {
-        var departments = await _employeeService.GetDepartmentsByBranchAsync(branchId);
-        return Ok(departments);
-    }
-
     [HttpPost("departments")]
     public async Task<ActionResult<Guid>> CreateDepartment([FromBody] DepartmentCreateDto dto)
     {

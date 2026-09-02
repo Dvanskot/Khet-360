@@ -28,7 +28,7 @@ public class IntegrationTests
         return new TenantDbContext(options, userContext);
     }
 
-    private (IServiceProvider, TenantDbContext, List<Guid>) GetServiceProvider()
+    private async Task<(IServiceProvider, TenantDbContext, List<Guid>)> GetServiceProviderAsync()
     {
         var mockUserContext = new Mock<ITenantUserContext>();
         mockUserContext.Setup(uc => uc.IsAuthenticated).Returns(true);
@@ -40,6 +40,15 @@ public class IntegrationTests
 
         var services = new ServiceCollection();
         services.AddSingleton(db);
+
+        // Platform DB for Tax Service
+        var platformOptions = new DbContextOptionsBuilder<PlatformDbContext>()
+            .UseInMemoryDatabase(databaseName: "PlatformDB_" + Guid.NewGuid().ToString())
+            .Options;
+        var platformDb = new PlatformDbContext(platformOptions);
+        await TestDataSeeder.SeedPlatformTaxData(platformDb);
+        services.AddSingleton(platformDb);
+
         services.AddSingleton(mockUserContext.Object);
 
         var mockTenantService = new Mock<ITenantService>();
@@ -86,6 +95,8 @@ public class IntegrationTests
         services.AddScoped<IPOSService, POSService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IFinancialService, FinancialService>();
+        services.AddScoped<ITaxService, TaxService>();
+        services.AddScoped<ISARSReportingService, SARSReportingService>();
 
         return (services.BuildServiceProvider(), db, assignedBranches);
     }
@@ -94,7 +105,7 @@ public class IntegrationTests
     public async Task Ultimate_Funeral_Lifecycle_GoldenPath_Should_Complete_Successfully()
     {
         // Arrange
-        var (sp, db, assignedBranches) = GetServiceProvider();
+        var (sp, db, assignedBranches) = await GetServiceProviderAsync();
         var leadService = sp.GetRequiredService<ILeadService>();
         var caseService = sp.GetRequiredService<IFuneralCaseService>();
         var arrangementService = sp.GetRequiredService<IServiceArrangementService>();
@@ -189,7 +200,7 @@ public class IntegrationTests
     public async Task InsuranceClaim_GoldenPath_Should_Complete_Successfully()
     {
         // Arrange
-        var (sp, db, assignedBranches) = GetServiceProvider();
+        var (sp, db, assignedBranches) = await GetServiceProviderAsync();
         var policyService = sp.GetRequiredService<IPolicyService>();
         var claimService = sp.GetRequiredService<IClaimService>();
         var branchId = Guid.NewGuid();
@@ -307,7 +318,7 @@ public class IntegrationTests
     public async Task OperationalExcellence_GoldenPath_Should_Complete_Successfully()
     {
         // Arrange
-        var (sp, db, assignedBranches) = GetServiceProvider();
+        var (sp, db, assignedBranches) = await GetServiceProviderAsync();
         var workItemService = sp.GetRequiredService<IWorkItemService>();
         var branchId = Guid.NewGuid();
 
@@ -344,7 +355,7 @@ public class IntegrationTests
     public async Task LeadToCase_GoldenPath_Should_Complete_Successfully()
     {
         // Arrange
-        var (sp, db, assignedBranches) = GetServiceProvider();
+        var (sp, db, assignedBranches) = await GetServiceProviderAsync();
         var leadService = sp.GetRequiredService<ILeadService>();
         var caseService = sp.GetRequiredService<IFuneralCaseService>();
         var branchId = Guid.NewGuid();
@@ -396,7 +407,7 @@ public class IntegrationTests
     public async Task ProductionToFinance_GoldenPath_Should_Complete_Successfully()
     {
         // Arrange
-        var (sp, db, assignedBranches) = GetServiceProvider();
+        var (sp, db, assignedBranches) = await GetServiceProviderAsync();
         var prodService = sp.GetRequiredService<IProductionService>();
         var financeService = sp.GetRequiredService<IFinanceVerificationService>();
         var branchId = Guid.NewGuid();
@@ -455,18 +466,18 @@ public class IntegrationTests
     public async Task PeopleToPayroll_GoldenPath_Should_Complete_Successfully()
     {
         // Arrange
-        var (sp, db, assignedBranches) = GetServiceProvider();
+        var (sp, db, assignedBranches) = await GetServiceProviderAsync();
         var empService = sp.GetRequiredService<IEmployeeService>();
         var payrollService = sp.GetRequiredService<IPayrollService>();
         var branchId = Guid.NewGuid();
         var deptId = Guid.NewGuid();
-        var posId = Guid.NewGuid();
+        var platformDb = sp.GetRequiredService<PlatformDbContext>();
+        var posId = platformDb.Positions.First().Id;
 
         // Add branch to mock user context to bypass global filter
         assignedBranches.Add(branchId);
         db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
-        db.Departments.Add(new Department { Id = deptId, Name = "HR", BranchId = branchId });
-        db.Positions.Add(new Position { Id = posId, Title = "HR Manager" });
+        db.Departments.Add(new Department { Id = deptId, Name = "HR"});
         await db.SaveChangesAsync();
 
         // 1. Hire Employee
@@ -533,7 +544,7 @@ public class IntegrationTests
     public async Task InsuranceClaim_CashPayout_Success()
     {
         // Arrange
-        var (sp, db, assignedBranches) = GetServiceProvider();
+        var (sp, db, assignedBranches) = await GetServiceProviderAsync();
         var policyService = sp.GetRequiredService<IPolicyService>();
         var claimService = sp.GetRequiredService<IClaimService>();
         var branchId = Guid.NewGuid();
@@ -639,7 +650,7 @@ public class IntegrationTests
     public async Task POS_QuickSale_Should_CreateInvoiceAndDecrementStock()
     {
         // Arrange
-        var (sp, db, assignedBranches) = GetServiceProvider();
+        var (sp, db, assignedBranches) = await GetServiceProviderAsync();
         var posService = sp.GetRequiredService<IPOSService>();
         var inventoryService = sp.GetRequiredService<IInventoryService>();
         var branchId = Guid.NewGuid();
@@ -689,7 +700,7 @@ public class IntegrationTests
     public async Task Inventory_LowStockAlert_Should_ReturnCorrectItems()
     {
         // Arrange
-        var (sp, db, assignedBranches) = GetServiceProvider();
+        var (sp, db, assignedBranches) = await GetServiceProviderAsync();
         var inventoryService = sp.GetRequiredService<IInventoryService>();
         var branchId = Guid.NewGuid();
         assignedBranches.Add(branchId);
@@ -710,5 +721,83 @@ public class IntegrationTests
         // Assert
         lowStockItems.Should().ContainSingle();
         lowStockItems.First().ProductId.Should().Be(p1.Id);
+    }
+
+    [Fact]
+    public async Task Payroll_StatutoryTax_Should_CalculateCorrectDeductionsAndReports()
+    {
+        // Arrange
+        var (sp, db, assignedBranches) = await GetServiceProviderAsync();
+        var payrollService = sp.GetRequiredService<IPayrollService>();
+        var reportingService = sp.GetRequiredService<ISARSReportingService>();
+        var branchId = Guid.NewGuid();
+        assignedBranches.Add(branchId);
+        db.Branches.Add(new Branch { Id = branchId, Name = "Main Branch" });
+
+        // 1. Setup Tax Year and Rates
+        var platformDb = sp.GetRequiredService<PlatformDbContext>();
+        await TestDataSeeder.SeedPlatformTaxData(platformDb);
+        await TestDataSeeder.SeedTenantBasicPayItems(db);
+
+        // 2. Setup Employee
+        var emp = new Employee {
+            Id = Guid.NewGuid(),
+            FirstName = "Tax",
+            LastName = "Test",
+            DateOfBirth = new DateTime(1990, 1, 1),
+            BranchId = branchId
+        };
+        db.Employees.Add(emp);
+
+        var contract = new EmploymentContract {
+            Id = Guid.NewGuid(),
+            EmployeeId = emp.Id,
+            Salary = 20000m // Monthly
+        };
+        db.EmploymentContracts.Add(contract);
+
+        var profile = new PayProfile {
+            Id = Guid.NewGuid(),
+            EmployeeId = emp.Id,
+            TaxNumber = "TAX123"
+        };
+        db.PayProfiles.Add(profile);
+        await db.SaveChangesAsync();
+
+        // 3. Run Payroll
+        var runId = await payrollService.CreatePayrollRunAsync(new PayrollRunCreateDto("Sept 2026", new DateTime(2026, 9, 1), new DateTime(2026, 9, 30)));
+        await payrollService.CalculatePayrollAsync(runId);
+        await payrollService.FinalizePayrollRunAsync(runId, Guid.NewGuid());
+
+        // Assert Calculations
+        var entries = await db.PayrollEntries.Where(pe => pe.PayrollRunId == runId).ToListAsync();
+
+        // Gross = 20000. Annual = 240,000.
+        // Bracket 2: Base 42,678 + (240,000 - 237,101) * 26% = 43,431.74
+        // Rebate: Primary 17,283.
+        // Net Annual = 26,148.74. Monthly = 2,179.06.
+        var payeEntry = entries.FirstOrDefault(e => e.PayItem.Code == "PAYE");
+        payeEntry.Should().NotBeNull();
+        payeEntry!.Amount.Should().BeApproximately(2179.06m, 0.01m);
+
+        // UIF = min(20000, 17712) * 1% = 177.12.
+        var uifEntry = entries.FirstOrDefault(e => e.PayItem.Code == "UIF_Employee");
+        uifEntry.Should().NotBeNull();
+        uifEntry!.Amount.Should().BeApproximately(177.12m, 0.01m);
+
+        // Employer costs: UIF 177.12, SDL 200.
+        var uifEmpEntry = entries.FirstOrDefault(e => e.PayItem.Code == "UIF_Employer");
+        uifEmpEntry.Should().NotBeNull();
+        uifEmpEntry!.Amount.Should().BeApproximately(177.12m, 0.01m);
+
+        var sdlEntry = entries.FirstOrDefault(e => e.PayItem.Code == "SDL_Employer");
+        sdlEntry.Should().NotBeNull();
+        sdlEntry!.Amount.Should().Be(200m);
+
+        // Assert EMP201 Report
+        var emp201 = await reportingService.GenerateEMP201Async(runId);
+        emp201.TotalPaye.Should().BeApproximately(2179.06m, 0.01m);
+        emp201.TotalUif.Should().BeApproximately(354.24m, 0.01m); // Emp + Employer
+        emp201.TotalSdl.Should().Be(200m);
     }
 }

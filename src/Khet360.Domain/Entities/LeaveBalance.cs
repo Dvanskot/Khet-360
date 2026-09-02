@@ -9,7 +9,6 @@ public class LeaveBalance : BaseEntity
     public virtual Employee Employee { get; set; } = null!;
 
     public Guid LeaveTypeId { get; set; }
-    public virtual LeaveType LeaveType { get; set; } = null!;
 
     public double Balance { get; set; }
     public DateTime LastUpdatedUtc { get; set; } = DateTime.UtcNow;

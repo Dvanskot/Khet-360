@@ -71,10 +71,8 @@ public class TenantDbContext : DbContext
     public DbSet<Feedback> Feedbacks { get; set; } = null!;
     public DbSet<Employee> Employees { get; set; } = null!;
     public DbSet<Department> Departments { get; set; } = null!;
-    public DbSet<Position> Positions { get; set; } = null!;
     public DbSet<EmploymentContract> EmploymentContracts { get; set; } = null!;
     public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
-    public DbSet<LeaveType> LeaveTypes { get; set; } = null!;
     public DbSet<LeaveBalance> LeaveBalances { get; set; } = null!;
     public DbSet<LeaveApplication> LeaveApplications { get; set; } = null!;
     public DbSet<PayProfile> PayProfiles { get; set; } = null!;
@@ -96,6 +94,12 @@ public class TenantDbContext : DbContext
     public DbSet<InventoryTransaction> InventoryTransactions { get; set; } = null!;
     public DbSet<InboxMessage> InboxMessages { get; set; } = null!;
     public DbSet<ArrangementWizardState> ArrangementWizardStates { get; set; } = null!;
+
+    public DbSet<TaxYear> TaxYears { get; set; } = null!;
+    public DbSet<TaxBracket> TaxBrackets { get; set; } = null!;
+    public DbSet<TaxRebate> TaxRebates { get; set; } = null!;
+    public DbSet<StatutoryRate> StatutoryRates { get; set; } = null!;
+
 
 
 
@@ -372,10 +376,6 @@ public class TenantDbContext : DbContext
                 .WithMany(d => d.Employees)
                 .HasForeignKey(e => e.DepartmentId);
 
-            entity.HasOne(e => e.Position)
-                .WithMany(p => p.Employees)
-                .HasForeignKey(e => e.PositionId);
-
             entity.HasOne(e => e.Branch)
                 .WithMany()
                 .HasForeignKey(e => e.BranchId);
@@ -388,13 +388,6 @@ public class TenantDbContext : DbContext
             entity.HasOne(e => e.Contract)
                 .WithOne()
                 .HasForeignKey<EmploymentContract>(c => c.EmployeeId);
-        });
-
-        modelBuilder.Entity<Department>(entity =>
-        {
-            entity.HasOne(d => d.Branch)
-                .WithMany()
-                .HasForeignKey(d => d.BranchId);
         });
 
         modelBuilder.Entity<Employee>(entity =>
@@ -479,10 +472,6 @@ public class TenantDbContext : DbContext
             entity.HasOne(lb => lb.Employee)
                 .WithMany()
                 .HasForeignKey(lb => lb.EmployeeId);
-
-            entity.HasOne(lb => lb.LeaveType)
-                .WithMany()
-                .HasForeignKey(lb => lb.LeaveTypeId);
         });
 
         modelBuilder.Entity<LeaveApplication>(entity =>
@@ -490,10 +479,6 @@ public class TenantDbContext : DbContext
             entity.HasOne(la => la.Employee)
                 .WithMany()
                 .HasForeignKey(la => la.EmployeeId);
-
-            entity.HasOne(la => la.LeaveType)
-                .WithMany()
-                .HasForeignKey(la => la.LeaveTypeId);
 
             entity.HasOne(la => la.Approver)
                 .WithMany()

@@ -72,6 +72,20 @@ public class TenantProvisioningService : ITenantProvisioningService
             await tenantContext.Database.MigrateAsync();
             _logger.LogInformation("Migrations applied to database {DbName} successfully.", dbName);
 
+            // Seed initial tenant data (Default Branch, Roles, Permissions, Departments)
+            var mainBranch = new Branch
+            {
+                Id = Guid.NewGuid(),
+                Name = "Main Branch",
+                Address = "Main Office",
+                IsActive = true
+            };
+            tenantContext.Branches.Add(mainBranch);
+            await tenantContext.SaveChangesAsync();
+
+            await TenantDbInitializer.InitializeDatabase(tenantContext, _logger, mainBranch.Id);
+            _logger.LogInformation("Initial tenant data seeded successfully for {DbName}.", dbName);
+
             return tenantConnectionString;
         }
         catch (Exception ex)

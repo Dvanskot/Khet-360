@@ -14,7 +14,6 @@ public interface IEmployeeService
     Task TerminateEmployeeAsync(Guid id, DateTime terminationDate);
 
     Task<DepartmentDto> GetDepartmentByIdAsync(Guid id);
-    Task<List<DepartmentDto>> GetDepartmentsByBranchAsync(Guid branchId);
     Task<Guid> CreateDepartmentAsync(DepartmentCreateDto dto);
 
     Task<PositionDto> GetPositionByIdAsync(Guid id);

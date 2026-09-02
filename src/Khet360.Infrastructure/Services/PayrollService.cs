@@ -13,10 +13,14 @@ namespace Khet360.Infrastructure.Services;
 public class PayrollService : IPayrollService
 {
     private readonly TenantDbContext _db;
+    private readonly ITaxService _taxService;
+    private readonly IFinancialService _financialService;
 
-    public PayrollService(TenantDbContext db)
+    public PayrollService(TenantDbContext db, ITaxService taxService, IFinancialService financialService)
     {
         _db = db;
+        _taxService = taxService;
+        _financialService = financialService;
     }
 
     public async Task<PayProfileDto> GetPayProfileAsync(Guid employeeId)
@@ -24,6 +28,24 @@ public class PayrollService : IPayrollService
         var profile = await _db.PayProfiles.FirstOrDefaultAsync(p => p.EmployeeId == employeeId);
         if (profile == null) throw new KeyNotFoundException("Pay profile not found.");
         return new PayProfileDto(profile.Id, profile.EmployeeId, profile.BankName, profile.AccountNumber, profile.BranchCode, profile.TaxNumber, profile.TaxBracket);
+    }
+
+    private async Task<PayItem> GetOrCreateStatutoryItemAsync(string code, string name, PayItemType type)
+    {
+        var item = await _db.PayItems.FirstOrDefaultAsync(pi => pi.Code == code);
+        if (item != null) return item;
+
+        item = new PayItem
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            Code = code,
+            Type = type,
+            IsStatutory = true
+        };
+        _db.PayItems.Add(item);
+        await _db.SaveChangesAsync();
+        return item;
     }
 
     public async Task<Guid> CreatePayProfileAsync(PayProfileCreateDto dto)
@@ -102,6 +124,15 @@ public class PayrollService : IPayrollService
 
         if (basicSalaryItem == null) throw new InvalidOperationException("Basic salary pay item (CODE: BASIC) must be defined.");
 
+        // Get statutory items
+        var payeItem = await GetOrCreateStatutoryItemAsync("PAYE", "PAYE Tax", PayItemType.Deduction);
+        var uifEmployeeItem = await GetOrCreateStatutoryItemAsync("UIF_Employee", "UIF Employee", PayItemType.Deduction);
+        var uifEmployerItem = await GetOrCreateStatutoryItemAsync("UIF_Employer", "UIF Employer", PayItemType.Earning);
+        var sdlEmployerItem = await GetOrCreateStatutoryItemAsync("SDL_Employer", "SDL Employer", PayItemType.Earning);
+
+        // Get active tax year
+        var taxYearId = await _taxService.GetActiveTaxYearIdAsync();
+
         // Clear existing entries for this run
         var existingEntries = await _db.PayrollEntries.Where(pe => pe.PayrollRunId == runId).ToListAsync();
         _db.PayrollEntries.RemoveRange(existingEntries);
@@ -110,21 +141,84 @@ public class PayrollService : IPayrollService
         {
             if (emp.Contract == null) continue;
 
-            // Verify employee has a pay profile
-            var profile = await _db.PayProfiles.AnyAsync(p => p.EmployeeId == emp.Id);
-            if (!profile) throw new InvalidOperationException($"Employee {emp.EmployeeCode} has no pay profile configured.");
+            var profile = await _db.PayProfiles.FirstOrDefaultAsync(p => p.EmployeeId == emp.Id);
+            if (profile == null) throw new InvalidOperationException($"Employee {emp.EmployeeCode} has no pay profile configured.");
+
+            decimal grossPay = emp.Contract.Salary;
 
             // 1. Base Salary
-            var entry = new PayrollEntry
+            _db.PayrollEntries.Add(new PayrollEntry
             {
                 Id = Guid.NewGuid(),
                 PayrollRunId = runId,
                 EmployeeId = emp.Id,
                 PayItemId = basicSalaryItem.Id,
-                Amount = emp.Contract.Salary,
+                Amount = grossPay,
                 Quantity = 1
-            };
-            _db.PayrollEntries.Add(entry);
+            });
+
+            // 2. PAYE Calculation
+            var paye = await _taxService.CalculatePayeAsync(grossPay, emp.DateOfBirth, taxYearId);
+            if (paye > 0)
+            {
+                _db.PayrollEntries.Add(new PayrollEntry
+                {
+                    Id = Guid.NewGuid(),
+                    PayrollRunId = runId,
+                    EmployeeId = emp.Id,
+                    PayItemId = payeItem.Id,
+                    Amount = paye,
+                    Quantity = 1,
+                    IsStatutory = true
+                });
+            }
+
+            // 3. UIF and SDL
+            var statutory = await _taxService.CalculateStatutoryDeductionsAsync(grossPay, taxYearId);
+
+            if (statutory.EmployeeUif > 0)
+            {
+                _db.PayrollEntries.Add(new PayrollEntry
+                {
+                    Id = Guid.NewGuid(),
+                    PayrollRunId = runId,
+                    EmployeeId = emp.Id,
+                    PayItemId = uifEmployeeItem.Id,
+                    Amount = statutory.EmployeeUif,
+                    Quantity = 1,
+                    IsStatutory = true
+                });
+            }
+
+            if (statutory.EmployerUif > 0)
+            {
+                _db.PayrollEntries.Add(new PayrollEntry
+                {
+                    Id = Guid.NewGuid(),
+                    PayrollRunId = runId,
+                    EmployeeId = emp.Id,
+                    PayItemId = uifEmployerItem.Id,
+                    Amount = statutory.EmployerUif,
+                    Quantity = 1,
+                    IsStatutory = true,
+                    IsEmployerContribution = true
+                });
+            }
+
+            if (statutory.EmployerSdl > 0)
+            {
+                _db.PayrollEntries.Add(new PayrollEntry
+                {
+                    Id = Guid.NewGuid(),
+                    PayrollRunId = runId,
+                    EmployeeId = emp.Id,
+                    PayItemId = sdlEmployerItem.Id,
+                    Amount = statutory.EmployerSdl,
+                    Quantity = 1,
+                    IsStatutory = true,
+                    IsEmployerContribution = true
+                });
+            }
         }
 
         await _db.SaveChangesAsync();
@@ -141,16 +235,22 @@ public class PayrollService : IPayrollService
 
         // Generate Payslips
         var entries = await _db.PayrollEntries
+            .Include(pe => pe.PayItem)
             .Where(pe => pe.PayrollRunId == runId)
             .ToListAsync();
 
         var employeeGroups = entries.GroupBy(pe => pe.EmployeeId);
 
+        decimal totalNetPay = 0;
+        decimal totalStatutoryLiability = 0;
+        decimal totalEmployerCost = 0;
+
         foreach (var group in employeeGroups)
         {
             var employeeId = group.Key;
-            var grossPay = group.Where(pe => pe.PayItem.Type == PayItemType.Earning).Sum(pe => pe.Amount);
+            var grossPay = group.Where(pe => pe.PayItem.Type == PayItemType.Earning && !pe.IsEmployerContribution).Sum(pe => pe.Amount);
             var totalDeductions = group.Where(pe => pe.PayItem.Type == PayItemType.Deduction).Sum(pe => pe.Amount);
+            var netPay = grossPay - totalDeductions;
 
             var payslip = new Payslip
             {
@@ -159,13 +259,63 @@ public class PayrollService : IPayrollService
                 PayrollRunId = runId,
                 GrossPay = grossPay,
                 TotalDeductions = totalDeductions,
-                NetPay = grossPay - totalDeductions,
+                NetPay = netPay,
                 IssuedDate = DateTime.UtcNow
             };
             _db.Payslips.Add(payslip);
+
+            totalNetPay += netPay;
         }
 
-        // Note: In a real app, we would post to the Finance General Ledger here.
+        // Calculate Liabilities for SARS
+        var statutoryEntries = entries.Where(pe => pe.IsStatutory).ToList();
+        totalStatutoryLiability = statutoryEntries.Sum(pe => pe.Amount);
+        totalEmployerCost = entries.Where(pe => pe.IsEmployerContribution).Sum(pe => pe.Amount);
+
+        // Post to Financial Ledger
+        var transaction = new FinancialTransaction
+        {
+            Id = Guid.NewGuid(),
+            Description = $"Payroll Finalization: {run.PeriodName}",
+            TransactionDate = DateTime.UtcNow,
+            SourceEntityId = runId,
+            SourceEntityType = "PayrollRun"
+        };
+        _db.FinancialTransactions.Add(transaction);
+
+        // Debit: Payroll Expense (Gross Pay + Employer Contributions)
+        var totalGross = entries.Where(pe => pe.PayItem.Type == PayItemType.Earning).Sum(pe => pe.Amount);
+        _db.FinancialEntries.Add(new FinancialEntry
+        {
+            Id = Guid.NewGuid(),
+            FinancialTransactionId = transaction.Id,
+            AccountCode = "PAYROLL-EXP",
+            Debit = totalGross,
+            Credit = 0
+        });
+
+        // Credit: Bank (Net Pay)
+        _db.FinancialEntries.Add(new FinancialEntry
+        {
+            Id = Guid.NewGuid(),
+            FinancialTransactionId = transaction.Id,
+            AccountCode = "CASH-BANK",
+            Debit = 0,
+            Credit = totalNetPay
+        });
+
+        // Credit: SARS Liability (PAYE + UIF + SDL)
+        if (totalStatutoryLiability > 0)
+        {
+            _db.FinancialEntries.Add(new FinancialEntry
+            {
+                Id = Guid.NewGuid(),
+                FinancialTransactionId = transaction.Id,
+                AccountCode = "SARS-LIABILITY",
+                Debit = 0,
+                Credit = totalStatutoryLiability
+            });
+        }
 
         await _db.SaveChangesAsync();
     }

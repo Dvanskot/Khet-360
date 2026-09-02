@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "GX+jvYOhJTU=",
+  "dgSpecHash": "qkPR4rTF7ME=",
   "success": true,
   "projectFilePath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Application\\Khet360.Application.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\Israel Tshikota\\.nuget\\packages\\fluentvalidation\\12.1.1\\fluentvalidation.12.1.1.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\mediatr\\14.2.0\\mediatr.14.2.0.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\mediatr.contracts\\2.0.1\\mediatr.contracts.2.0.1.nupkg.sha512",
     "C:\\Users\\Israel Tshikota\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\10.0.0\\microsoft.extensions.dependencyinjection.abstractions.10.0.0.nupkg.sha512",

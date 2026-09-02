@@ -15,8 +15,6 @@ public enum BackupStatus
 public class PlatformBackupJob : BaseEntity
 {
     [Required]
-    public Guid TenantId { get; set; }
-    [Required]
     public DateTime RequestedAtUtc { get; set; } = DateTime.UtcNow;
 
     public DateTime? CompletedAtUtc { get; set; }

@@ -60,6 +60,24 @@ const routes: RouteRecordRaw[] = [
           },
         ]
       },
+      {
+        path: 'fleet',
+        name: 'fleet',
+        component: () => import('@/views/fleet/FleetDashboard.vue'),
+        children: [
+          {
+            path: 'vehicles',
+            name: 'vehicles',
+            component: () => import('@/views/fleet/vehicles/VehicleManagementView.vue'),
+          },
+          {
+            path: 'dispatch',
+            name: 'dispatch',
+            component: () => import('@/views/fleet/dispatch/DispatchView.vue'),
+          },
+        ]
+      },
+
 
       {
         path: 'finance',

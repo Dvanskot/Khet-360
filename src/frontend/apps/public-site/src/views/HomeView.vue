@@ -22,11 +22,11 @@
       <div class="container">
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-number">10+</div>
+            <div class="stat-number">{{ stats.yearsOfExperience }}</div>
             <div class="stat-label">Years of Experience</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">500+</div>
+            <div class="stat-number">{{ stats.familiesServed }}</div>
             <div class="stat-label">Families Served</div>
           </div>
           <div class="stat-card">
@@ -34,14 +34,14 @@
             <div class="stat-label">Available Support</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">98%</div>
+            <div class="stat-number">{{ stats.satisfactionRate }}%</div>
             <div class="stat-label">Satisfaction Rate</div>
           </div>
         </div>
-      </div>
-      <div class="connection-status-indicator">
-        <ConnectionStatus />
-        <span class="status-text">{{ connectionStatus }}</span>
+        <div class="connection-status-indicator">
+          <ConnectionStatus />
+          <span class="status-text">{{ connectionStatus }}</span>
+        </div>
       </div>
     </section>
 
@@ -123,7 +123,7 @@
             placeholder="Enter your email"
             required
           />
-        </div>
+        </div
         
         <div class="form-group">
           <label for="phone" class="form-label">Phone Number *</label>
@@ -147,7 +147,7 @@
         </div>
         
         <div class="form-group">
-          <label for="message" class="form-label">Message</label>
+          <label for="message" class="form-label">Message</p>
           <KTextarea
             v-model="form.message"
             id="message"
@@ -187,6 +187,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { KButton, KInput, KSelect, KTextarea, KDialog } from '@khet360/ui-shared';
+import { PublicSiteService } from '@/services/publicSiteService';
 import { signalRService } from '@/services/signalRService';
 import { ConnectionStatus } from '@/components/ConnectionStatus.vue';
 
@@ -218,27 +219,7 @@ const services = ref([
   }
 ]);
 
-const testimonials = ref([
-  {
-    id: 1,
-    text: 'The team at Khet-360 handled everything with such care and professionalism during our difficult time. We felt supported every step of the way.',
-    author: 'Johnson Family',
-    location: 'Johannesburg'
-  },
-  {
-    id: 2,
-    text: 'From the first call to the final service, the compassion and attention to detail was exceptional. Highly recommend their services.',
-    author: 'Williams Family',
-    location: 'Cape Town'
-  },
-  {
-    id: 3,
-    text: 'They made a very difficult process as smooth as possible. The staff was kind, knowledgeable, and truly cared about our family.',
-    author: 'Mkhize Family',
-    location: 'Durban'
-  }
-]);
-
+const testimonials = ref([]);
 const serviceTypes = [
   'Traditional Funeral',
   'Cremation Service',
@@ -264,9 +245,17 @@ const submitting = ref(false);
 const connectionStatus = ref('Checking...');
 const isConnected = ref(false);
 
+// Statistics
+const stats = ref({
+  yearsOfExperience: 0,
+  familiesServed: 0,
+  satisfactionRate: 0
+});
+
 // Real-time updates
-const handleStatsUpdate = (stats: any) => {
+const handleStatsUpdate = (statsData: any) => {
   // Update stats in real-time
+  stats.value = { ...stats.value, ...statsData };
   notificationService.addNotification({
     title: 'Service Update',
     message: 'Our service statistics have been updated',
@@ -285,26 +274,97 @@ const handleNewTestimonial = (testimonial: any) => {
   });
 };
 
+const handleServiceUpdated = (service: any) => {
+  // Update service in the list
+  const index = services.value.findIndex(s => s.id === service.id);
+  if (index !== -1) {
+    services.value[index] = { ...services.value[index], ...service };
+    notificationService.addNotification({
+      title: 'Service Updated',
+      message: `Service "${service.title}" has been updated`,
+      type: 'info'
+    });
+  }
+};
+
 const fetchInitialStats = async () => {
   try {
-    // In a real implementation, this would fetch from an API
-    // For demo, we'll just set some initial values
+    // Fetch statistics from API
+    const statsData = await PublicSiteService.getStatistics();
+    stats.value = statsData;
     connectionStatus.value = 'Connected';
     isConnected.value = true;
   } catch (err) {
     connectionStatus.value = 'Disconnected';
     isConnected.value = false;
     console.error('Error fetching initial stats:', err);
+    // Fallback to mock data
+    stats.value = {
+      yearsOfExperience: 10,
+      familiesServed: 500,
+      satisfactionRate: 98
+    };
+  }
+};
+
+const fetchTestimonials = async () => {
+  try {
+    const testimonialsData = await PublicSiteService.getTestimonials();
+    testimonials.value = testimonialsData;
+  } catch (err) {
+    console.error('Error fetching testimonials:', err);
+    // Fallback to mock data
+    testimonials.value = [
+      {
+        id: 1,
+        text: 'The team at Khet-360 handled everything with such care and professionalism during our difficult time. We felt supported every step of the way.',
+        author: 'Johnson Family',
+        location: 'Johannesburg'
+      },
+      {
+        id: 2,
+        text: 'From the first call to the final service, the compassion and attention to detail was exceptional. Highly recommend their services.',
+        author: 'Williams Family',
+        location: 'Cape Town'
+      },
+      {
+        id: 3,
+        text: 'They made a very difficult process as smooth as possible. The staff was kind, knowledgeable, and truly cared about our family.',
+        author: 'Mkhize Family',
+        location: 'Durban'
+      }
+    ];
+  }
+};
+
+const fetchServices = async () => {
+  try {
+    const servicesData = await PublicSiteService.getServices();
+    services.value = servicesData;
+  } catch (err) {
+    console.error('Error fetching services:', err);
+    // Keep the default services if API fails
   }
 };
 
 onMounted(() => {
   // Fetch initial data
   fetchInitialStats();
+  fetchTestimonials();
+  fetchServices();
   
   // Set up SignalR listeners for real-time updates
-  signalRService.on('StatsUpdated', handleStatsUpdate);
-  signalRService.on('NewTestimonialAdded', handleNewTestimonial);
+  const statsCleanup = PublicSiteService.subscribeToStatisticsUpdates(
+    handleStatsUpdate
+  );
+  
+  const testimonialCleanup = PublicSiteService.subscribeToNewTestimonials(
+    handleNewTestimonial
+  );
+  
+  const serviceCleanup = PublicSiteService.subscribeToServiceUpdates(
+    handleServiceUpdated
+  );
   
   // Start SignalR connection
   signalRService.start().catch(err => {
@@ -316,8 +376,9 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   // Cleanup SignalR subscriptions
-  signalRService.off('StatsUpdated', handleStatsUpdate);
-  signalRService.off('NewTestimonialAdded', handleNewTestimonial);
+  if (statsCleanup) statsCleanup();
+  if (testimonialCleanup) testimonialCleanup();
+  if (serviceCleanup) serviceCleanup();
   
   // Stop SignalR connection
   signalRService.stop();
@@ -329,23 +390,28 @@ const scrollToServices = () => {
 };
 
 const scrollToAbout = () => {
-  document.querySelector('.about-section')?.scrollIntoView({ behavior: 'smooth' });
+  document.querySelector('.about-section')?.scrollIntoView({ behavior: 'smooth' };
 };
 
 const submitContactForm = async () => {
   submitting.value = true;
   try {
-    // In a real implementation, this would submit to an API
-    // For demo, we'll just show a success message
+    // Submit the contact form
+    await PublicSiteService.submitContactForm(form.value);
+    
+    // Show success message
     alert('Thank you for your message! We will get back to you shortly.');
     showContactForm.value = false;
     
-    // Notify via SignalR that we received a new contact form submission
-    signalRService.send('NewContactSubmission', {
-      name: form.value.name,
-      email: form.value.email,
-      timestamp: new Date().toISOString()
-    });
+    // Reset form
+    form.value = {
+      name: '',
+      email: '',
+      phone: '',
+      serviceType: '',
+      message: '',
+      subscribe: false
+    };
   } catch (err) {
     alert('There was an error submitting your message. Please try again.');
     console.error('Error submitting contact form:', err);

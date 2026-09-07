@@ -1,7 +1,6 @@
 {
   "name": "@khet360/tenant-erp",
   "version": "1.0.0",
- 0",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -13,6 +12,7 @@
     "vue-router": "^4.3.0",
     "pinia": "^2.1.0",
     "axios": "^1.6.0",
+    "@microsoft/signalr": "^8.0.0",
     "@khet360/api-client": "workspace:*",
     "@khet360/ui-shared": "workspace:*"
   },

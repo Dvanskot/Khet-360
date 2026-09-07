@@ -7,6 +7,15 @@
       </div>
     </header>
 
+    <div v-if="error" class="error-message">
+      {{ error }}
+    </div>
+
+    <div v-if="loading" class="loading-indicator">
+      <div class="spinner"></div>
+      <p>Loading work items from server...</p>
+    </div>
+
     <div class="filter-bar">
       <button
         v-for="f in filters"
@@ -20,44 +29,91 @@
     </div>
 
     <div class="task-list">
-      <div v-if="tasks.length === 0" class="empty-state">
+      <div v-if="tasks.length === 0 && workItems.length === 0" class="empty-state">
         <span class="emoji">🎉</span>
         <p>All caught up! No pending tasks.</p>
       </div>
 
-      <div
-        v-for="task in sortedTasks"
-        :key="task.id"
-        class="task-card"
-        :class="task.priority.toLowerCase()"
-      >
-        <div class="task-info">
-          <div class="task-meta">
-            <span class="case-id">{{ task.caseId }}</span>
-            <span class="due-date">{{ formatDate(task.dueAt) }}</span>
+      <!-- API Work Items -->
+      <div v-if="workItems.length > 0" class="api-work-items">
+        <h3 class="section-title">Server Work Items</h3>
+        <div
+          v-for="task in workItems"
+          :key="task.id"
+          class="task-card"
+          :class="task.priority.toLowerCase()"
+        >
+          <div class="task-info">
+            <div class="task-meta">
+              <span class="case-id">{{ task.caseId }}</span>
+              <span class="due-date">{{ task.due }}</span>
+            </div>
+            <h3>{{ task.title }}</h3>
+            <p>{{ task.description }}</p>
           </div>
-          <h3>{{ task.title }}</h3>
-          <p>{{ task.description }}</p>
-        </div>
 
-        <div class="task-actions">
-          <button
-            v-if="task.status === 'Pending'"
-            @click="updateTaskStatus(task, 'InProgress')"
-            class="btn-action"
-          >
-            Start
-          </button>
-          <button
-            v-if="task.status === 'InProgress'"
-            @click="updateTaskStatus(task, 'Completed')"
-            class="btn-action btn-complete"
-          >
-            Finish
-          </button>
-          <span v-if="task.status === 'Completed'" class="status-badge">
-            Completed
-          </span>
+          <div class="task-actions">
+            <button
+              v-if="task.status === 'Pending'"
+              @click="completeWorkItem(task.id)"
+              class="btn-action"
+            >
+              Start
+            </button>
+            <button
+              v-if="task.status === 'In Progress'"
+              @click="completeWorkItem(task.id)"
+              class="btn-action btn-complete"
+            >
+              Finish
+            </button>
+            <span v-if="task.status === 'Blocked'" class="status-badge">
+              Blocked
+            </span>
+            <span v-if="task.status === 'Completed'" class="status-badge">
+              Completed
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Local Tasks -->
+      <div v-if="tasks.length > 0" class="local-tasks">
+        <h3 class="section-title">Local Tasks</h3>
+        <div
+          v-for="task in sortedTasks"
+          :key="task.id"
+          class="task-card"
+          :class="task.priority.toLowerCase()"
+        >
+          <div class="task-info">
+            <div class="task-meta">
+              <span class="case-id">{{ task.caseId }}</span>
+              <span class="due-date">{{ formatDate(task.dueAt) }}</span>
+            </div>
+            <h3>{{ task.title }}</h3>
+            <p>{{ task.description }}</p>
+          </div>
+
+          <div class="task-actions">
+            <button
+              v-if="task.status === 'Pending'"
+              @click="updateTaskStatus(task, 'InProgress')"
+              class="btn-action"
+            >
+              Start
+            </button>
+            <button
+              v-if="task.status === 'InProgress'"
+              @click="updateTaskStatus(task, 'Completed')"
+              class="btn-action btn-complete"
+            >
+              Finish
+            </button>
+            <span v-if="task.status === 'Completed'" class="status-badge">
+              Completed
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -66,13 +122,17 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { MobileWorkItemService, WorkItem } from '@/services/workItemService';
 import { db } from '@/db/schema';
 import { syncEngine } from '@/sync/sync-engine';
 import { LocalTask } from '@/db/schema';
 
+const workItems = ref<WorkItem[]>([]);
 const tasks = ref<LocalTask[]>([]);
 const isSyncing = ref(false);
 const activeFilter = ref('all');
+const loading = ref<boolean>(true);
+const error = ref<string | null>(null);
 
 const filters = [
   { label: 'All Tasks', value: 'all' },
@@ -97,6 +157,36 @@ const sortedTasks = computed(() => {
   });
 });
 
+const fetchWorkItems = async () => {
+  try {
+    loading.value = true;
+    error.value = null;
+    workItems.value = await MobileWorkItemService.getWorkItems();
+  } catch (err) {
+    error.value = 'Failed to load work items. Please try again later.';
+    console.error('Error fetching work items:', err);
+    // Fallback to mock data in case of API failure
+    workItems.value = [
+      { id: 1, title: 'Verify Death Certificate', description: 'Verify the uploaded death certificate for Case #C-1024', status: 'Pending', due: 'Today', caseId: 'C-1024', priority: 'High' },
+      { id: 2, title: 'Schedule Burial Service', description: 'Coordinate with venue and transport for Case #C-1021', status: 'In Progress', due: 'Tomorrow', caseId: 'C-1021', priority: 'Medium' },
+      { id: 3, title: 'Process Claim Payout', description: 'Verify benefits and initiate payout for Case #C-1018', status: 'Blocked', due: '2 days', caseId: 'C-1018', priority: 'High' },
+    ];
+  } finally {
+    loading.value = false;
+  }
+};
+
+const completeWorkItem = async (id: number) => {
+  try {
+    await MobileWorkItemService.completeWorkItem(id);
+    // Refresh the list after completion
+    await fetchWorkItems();
+  } catch (err) {
+    error.value = 'Failed to complete work item. Please try again later.';
+    console.error('Error completing work item:', err);
+  }
+};
+
 async function loadTasks() {
   tasks.value = await db.tasks.toArray();
 }
@@ -117,8 +207,11 @@ function formatDate(dateStr: string) {
 
 onMounted(async () => {
   await loadTasks();
+  await fetchWorkItems(); // Fetch from API as well
   // Periodically refresh tasks from local DB
   setInterval(loadTasks, 5000);
+  // Periodically refresh from API
+  setInterval(fetchWorkItems, 30000);
 });
 </script>
 
@@ -153,6 +246,40 @@ onMounted(async () => {
 .sync-status.syncing {
   color: var(--khet-primary);
   border-color: var(--khet-primary);
+}
+
+.error-message {
+  padding: 1rem;
+  background-color: #f8d7da;
+  color: #721c24;
+  border-radius: var(--khet-radius-md);
+  border: 1px solid #f5c6cb;
+  margin-bottom: 1rem;
+}
+
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--khet-text-muted);
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--khet-border);
+  border-top-color: var(--khet-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 0.5rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .filter-bar {
@@ -281,4 +408,26 @@ onMounted(async () => {
 .high { border-left: 4px solid #f59e0b; }
 .medium { border-left: 4px solid #3b82f6; }
 .low { border-left: 4px solid #9ca3af; }
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1.5rem 0 1rem 0;
+  color: var(--khet-text-main);
+}
+
+.api-work-items {
+  background: var(--khet-surface-alt);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--khet-border);
+}
+
+.local-tasks {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid var(--khet-border);
+}
 </style>

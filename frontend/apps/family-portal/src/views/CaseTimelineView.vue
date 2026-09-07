@@ -2,9 +2,16 @@
   <div class="portal-container">
     <header class="portal-header">
       <div class="header-content">
-        <div class="welcome">
+        <div class="welcome" v-if="!loading && !error">
           <h1>In Loving Memory of {{ deceasedName }}</h1>
           <p>We are here to support you. Below is the current progress of the arrangements.</p>
+        </div>
+        <div v-else-if="loading" class="loading-indicator">
+          <div class="spinner"></div>
+          <p>Loading case information...</p>
+        </div>
+        <div v-else-if="error" class="error-message">
+          {{ error }}
         </div>
         <div class="family-badge">
           <span>Family Access Portal</span>
@@ -12,7 +19,7 @@
       </div>
     </header>
 
-    <main class="portal-main">
+    <main v-if="!loading && !error" class="portal-main">
       <div class="main-grid">
         <!-- Timeline Section -->
         <div class="timeline-section">
@@ -66,16 +73,16 @@
             <div class="payment-info">
               <div class="payment-row">
                 <span>Total Package Cost:</span>
-                <span>R 12,000.00</span>
+                <span>R {{ financialSummary.totalPackageCost.toLocaleString() }}.00</span>
               </div>
               <div class="payment-row">
                 <span>Insurance Cover:</span>
-                <span>- R 8,000.00</span>
+                <span>- R {{ financialSummary.insuranceCover.toLocaleString() }}</span>
               </div>
               <div class="payment-divider"></div>
               <div class="payment-total">
                 <span>Outstanding Balance:</span>
-                <span class="amount">R 4,000.00</span>
+                <span class="amount">R {{ financialSummary.outstandingBalance.toLocaleString() }}.00</span>
               </div>
             </div>
             <KButton variant="primary" class="pay-btn" @click="makePayment">Pay Outstanding Balance</KButton>
@@ -84,317 +91,419 @@
       </div>
     </main>
 
-    <footer class="portal-footer">
-      <p>Need help? Contact your Funeral Director, Sarah Jenkins, at +27 82 123 4567</p>
+    <footer class="portal-footer" v-if="!loading && !error">
+      <p>Need help? Contact your Funeral Director, {{ assignedFuneralDirector.name }}, at {{ assignedFuneralDirector.contactNumber }}</p>
     </footer>
-  </template>
+  </div>
+</template>
 
-  <script setup lang="ts">
-  import { ref } from 'vue';
-  import { KButton } from '@khet360/ui-shared';
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { KButton } from '@khet360/ui-shared';
+import { FamilyPortalService, FuneralCaseTimeline } from '@/services/familyPortalService';
 
-  const deceasedName = ref('Samuel Tshikota');
-  const currentStage = ref('Service Planning');
-  const currentStageIndex = ref(2);
+const deceasedName = ref('');
+const currentStage = ref('');
+const currentStageIndex = ref(0);
+const loading = ref<boolean>(true);
+const error = ref<string | null>(null);
 
-  const milestones = [
-    { title: 'Death Notification', description: 'Case opened and initial notification received.', date: 'Aug 25' },
-    { title: 'Verification', description: 'Identity and policy verification completed.', date: 'Aug 26' },
-    { title: 'Service Planning', description: 'Arranging venue, transport and casket selection.', date: 'Current' },
-    { title: 'Service Delivery', description: 'The funeral service and burial/cremation.', date: 'Pending' },
-    { title: 'Case Closure', description: 'Final administration and document archiving.', date: 'Pending' },
-  ];
+const milestones = ref<Array<{ title: string; description: string; date?: string }>>([]);
+const requiredDocs = ref<Array<{ name: string; uploaded: boolean; uploadDate?: string }>>([]);
+const financialSummary = ref<{
+  totalPackageCost: number;
+  insuranceCover: number;
+  outstandingBalance: number;
+  currency: string;
+}>({
+  totalPackageCost: 0,
+  insuranceCover: 0,
+  outstandingBalance: 0,
+  currency: 'ZAR',
+});
 
-  const requiredDocs = ref([
-    { name: 'Death Certificate', uploaded: true },
-    { name: 'ID Copy (Deceased)', uploaded: true },
-    { name: 'ID Copy (Next of Kin)', uploaded: false },
-    { name: 'Marriage Certificate', uploaded: false },
-  ]);
+const assignedFuneralDirector = ref<{
+  name: string;
+  contactNumber: string;
+}>({
+  name: '',
+  contactNumber: '',
+});
 
-  const uploadDoc = (name: string) => {
-    alert(`Opening upload dialog for ${name}...`);
-  };
+const fetchCaseTimeline = async () => {
+  try {
+    loading.value = true;
+    error.value = null;
+    // In a real app, we'd get the case ID from the route or auth context
+    const caseId = 'C-1024'; // Hardcoded for demo
+    const timelineData = await FamilyPortalService.getCaseTimeline(caseId);
+    
+    deceasedName.value = timelineData.deceasedName;
+    currentStage.value = timelineData.currentStage;
+    currentStageIndex.value = timelineData.currentStageIndex;
+    milestones.value = timelineData.milestones;
+    requiredDocs.value = timelineData.requiredDocuments;
+    financialSummary.value = timelineData.financialSummary;
+    assignedFuneralDirector.value = timelineData.assignedFuneralDirector;
+  } catch (err) {
+    error.value = 'Failed to load case information. Please try again later.';
+    console.error('Error fetching case timeline:', err);
+    // Fallback to mock data in case of API failure
+    deceasedName.value = 'Samuel Tshikota';
+    currentStage.value = 'Service Planning';
+    currentStageIndex.value = 2;
+    milestones.value = [
+      { title: 'Death Notification', description: 'Case opened and initial notification received.', date: 'Aug 25' },
+      { title: 'Verification', description: 'Identity and policy verification completed.', date: 'Aug 26' },
+      { title: 'Service Planning', description: 'Arranging venue, transport and casket selection.', date: 'Current' },
+      { title: 'Service Delivery', description: 'The funeral service and burial/cremation.', date: 'Pending' },
+      { title: 'Case Closure', description: 'Final administration and document archiving.', date: 'Pending' },
+    ];
+    requiredDocs.value = [
+      { name: 'Death Certificate', uploaded: true },
+      { name: 'ID Copy (Deceased)', uploaded: true },
+      { name: 'ID Copy (Next of Kin)', uploaded: false },
+      { name: 'Marriage Certificate', uploaded: false },
+    ];
+    financialSummary.value = {
+      totalPackageCost: 12000,
+      insuranceCover: 8000,
+      outstandingBalance: 4000,
+      currency: 'ZAR',
+    };
+    assignedFuneralDirector.value = {
+      name: 'Sarah Jenkins',
+      contactNumber: '+27 82 123 4567',
+    };
+  } finally {
+    loading.value = false;
+  }
+};
 
-  const makePayment = () => {
-    alert('Redirecting to secure payment gateway...');
-  };
+const uploadDoc = (name: string) => {
+  // In a real implementation, this would open a file upload dialog
+  alert(`Opening upload dialog for ${name}...`);
+};
+
+const makePayment = () => {
+  // In a real implementation, this would redirect to a payment gateway
+  alert('Redirecting to secure payment gateway...');
+};
+
+onMounted(() => {
+  fetchCaseTimeline();
+});
   </script>
 
-  <style scoped>
-  .portal-container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
+<style scoped>
+.portal-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
 
-  .portal-header {
-    background-color: var(--family-surface);
-    padding: 3rem 2rem;
-    text-align: center;
-    border-bottom: 1px solid var(--family-border);
-  }
+.portal-header {
+  background-color: var(--family-surface);
+  padding: 3rem 2rem;
+  text-align: center;
+  border-bottom: 1px solid var(--family-border);
+}
 
-  .header-content {
-    max-width: 800px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5rem;
-  }
+.header-content {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
 
-  .welcome h1 {
-    font-size: 2.5rem;
-    margin: 0 0 1rem 0;
-    color: var(--family-text-main);
-    font-weight: 300;
-  }
+.welcome h1 {
+  font-size: 2.5rem;
+  margin: 0 0 1rem 0;
+  color: var(--family-text-main);
+  font-weight: 300;
+}
 
-  .welcome p {
-    font-size: 1.1rem;
-    color: var(--family-text-muted);
-    max-width: 600px;
-    margin: 0 auto;
-  }
+.welcome p {
+  font-size: 1.1rem;
+  color: var(--family-text-muted);
+  max-width: 600px;
+  margin: 0 auto;
+}
 
-  .family-badge {
-    background-color: var(--family-primary-light, #f3f4f6);
-    color: var(--family-text-muted);
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    border: 1px solid var(--family-border);
-  }
+.family-badge {
+  background-color: var(--family-primary-light, #f3f4f6);
+  color: var(--family-text-muted);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--family-border);
+}
 
-  .portal-main {
-    flex: 1;
-    padding: 3rem 2rem;
-    max-width: 1100px;
-    margin: 0 auto;
-    width: 100%;
-  }
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--family-text-muted);
+}
 
-  .main-grid {
-    display: grid;
-    grid-template-columns: 1fr 400px;
-    gap: 3rem;
-  }
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--family-border);
+  border-top-color: var(--family-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 0.5rem;
+}
 
-  .section-card {
-    background-color: white;
-    border-radius: var(--family-radius);
-    padding: 2rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-    border: 1px solid var(--family-border);
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
+}
 
-  .section-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-  }
+.error-message {
+  padding: 1.5rem;
+  background-color: #f8d7da;
+  color: #721c24;
+  border-radius: var(--family-radius);
+  border: 1px solid #f5c6cb;
+  text-align: center;
+  margin: 2rem 0;
+}
 
-  .section-title h3 {
-    font-size: 1.3rem;
-    margin: 0;
-    color: var(--family-text-main);
-  }
+.portal-main {
+  flex: 1;
+  padding: 3rem 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
 
-  .status-pill {
-    font-size: 0.8rem;
-    padding: 4px 12px;
-    background-color: var(--family-accent);
-    color: white;
-    border-radius: 12px;
-    font-weight: 600;
-  }
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 3rem;
+}
 
-  .timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    position: relative;
-  }
+.section-card {
+  background-color: white;
+  border-radius: var(--family-radius);
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+  border: 1px solid var(--family-border);
+}
 
-  .milestone-item {
-    display: flex;
-    gap: 1.5rem;
-    position: relative;
-  }
+.section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
 
-  .milestone-marker {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background-color: white;
-    border: 2px solid var(--family-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    font-weight: 700;
-    z-index: 2;
-    transition: all 0.3s;
-  }
+.section-title h3 {
+  font-size: 1.3rem;
+  margin: 0;
+  color: var(--family-text-main);
+}
 
-  .milestone-item.active .milestone-marker {
-    border-color: var(--family-accent);
-    background-color: var(--family-accent);
-    color: white;
-    box-shadow: 0 0 0 4px rgba(8, 175, 175, 0.2);
-  }
+.status-pill {
+  font-size: 0.8rem;
+  padding: 4px 12px;
+  background-color: var(--family-accent);
+  color: white;
+  border-radius: 12px;
+  font-weight: 600;
+}
 
-  .milestone-item.completed .milestone-marker {
-    background-color: #2ecc71;
-    border-color: #2ecc71;
-    color: white;
-  }
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  position: relative;
+}
 
-  .milestone-content {
-    flex: 1;
-    padding-bottom: 1rem;
-  }
+.milestone-item {
+  display: flex;
+  gap: 1.5rem;
+  position: relative;
+}
 
-  .milestone-title {
-    font-weight: 600;
-    font-size: 1.1rem;
-    margin-bottom: 0.25rem;
-  }
+.milestone-marker {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: white;
+  border: 2px solid var(--family-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  z-index: 2;
+  transition: all 0.3s;
+}
 
-  .milestone-desc {
-    font-size: 0.9rem;
-    color: var(--family-text-muted);
-    margin-bottom: 0.5rem;
-  }
+.milestone-item.active .milestone-marker {
+  border-color: var(--family-accent);
+  background-color: var(--family-accent);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(8, 175, 175, 0.2);
+}
 
-  .milestone-date {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--family-text-muted);
-    text-transform: uppercase;
-  }
+.milestone-item.completed .milestone-marker {
+  background-color: #2ecc71;
+  border-color: #2ecc71;
+  color: white;
+}
 
-  .actions-section {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-  }
+.milestone-content {
+  flex: 1;
+  padding-bottom: 1rem;
+}
 
-  .action-card {
-    background-color: white;
-    border-radius: var(--family-radius);
-    padding: 2rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-    border: 1px solid var(--family-border);
-  }
+.milestone-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
 
-  .action-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-  }
+.milestone-desc {
+  font-size: 0.9rem;
+  color: var(--family-text-muted);
+  margin-bottom: 0.5rem;
+}
 
-  .action-icon {
-    font-size: 1.5rem;
-  }
+.milestone-date {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--family-text-muted);
+  text-transform: uppercase;
+}
 
-  .action-header h3 {
-    font-size: 1.2rem;
-    margin: 0;
-  }
+.actions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
 
-  .doc-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-top: 1.5rem;
-  }
+.action-card {
+  background-color: white;
+  border-radius: var(--family-radius);
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+  border: 1px solid var(--family-border);
+}
 
-  .doc-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 1rem;
-    background-color: var(--family-bg);
-    border-radius: 8px;
-    border: 1px solid var(--family-border);
-  }
+.action-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
 
-  .doc-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
+.action-icon {
+  font-size: 1.5rem;
+}
 
-  .doc-name {
-    font-size: 0.9rem;
-    font-weight: 500;
-  }
+.action-header h3 {
+  font-size: 1.2rem;
+  margin: 0;
+}
 
-  .doc-status {
-    font-size: 0.75rem;
-    color: var(--family-text-muted);
-  }
+.doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
 
-  .doc-item.uploaded {
-    background-color: #f0fff4;
-    border-color: #c6f6d5;
-  }
+.doc-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: var(--family-bg);
+  border-radius: 8px;
+  border: 1px solid var(--family-border);
+}
 
-  .check-icon {
-    color: #2ecc71;
-    font-weight: 800;
-  }
+.doc-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
 
-  .payment-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-  }
+.doc-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
 
-  .payment-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-  }
+.doc-status {
+  font-size: 0.75rem;
+  color: var(--family-text-muted);
+}
 
-  .payment-divider {
-    height: 1px;
-    background-color: var(--family-border);
-    margin: 0.5rem 0;
-  }
+.doc-item.uploaded {
+  background-color: #f0fff4;
+  border-color: #c6f6d5;
+}
 
-  .payment-total {
-    display: flex;
-    justify-content: space-between;
-    font-weight: 700;
-    font-size: 1.1rem;
-  }
+.check-icon {
+  color: #2ecc71;
+  font-weight: 800;
+}
 
-  .amount {
-    color: #c0392b;
-    font-weight: 800;
-  }
+.payment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
 
-  .pay-btn {
-    width: 100%;
-    padding: 1rem;
-    font-weight: 700;
-    font-size: 1rem;
-    background-color: var(--family-accent);
-  }
+.payment-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
 
-  .portal-footer {
-    text-align: center;
-    padding: 3rem 2rem;
-    color: var(--family-text-muted);
-    font-size: 0.9rem;
-    border-top: 1px solid var(--family-border);
-  }
-  </style>
+.payment-divider {
+  height: 1px;
+  background-color: var(--family-border);
+  margin: 0.5rem 0;
+}
+
+.payment-total {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.amount {
+  color: #c0392b;
+  font-weight: 800;
+}
+
+.pay-btn {
+  width: 100%;
+  padding: 1rem;
+  font-weight: 700;
+  font-size: 1rem;
+  background-color: var(--family-accent);
+}
+
+.portal-footer {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--family-text-muted);
+  font-size: 0.9rem;
+  border-top: 1px solid var(--family-border);
+}
+</style>
 </template>

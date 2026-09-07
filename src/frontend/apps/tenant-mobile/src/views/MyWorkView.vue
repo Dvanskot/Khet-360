@@ -4,9 +4,9 @@
       <h1 class="title">My Work</h1>
       <div class="header-actions">
         <ConnectionStatus />
-      </div>
-      <div class="sync-status" :class="{ syncing: isSyncing }">
-        {{ isSyncing ? 'Syncing...' : 'Synced' }}
+        <div class="sync-status" :class="{ syncing: isSyncing }">
+          {{ isSyncing ? 'Syncing...' : 'Synced' }}
+        </div>
       </div>
     </header>
 
@@ -32,7 +32,7 @@
     </div>
 
     <div class="task-list">
-      <div v-if="tasks.length === 0 && workItems.length === 0" class="empty-state">
+      <div v-if="(workItems.length === 0 && tasks.length === 0) && !loading" class="empty-state">
         <span class="emoji">🎉</span>
         <p>All caught up! No pending tasks.</p>
       </div>
@@ -49,7 +49,7 @@
           <div class="task-info">
             <div class="task-meta">
               <span class="case-id">{{ task.caseId }}</span>
-              <span class="due-date">{{ task.due }}</span>
+              <span class="due-date">{{ formatDate(task.due) }}</span>
             </div>
             <h3>{{ task.title }}</h3>
             <p>{{ task.description }}</p>
@@ -168,6 +168,7 @@ const fetchWorkItems = async () => {
   try {
     loading.value = true;
     error.value = null;
+    isSyncing.value = true;
     workItems.value = await MobileWorkItemService.getWorkItems();
   } catch (err) {
     error.value = 'Failed to load work items. Please try again later.';
@@ -180,6 +181,7 @@ const fetchWorkItems = async () => {
     ];
   } finally {
     loading.value = false;
+    isSyncing.value = false;
   }
 };
 
@@ -197,17 +199,25 @@ const completeWorkItem = async (id: number) => {
 };
 
 async function loadTasks() {
-  tasks.value = await db.tasks.toArray();
+  try {
+    tasks.value = await db.tasks.toArray();
+  } catch (err) {
+    console.error('Error loading tasks from local DB:', err);
+  }
 }
 
 async function updateTaskStatus(task: LocalTask, newStatus: LocalTask['status']) {
-  await syncEngine.executeCommand({
-    entityType: 'Task',
-    entityId: task.id,
-    action: 'UPDATE',
-    payload: { status: newStatus },
-  });
-  await loadTasks();
+  try {
+    await syncEngine.executeCommand({
+      entityType: 'Task',
+      entityId: task.id,
+      action: 'UPDATE',
+      payload: { status: newStatus },
+    });
+    await loadTasks();
+  } catch (err) {
+    console.error('Error updating task status:', err);
+  }
 }
 
 function formatDate(dateStr: string) {
@@ -248,14 +258,30 @@ const handleWorkItemDeleted = (workItemId: number) => {
   });
 };
 
+const handleWorkItemCompleted = (completedWorkItem: WorkItem) => {
+  // Find and update the specific work item
+  const index = workItems.value.findIndex(item => item.id === completedWorkItem.id);
+  if (index !== -1) {
+    workItems.value[index] = { ...workItems.value[index], ...completedWorkItem };
+    notificationService.addNotification({
+      title: 'Work Item Completed',
+      message: `Work item "${completedWorkItem.title}" has been marked as complete`,
+      type: 'success'
+    });
+  }
+};
+
 onMounted(async () => {
   await loadTasks();
   await fetchWorkItems(); // Fetch from API as well
   
   // Set up SignalR listeners for real-time updates
-  signalRService.on('WorkItemUpdated', handleWorkItemUpdated);
-  signalRService.on('WorkItemCreated', handleWorkItemCreated);
-  signalRService.on('WorkItemDeleted', handleWorkItemDeleted);
+  const workItemCleanup = MobileWorkItemService.subscribeToWorkItemUpdates(
+    handleWorkItemCreated,
+    handleWorkItemUpdated,
+    handleWorkItemDeleted,
+    handleWorkItemCompleted
+  );
   
   // Start SignalR connection
   signalRService.start().catch(err => {
@@ -275,9 +301,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   // Cleanup SignalR subscriptions
-  signalRService.off('WorkItemUpdated', handleWorkItemUpdated);
-  signalRService.off('WorkItemCreated', handleWorkItemCreated);
-  signalRService.off('WorkItemDeleted', handleWorkItemDeleted);
+  if (workItemCleanup) workItemCleanup();
   
   // Stop SignalR connection
   signalRService.stop();
@@ -308,6 +332,7 @@ onBeforeUnmount(() => {
 .page-header .header-actions {
   display: flex;
   gap: 1rem;
+  align-items: center;
 }
 
 .page-header .sync-status {

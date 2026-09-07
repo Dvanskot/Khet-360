@@ -90,6 +90,13 @@
                 Edit
               </KButton>
               <KButton 
+                variant="success" 
+                size="sm" 
+                @click="orderProduct(product.id)"
+              >
+                Order
+              </KButton>
+              <KButton 
                 variant="danger" 
                 size="sm" 
                 @confirm="deleteProduct(product.id)"
@@ -137,7 +144,7 @@
           placeholder="Enter SKU"
           required
         />
-      </div>
+      </div
       
       <div class="form-group">
         <label for="category" class="form-label">Category *</label>
@@ -178,6 +185,30 @@
           type="number"
           v-model.number="form.stockQuantity"
           id="stockQuantity"
+          placeholder="0"
+          min="0"
+          required
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="reorderLevel" class="form-label">Reorder Level *</label>
+        <KInput
+          type="number"
+          v-model.number="form.reorderLevel"
+          id="reorderLevel"
+          placeholder="0"
+          min="0"
+          required
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="maxStockLevel" class="form-label">Maximum Stock Level *</label>
+        <KInput
+          type="number"
+          v-model.number="form.maxStockLevel"
+          id="maxStockLevel"
           placeholder="0"
           min="0"
           required
@@ -237,6 +268,7 @@ import { KButton, KInput, KSelect, KDialog } from '@khet360/ui-shared';
 import { VendorHubService, Product } from '@/services/vendorHubService';
 import { signalRService } from '@/services/signalRService';
 import { authService } from '@/services/authService';
+import { notificationService } from '@/services/notificationService';
 import { ConnectionStatus } from '@/components/ConnectionStatus.vue';
 
 const products = ref<Product[]>([]);
@@ -250,6 +282,9 @@ const selectedStatus = ref<string | null>(null);
 const showCreateDialog = ref(false);
 const showStockDetails = ref(false);
 const selectedProduct = ref<Product | null>(null);
+const saving = ref(false);
+const confirmDelete = ref(false);
+
 const form = ref({
   id: '',
   name: '',
@@ -344,6 +379,7 @@ const fetchProducts = async () => {
       { id: '2', name: 'Standard Steel Casket', sku: 'CAK-002', category: 'Caskets', price: 8500, cost: 5500, stockQuantity: 8, status: 'Active' },
       { id: '3', name: 'Cremation Urn - Bronze', sku: 'URN-001', category: 'Urns', price: 2500, cost: 1200, stockQuantity: 15, status: 'Active' },
       { id: '4', name: 'Funeral Flowers - Lilly Arrangement', sku: 'FLR-001', category: 'Flowers', price: 1200, cost: 600, stockQuantity: 0, status: 'Active' },
+      { id: '5', name: 'Memorial Plaque - Granite', sku: 'MEM-001', category: 'Memorial Items', price: 1800, cost: 900, stockQuantity: 12, status: 'Active' },
     ];
   } finally {
     loading.value = false;
@@ -382,7 +418,6 @@ const editProduct = (product: Product) => {
 };
 
 const deleteProduct = (productId: string) => {
-  // Implementation would go here
   confirmDelete.value = true;
 };
 
@@ -399,6 +434,24 @@ const confirmDelete = async (productId: string) => {
   }
 };
 
+const orderProduct = async (productId: string) => {
+  try {
+    // In a real implementation, this would create an order
+    // For now, we'll just show a confirmation
+    const result = await VendorHubService.getProductById(productId);
+    alert(`Placing order for ${result.name}...`);
+    
+    // Notify via SignalR that we ordered a product (decreased stock)
+    signalRService.send('ProductOrdered', {
+      productId,
+      quantity: 1
+    });
+  } catch (err) {
+    error.value = 'Failed to order product. Please try again later.';
+    console.error('Error ordering product:', err);
+  }
+};
+
 const toggleStockDetails = (product: Product) => {
   selectedProduct.value = product;
   showStockDetails.value = true;
@@ -408,9 +461,11 @@ onMounted(async () => {
   await fetchProducts();
   
   // Set up SignalR listeners for real-time updates
-  signalRService.on('ProductUpdated', handleProductUpdated);
-  signalRService.on('ProductCreated', handleProductCreated);
-  signalRService.on('ProductDeleted', handleProductDeleted);
+  const productCleanup = VendorHubService.subscribeToProductUpdates(
+    handleProductCreated,
+    handleProductUpdated,
+    handleProductDeleted
+  );
   
   // Start SignalR connection
   signalRService.start().catch(err => {
@@ -421,24 +476,16 @@ onMounted(async () => {
       type: 'warning'
     });
   });
-});
-
-onBeforeUnmount(() => {
-  // Cleanup SignalR subscriptions
-  signalRService.off('ProductUpdated', handleProductUpdated);
-  signalRService.off('ProductCreated', handleProductCreated);
-  signalRService.off('ProductDeleted', handleProductDeleted);
   
-  // Stop SignalR connection
-  signalRService.stop();
+  // Cleanup on unmount
+  onBeforeUnmount(() => {
+    if (productCleanup) productCleanup();
+    signalRService.stop();
+  });
 });
 </script>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-
-const saving = ref(false);
-const confirmDelete = ref(false);
 </script>
 
 <style scoped>

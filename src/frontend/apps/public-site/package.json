@@ -9,6 +9,10 @@
   },
   "dependencies": {
     "vue": "^3.4.0",
+    "vue-router": "^4.3.0",
+    "pinia": "^2.1.0",
+    "@microsoft/signalr": "^8.0.0",
+    "@khet360/api-client": "workspace:*",
     "@khet360/ui-shared": "workspace:*"
   },
   "devDependencies": {

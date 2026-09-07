@@ -12,15 +12,11 @@ export default defineConfig({
   server: {
     port: 5174,
     proxy: {
-      '/platform/api': {
+      '/api': {
         target: 'http://localhost:5226',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/platform\/api/, '/platform/api'),
-      },
-      '/tenant/api': {
-        target: 'http://localhost:5226',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/tenant\/api/, '/tenant/api'),
+        secure: false,
+        ws: true,
       },
     },
   },

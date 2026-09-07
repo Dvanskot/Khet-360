@@ -23,7 +23,7 @@
         <span>Family Access Portal</span>
       </div>
       <div class="user-profile">
-        <span class="username">Sarah Jenkins</span>
+        <span class="username">{{ assignedFuneralDirector.name }}</span>
         <img src="/images/user-placeholder.png" alt="User Profile" class="user-avatar" />
       </div>
     </div>
@@ -139,22 +139,60 @@ onMounted(() => {
   fetchCaseTimeline();
   
   // Set up SignalR listeners for real-time updates
-  signalRService.on('CaseTimelineUpdated', (updatedTimeline: any) => {
-    // Update the case timeline with new data
-    deceasedName.value = updatedTimeline.deceasedName;
-    currentStage.value = updatedTimeline.currentStage;
-    currentStageIndex.value = updatedTimeline.currentStageIndex;
-    milestones.value = updatedTimeline.milestones;
-    requiredDocs.value = updatedTimeline.requiredDocuments;
-    financialSummary.value = updatedTimeline.financialSummary;
-    assignedFuneralDirector.value = updatedTimeline.assignedFuneralDirector;
-    
-    notificationService.addNotification({
-      title: 'Case Timeline Updated',
-      message: 'The case timeline has been updated with new information',
-      type: 'info'
-    });
-  });
+  const timelineCleanup = FamilyPortalService.subscribeToCaseTimelineUpdates(
+    (updatedTimeline: any) => {
+      // Update the case timeline with new data
+      deceasedName.value = updatedTimeline.deceasedName;
+      currentStage.value = updatedTimeline.currentStage;
+      currentStageIndex.value = updatedTimeline.currentStageIndex;
+      milestones.value = updatedTimeline.milestones;
+      requiredDocs.value = updatedTimeline.requiredDocuments;
+      financialSummary.value = updatedTimeline.financialSummary;
+      assignedFuneralDirector.value = updatedTimeline.assignedFuneralDirector;
+      
+      notificationService.addNotification({
+        title: 'Case Timeline Updated',
+        message: 'The case timeline has been updated with new information',
+        type: 'info'
+      });
+    }
+  );
+  
+  const documentCleanup = FamilyPortalService.subscribeToDocumentUpdates(
+    (uploadData: any) => {
+      notificationService.addNotification({
+        title: 'Document Uploaded',
+        message: `Document "${uploadData.fileName}" has been uploaded successfully`,
+        type: 'success'
+      });
+      
+      // If it's a required document, mark it as uploaded
+      if (uploadData.documentType) {
+        const docIndex = requiredDocs.value.findIndex(doc => 
+          doc.name.toLowerCase().includes(uploadData.documentType.toLowerCase())
+        );
+        if (docIndex !== -1) {
+          requiredDocs.value[docIndex].uploaded = true;
+          requiredDocs.value[docIndex].uploadDate = new Date().toISOString().split('T')[0];
+        }
+      }
+    }
+  );
+  
+  const paymentCleanup = FamilyPortalService.subscribeToPaymentUpdates(
+    (paymentData: any) => {
+      notificationService.addNotification({
+        title: 'Payment Processed',
+        message: `Payment of R ${paymentData.amount.toLocaleString()} has been processed successfully`,
+        type: 'success'
+      });
+      
+      // Update financial summary
+      if (financialSummary.value.outstandingBalance >= paymentData.amount) {
+        financialSummary.value.outstandingBalance -= paymentData.amount;
+      }
+    }
+  );
   
   // Start SignalR connection
   signalRService.start().catch(err => {
@@ -164,6 +202,14 @@ onMounted(() => {
       message: 'Unable to connect to real-time updates. Some features may not be live.',
       type: 'warning'
     });
+  });
+  
+  // Cleanup on unmount
+  onBeforeUnmount(() => {
+    timelineCleanup();
+    documentCleanup();
+    paymentCleanup();
+    signalRService.stop();
   });
 });
 </script>

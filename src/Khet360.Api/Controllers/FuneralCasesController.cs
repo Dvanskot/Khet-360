@@ -1,8 +1,10 @@
+using Khet360.Application.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Khet360.Application.Interfaces;
 using Khet360.Api.Attributes;
 using Khet360.Domain.Enums;
+using System;
 
 namespace Khet360.Api.Controllers;
 
@@ -20,36 +22,38 @@ public class FuneralCasesController : ControllerBase
 
     [HttpPost]
     [HasPermission("FuneralCases.Create")]
-    public async Task<IActionResult> OpenCase([FromBody] OpenCaseRequest request)
+    public async Task<ActionResult<ApiResponse<Guid>>> OpenCase([FromBody] OpenCaseRequest request)
     {
         var id = await _funeralCaseService.OpenCaseAsync(request.CustomerId, request.DeceasedCustomerId, request.BranchId);
-        return CreatedAtAction(nameof(GetById), new { id }, new { Id = id });
+        return CreatedAtAction(nameof(GetById), new { id }, ApiResponse.Ok(id, "Case opened successfully"));
     }
 
     [HttpPatch("milestone")]
     [HasPermission("FuneralCases.Update")]
-    public async Task<IActionResult> CompleteMilestone([FromBody] CompleteMilestoneRequest request)
+    public async Task<ActionResult<ApiResponse<object>>> CompleteMilestone([FromBody] CompleteMilestoneRequest request)
     {
         var userId = Guid.Parse(User.FindFirst("sub")?.Value ?? throw new UnauthorizedAccessException());
         await _funeralCaseService.CompleteMilestoneAsync(request.CaseId, request.Milestone, request.Outcome, request.Notes, userId);
-        return NoContent();
+        return Ok(ApiResponse.Ok(new { success = true }, "Milestone completed successfully"));
     }
 
     [HttpGet("{id}")]
     [HasPermission("FuneralCases.Read")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<ActionResult<ApiResponse<FuneralCaseDetailsDto>>> GetById(Guid id)
     {
         var funeralCase = await _funeralCaseService.GetCaseDetailsAsync(id);
-        if (funeralCase == null) return NotFound();
-        return Ok(funeralCase);
+        if (funeralCase == null) 
+            return NotFound(ApiResponse.Fail<FuneralCaseDetailsDto>("Case not found"));
+        
+        return Ok(ApiResponse.Ok(funeralCase, "Case retrieved successfully"));
     }
 
     [HttpGet]
     [HasPermission("FuneralCases.Read")]
-    public async Task<IActionResult> GetCases([FromQuery] FuneralCaseSearchFilter filter)
+    public async Task<ActionResult<ApiResponse<PagedList<FuneralCaseDto>>>> GetCases([FromQuery] FuneralCaseSearchFilter filter)
     {
         var results = await _funeralCaseService.SearchCasesAsync(filter);
-        return Ok(results);
+        return Ok(ApiResponse.Ok(results, "Cases retrieved successfully"));
     }
 }
 

@@ -73,18 +73,173 @@
           </div>
         </div>
       </div>
+      
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h3 class="section-title">Quick Actions</h3>
+        <div class="actions-grid">
+          <KButton @click="showCreateWorkItemDialog = true" variant="secondary">
+            Add Work Item
+          </KButton>
+          <KButton @click="showCreateLeadDialog = true" variant="secondary">
+            Add Lead
+          </KButton>
+          <KButton @click="showNotificationSettings = true" variant="outline">
+            Notification Settings
+          </KButton>
+        </div>
+      </div>
     </div>
   </div>
+  
+  <!-- Create Work Item Dialog -->
+  <KDialog v-model:show="showCreateWorkItemDialog" title="Create New Work Item" width="500px">
+    <div class="dialog-content">
+      <div class="form-group">
+        <label for="title" class="form-label">Title *</label>
+        <KInput
+          v-model="workItemForm.title"
+          id="title"
+          placeholder="Enter work item title"
+          required
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="description" class="form-label">Description</label>
+        <KTextarea
+          v-model="workItemForm.description"
+          id="description"
+          placeholder="Enter work item description"
+          rows="3"
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="caseId" class="form-label">Case ID *</label>
+        <KInput
+          v-model="workItemForm.caseId"
+          id="caseId"
+          placeholder="Enter case ID"
+          required
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="priority" class="form-label">Priority</label>
+        <KSelect
+          v-model="workItemForm.priority"
+          id="priority"
+          :options="priorityOptions"
+          placeholder="Select priority"
+          required
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="dueDate" class="form-label">Due Date</label>
+        <KInput
+          type="date"
+          v-model="workItemForm.dueDate"
+          id="dueDate"
+        />
+      </div>
+    </div>
+    
+    <template #footer>
+      <KButton variant="secondary" @click="showCreateWorkItemDialog = false">
+        Cancel
+      </KButton>
+      <KButton 
+        variant="primary" 
+        @click="saveWorkItem"
+        :loading="savingWorkItem"
+      >
+        Save Work Item
+      </KButton>
+    </template>
+  </KDialog>
+  
+  <!-- Create Lead Dialog -->
+  <KDialog v-model:show="showCreateLeadDialog" title="Create New Lead" width="500px">
+    <div class="dialog-content">
+      <div class="form-group">
+        <label for="contactName" class="form-label">Contact Name *</label>
+        <KInput
+          v-model="leadForm.contactName"
+          id="contactName"
+          placeholder="Enter contact name"
+          required
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="organization" class="form-label">Organization</label>
+        <KInput
+          v-model="leadForm.organization"
+          id="organization"
+          placeholder="Enter organization name"
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="serviceInterest" class="form-label">Service Interest *</label>
+        <KSelect
+          v-model="leadForm.serviceInterest"
+          id="serviceInterest"
+          :options="serviceOptions"
+          placeholder="Select service interest"
+          required
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="priority" class="form-label">Priority</label>
+        <KSelect
+          v-model="leadForm.priority"
+          id="priority"
+          :options="priorityOptions"
+          placeholder="Select priority"
+          required
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="status" class="form-label">Status</label>
+        <KSelect
+          v-model="leadForm.status"
+          id="status"
+          :options="statusOptions"
+          placeholder="Select status"
+          required
+        />
+      </div>
+    </div>
+    
+    <template #footer>
+      <KButton variant="secondary" @click="showCreateLeadDialog = false">
+        Cancel
+      </KButton>
+      <KButton 
+        variant="primary" 
+        @click="saveLead"
+        :loading="savingLead"
+      >
+        Save Lead
+      </KButton>
+    </template>
+  </KDialog>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmarked } from 'vue';
-import { ConnectionStatus } from '@/components/ConnectionStatus.vue';
-
-// Import services
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
+import { KButton, KInput, KTextarea, KSelect, KDialog } from '@khet360/ui-shared';
+import { WorkItemService } from '@/services/workItemService';
+import { LeadService } from '@/services/leadService';
 import { signalRService } from '@/services/signalRService';
 import { authService } from '@/services/authService';
 import { notificationService } from '@/services/notificationService';
+import { ConnectionStatus } from '@/components/ConnectionStatus.vue';
 
 const stats = ref({
   activeCases: 0,
@@ -94,23 +249,120 @@ const stats = ref({
 });
 
 const recentActivities = ref([]);
-const loading = ref(true);
-const error = ref(null);
+const loading = ref<boolean>(true);
+const error = ref<string | null>(null);
 
-// Mock data fetching function (would be replaced with actual API calls)
+const priorityOptions = ['Low', 'Medium', 'High', 'Critical'];
+const statusOptions = ['New', 'Contacted', 'Qualified', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost'];
+const serviceOptions = [
+  'Traditional Funeral',
+  'Cremation Service',
+  'Memorial Service',
+  'Pre-Planning Consultation',
+  'Grief Support',
+  'Transportation Services',
+  'Floral Arrangements',
+  'Catering Services'
+];
+
+const workItemForm = ref({
+  title: '',
+  description: '',
+  caseId: '',
+  priority: 'Medium',
+  dueDate: ''
+});
+
+const leadForm = ref({
+  contactName: '',
+  organization: '',
+  serviceInterest: '',
+  priority: 'Medium',
+  status: 'New'
+});
+
+const savingWorkItem = ref(false);
+const savingLead = ref(false);
+const showCreateWorkItemDialog = ref(false);
+const showCreateLeadDialog = ref(false);
+const showNotificationSettings = ref(false);
+
+// Real-time update handlers
+const handleStatsUpdate = (newStats: any) => {
+  stats.value = { ...stats.value, ...newStats };
+  notificationService.addNotification({
+    title: 'Dashboard Updated',
+    message: 'Statistics have been updated in real-time',
+    type: 'info'
+  });
+};
+
+const handleActivityUpdate = (activity: any) => {
+  // Add new activity to the beginning of the list
+  recentActivities.value = [activity, ...recentActivities.value.slice(0, 9)]; // Keep only latest 10
+  notificationService.addNotification({
+    title: 'New Activity',
+    message: activity.title,
+    type: 'success'
+  });
+};
+
+const handleWorkItemCreated = (workItem: any) => {
+  notificationService.addNotification({
+    title: 'Work Item Created',
+    message: `New work item "${workItem.title}" has been created`,
+    type: 'success'
+  });
+  // Optionally refresh stats or activity feed
+};
+
+const handleLeadCreated = (lead: any) => {
+  notificationService.addNotification({
+    title: 'New Lead Created',
+    message: `New lead "${lead.contactName}" from ${lead.organization || 'unknown'} has been created`,
+    type: 'success'
+  });
+};
+
 const fetchDashboardData = async () => {
   try {
     loading.value = true;
     error.value = null;
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Fetch statistics
+    const workItems = await WorkItemService.getWorkItems();
+    const leads = await LeadService.getLeads();
     
-    // In a real app, this would be:
-    // const response = await apiService.getDashboardStats();
-    // stats.value = response.data;
+    // Calculate statistics
+    stats.value = {
+      activeCases: workItems.filter(item => item.status !== 'Completed').length,
+      monthlyRevenue: 1250000, // This would come from a financial service
+      fleetUtilization: 78, // This would come from a fleet service
+      pendingTasks: workItems.filter(item => item.status === 'Pending' || item.status === 'In Progress').length
+    };
     
-    // Mock data for demonstration
+    // Generate recent activities
+    recentActivities.value = [
+      ...workItems.slice(0, 3).map(item => ({
+        id: `wi-${item.id}`,
+        title: item.title,
+        description: item.description,
+        icon: '📋',
+        timestamp: new Date(item.updatedAt || item.createdAt).getTime()
+      })),
+      ...leads.slice(0, 2).map(lead => ({
+        id: `lead-${lead.id}`,
+        title: `New Lead: ${lead.contactName}`,
+        description: `${lead.organization || ''} - ${lead.serviceInterest}`,
+        icon: '👤',
+        timestamp: new Date(lead.updatedAt || lead.createdAt).getTime()
+      }))
+    ].sort((a, b) => b.timestamp - a.timestamp); // Sort by timestamp descending
+    
+  } catch (err) {
+    error.value = 'Failed to load dashboard data. Please try again later.';
+    console.error('Error fetching dashboard data:', err);
+    // Fallback to mock data
     stats.value = {
       activeCases: 24,
       monthlyRevenue: 1250000,
@@ -148,33 +400,108 @@ const fetchDashboardData = async () => {
         timestamp: Date.now() - 7200000 // 2 hours ago
       }
     ];
-    
-  } catch (err) {
-    error.value = 'Failed to load dashboard data. Please try again later.';
-    console.error('Error fetching dashboard data:', err);
   } finally {
     loading.value = false;
   }
 };
 
-// Real-time update handlers
-const handleStatsUpdate = (newStats: any) => {
-  stats.value = { ...stats.value, ...newStats };
+// Real-time update handlers for work items and leads
+const handleWorkItemUpdated = (workItem: any) => {
+  // Update stats if needed
+  if (workItem.status === 'Completed') {
+    // Recalculate pending tasks
+    stats.value.pendingTasks = Math.max(0, stats.value.pendingTasks - 1);
+  } else if (workItem.status === 'Pending' || workItem.status === 'In Progress') {
+    // Recalculate pending tasks
+    stats.value.pendingTasks = Math.min(999, stats.value.pendingTasks + 1);
+  }
+  
   notificationService.addNotification({
-    title: 'Dashboard Updated',
-    message: 'Statistics have been updated in real-time',
+    title: 'Work Item Updated',
+    message: `Work item "${workItem.title}" has been updated`,
     type: 'info'
   });
 };
 
-const handleActivityUpdate = (activity: any) => {
-  // Add new activity to the beginning of the list
-  recentActivities.value = [activity, ...recentActivities.value.slice(0, 9)]; // Keep only latest 10
+const handleWorkItemCompleted = (workItem: any) => {
+  // Update completed work item stats
+  stats.value.activeCases = Math.max(0, stats.value.activeCases - 1);
+  stats.value.pendingTasks = Math.max(0, stats.value.pendingTasks - 1);
+  
   notificationService.addNotification({
-    title: 'New Activity',
-    message: activity.title,
+    title: 'Work Item Completed',
+    message: `Work item "${workItem.title}" has been marked as complete`,
     type: 'success'
   });
+};
+
+const handleLeadUpdated = (lead: any) => {
+  notificationService.addNotification({
+    title: 'Lead Updated',
+    message: `Lead "${lead.contactName}" has been updated`,
+    type: 'info'
+  });
+};
+
+const saveWorkItem = async () => {
+  try {
+    savingWorkItem.value = true;
+    const newWorkItem = await WorkItemService.createWorkItem({
+      title: workItemForm.value.title,
+      description: workItemForm.value.description,
+      caseId: workItemForm.value.caseId,
+      priority: workItemForm.value.priority,
+      dueDate: workItemForm.value.dueDate || undefined,
+      status: 'Pending'
+    });
+    
+    // Close dialog and refresh
+    showCreateWorkItemDialog.value = false;
+    workItemForm.value = {
+      title: '',
+      description: '',
+      caseId: '',
+      priority: 'Medium',
+      dueDate: ''
+    };
+    
+    await fetchDashboardData();
+  } catch (err) {
+    error.value = 'Failed to save work item. Please try again later.';
+    console.error('Error saving work item:', err);
+  } finally {
+    savingWorkItem.value = false;
+  }
+};
+
+const saveLead = async () => {
+  try {
+    savingLead.value = true;
+    const newLead = await LeadService.createLead({
+      contactName: leadForm.value.contactName,
+      organization: leadForm.value.organization,
+      serviceInterest: leadForm.value.serviceInterest,
+      priority: leadForm.value.priority,
+      status: leadForm.value.status
+    });
+    
+    // Close dialog and refresh
+    showCreateLeadDialog.value = false;
+    leadForm.value = {
+      contactName: '',
+      organization: '',
+      serviceInterest: '',
+      priority: 'Medium',
+      status: 'New'
+    };
+    
+    await fetchDashboardData();
+  } catch (err) {
+    error.value = 'Failed to save lead. Please try again later.';
+    console.error('Error saving lead:', err);
+  } finally {
+    savingLead.value = false;
+  }
 };
 
 onMounted(() => {
@@ -184,6 +511,11 @@ onMounted(() => {
   // Set up SignalR listeners for real-time updates
   signalRService.on('DashboardStatsUpdated', handleStatsUpdate);
   signalRService.on('NewActivityAdded', handleActivityUpdate);
+  signalRService.on('WorkItemCreated', handleWorkItemCreated);
+  signalRService.on('WorkItemUpdated', handleWorkItemUpdated);
+  signalRService.on('WorkItemCompleted', handleWorkItemCompleted);
+  signalRService.on('LeadCreated', handleLeadCreated);
+  signalRService.on('LeadUpdated', handleLeadUpdated);
   
   // Start SignalR connection
   signalRService.start().catch(err => {
@@ -203,9 +535,14 @@ onBeforeUnmount(() => {
   // Clean up SignalR listeners
   signalRService.off('DashboardStatsUpdated', handleStatsUpdate);
   signalRService.off('NewActivityAdded', handleActivityUpdate);
+  signalRService.off('WorkItemCreated', handleWorkItemCreated);
+  signalRService.off('WorkItemUpdated', handleWorkItemUpdated);
+  signalRService.off('WorkItemCompleted', handleWorkItemCompleted);
+  signalRService.off('LeadCreated', handleLeadCreated);
+  signalRService.off('LeadUpdated', handleLeadUpdated);
   
-  // Stop SignalR connection
-  signalRService.stop();
+  // Note: We don't stop the SignalR connection here as other components might still need it
+  // In a real app, you might want to track connection usage and stop when no longer needed
 });
 
 const formatTime = (timestamp: number): string => {
@@ -395,5 +732,34 @@ const formatTime = (timestamp: number): string => {
 .activity-time {
   font-size: 0.75rem;
   color: #9ca3af;
+}
+
+.quick-actions {
+  margin-top: 2rem;
+}
+
+.actions-grid {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Dialog styles */
+.dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
 }
 </style>

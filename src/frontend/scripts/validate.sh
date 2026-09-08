@@ -1,5 +1,7 @@
 #!/bin/bash
-# Validation script for Khet-360 frontend applications
+
+# Khet-360 Frontend Validation Script
+# Ensures all frontend applications are properly configured
 
 set -e
 
@@ -7,92 +9,107 @@ echo "🔍 Validating Khet-360 Frontend Applications"
 echo "=========================================="
 
 # Check Node.js version
-NODE_VERSION=$(node --version)
-echo "✅ Node.js version: $NODE_VERSION"
+node_version=$(node --version)
+echo "✅ Node.js version: $node_version"
 
-# Check npm version
-NPM_VERSION=$(npm --version)
-echo "✅ npm version: $NPM_VERSION"
+# Check if pnpm is available
+if ! command -v pnpm &> /dev/null; then
+    echo "❌ pnpm not found! Please install pnpm:"
+    echo "   npm install -g pnpm"
+    exit 1
+fi
+pnpm_version=$(pnpm --version)
+echo "✅ pnpm version: $pnpm_version"
 
-# Check if we're in the right directory
-if [ ! -f "src/frontend/package.json" ]; then
-  echo "❌ Error: Not in project root directory"
-  echo "Expected to find src/frontend/package.json"
-  exit 1
+# Check project root
+if [ ! -f "package.json" ]; then
+    echo "❌ package.json not found in current directory"
+    exit 1
 fi
 echo "✅ Project root verified"
 
-# Check if frontend directory exists
-if [ ! -d "src/frontend" ]; then
-  echo "❌ Error: Frontend directory not found"
-  exit 1
+# Check that we're using pnpm workspace protocol correctly
+if ! grep -q "workspaces:" package.json; then
+    echo "❌ Workspaces protocol not found in package.json"
+    exit 1
 fi
-echo "✅ Frontend directory verified"
+echo "✅ Workspaces protocol configured"
 
-# Check each application directory
+# Check applications directory
+if [ ! -d "apps" ]; then
+    echo "❌ apps directory not found"
+    exit 1
+fi
+echo "✅ Applications directory verified"
+
+# Check each application
 APPS=("tenant-erp" "tenant-mobile" "family-portal" "vendor-hub" "public-site")
-
 for app in "${APPS[@]}"; do
-  if [ ! -d "src/frontend/apps/$app" ]; then
-    echo "❌ Error: Application directory $app not found"
-    exit 1
-  fi
-  
-  if [ ! -f "src/frontend/apps/$app/package.json" ]; then
-    echo "❌ Error: Package.json missing for $app"
-    exit 1
-  fi
-  
-  # Simple validation - check if file contains required fields
-  if ! grep -q '"name"' "src/frontend/apps/$app/package.json"; then
-    echo "❌ Error: Package.json missing name field for $app"
-    exit 1
-  fi
-  
-  echo "✅ Application $app directory verified"
+    if [ ! -d "apps/$app" ]; then
+        echo "❝ $app directory not found"
+        exit 1
+    fi
+    
+    if [ ! -f "apps/$app/package.json" ]; then
+        echo "❝ $app/package.json not found"
+        exit 1
+    fi
+    
+    # Check for correct package name format
+    if ! grep -q '"@khet360/'"$app"'"' "apps/$app/package.json"; then
+        echo "❝ $app has incorrect package name format"
+        exit 1
+    fi
+    
+    # Check for vite config
+    if [ ! -f "apps/$app/vite.config.ts" ] && [ ! -f "apps/$app/vite.config.js" ]; then
+        echo "⚠️  $app missing vite.config.ts/js (may still work)"
+    fi
+    
+    echo "✅ Application $app directory verified"
 done
+
+# Check packages directory
+if [ ! -d "packages" ]; then
+    echo "❝ packages directory not found"
+    exit 1
+fi
+echo "✅ Packages directory verified"
 
 # Check shared packages
-SHARED_PACKAGES=("api-client" "ui-shared")
-
-for package in "${SHARED_PACKAGES[@]}"; do
-  if [ ! -d "src/frontend/packages/$package" ]; then
-    echo "❌ Error: Shared package directory $package not found"
-    exit 1
-  fi
-  
-  if [ ! -f "src/frontend/packages/$package/package.json" ]; then
-    echo "❐ Error: Package.json missing for shared package $package"
-    exit 1
-  fi
-  
-  # Simple validation - check if file contains required fields
-  if ! grep -q '"name"' "src/frontend/packages/$package/package.json"; then
-    echo "❌ Error: Package.json missing name field for shared package $package"
-    exit 1
-  fi
-  
-  echo "✅ Shared package $package directory verified"
+PACKAGES=("api-client" "ui-shared")
+for pkg in "${PACKAGES[@]}"; do
+    if [ ! -d "packages/$pkg" ]; then
+        echo "❝ $pkg directory not found"
+        exit 1
+    fi
+    
+    if [ ! -f "packages/$pkg/package.json" ]; then
+        echo "❝ $pkg/package.json not found"
+        exit 1
+    fi
+    
+    echo "✅ Shared package $pkg verified"
 done
 
-# Try to build UI shared package (skip if it fails due to peer deps)
-echo "🔨 Testing UI shared package build..."
-cd src/frontend/packages/ui-shared
-if npm install --legacy-peer-deps 2>/dev/null && npm run build 2>/dev/null; then
-  echo "✅ UI shared package builds successfully"
+# Try to run a quick build test to verify workspace functionality
+echo ""
+echo "🧪 Testing workspace functionality..."
+if pnpm ls > /dev/null 2>&1; then
+    echo "✅ Workspace recognition working"
 else
-  echo "⚠️  UI shared package build skipped (peer dependency issues)"
+    echo "❝ Workspace recognition failed"
+    echo "💡 Try running: pnpm install"
+    exit 1
 fi
-cd -
 
 echo ""
 echo "🎉 All validations passed!"
 echo "✅ Project structure is correct"
 echo "✅ All applications are configured"
-echo "✅ Ready for development and deployment"
+echo "✅ Workspaces protocol properly configured"
 echo ""
 echo "Next steps:"
-echo "1. Configure backend connection in .env files"
-echo "2. Run: npm install"
-echo "3. Run: npm run dev:all to start all applications"
-echo "4. Visit http://localhost:5173 for Tenant-ERP"
+echo "1. Run: pnpm install"
+echo "2. Run: pnpm run dev:all to start all applications"
+echo "3. Visit http://localhost:5173 for Tenant-ERP"

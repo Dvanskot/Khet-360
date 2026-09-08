@@ -8,13 +8,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.4.0",
-    "vue-router": "^4.3.0",
-    "pinia": "^2.1.0",
-    "axios": "^1.6.0",
-    "@microsoft/signalr": "^8.0.0",
     "@khet360/api-client": "workspace:*",
-    "@khet360/ui-shared": "workspace:*"
+    "@khet360/ui-shared": "workspace:*",
+    "@microsoft/signalr": "^8.0.0",
+    "axios": "^1.6.0",
+    "chart.js": "^4.5.1",
+    "pinia": "^2.1.0",
+    "vue": "^3.4.0",
+    "vue-chartjs": "^5.3.4",
+    "vue-router": "^4.3.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",

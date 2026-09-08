@@ -41,6 +41,7 @@
         <div class="connection-status-indicator">
           <ConnectionStatus />
           <span class="status-text">{{ connectionStatus }}</span>
+          <span class="stat-indicator" v-if="statsUpdatedRecently" class="updated-indicator">●</span>
         </div>
       </div>
     </section>
@@ -154,7 +155,7 @@
             placeholder="How can we help you?"
             rows="4"
           />
-        </div>
+        </div
         
         <div class="form-group">
           <KInput
@@ -244,6 +245,7 @@ const submitting = ref(false);
 // Connection status
 const connectionStatus = ref('Checking...');
 const isConnected = ref(false);
+const statsUpdatedRecently = ref(false);
 
 // Statistics
 const stats = ref({
@@ -256,6 +258,13 @@ const stats = ref({
 const handleStatsUpdate = (statsData: any) => {
   // Update stats in real-time
   stats.value = { ...stats.value, ...statsData };
+  statsUpdatedRecently.value = true;
+  
+  // Reset the update indicator after 5 seconds
+  setTimeout(() => {
+    statsUpdatedRecently.value = false;
+  }, 5000);
+  
   notificationService.addNotification({
     title: 'Service Update',
     message: 'Our service statistics have been updated',
@@ -671,6 +680,24 @@ const submitContactForm = async () => {
 .status-text {
   font-size: 0.875rem;
   font-weight: 500;
+}
+
+.updated-indicator {
+  color: #10b981;
+  font-size: 1rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 /* Dialog styles */

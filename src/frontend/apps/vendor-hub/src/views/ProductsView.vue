@@ -4,6 +4,9 @@
       <h1 class="title">Product Catalog</h1>
       <div class="header-actions">
         <ConnectionStatus />
+        <div class="alert alert-warning" v-if="lowStockCount > 0">
+          ⚠️ {{ lowStockCount }} products are low in stock!
+        </div>
         <KButton @click="showCreateDialog = true" variant="primary">
           Add Product
         </KButton>
@@ -71,7 +74,14 @@
             <td>{{ product.category }}</td>
             <td>{{ product.price }}</td>
             <td>{{ product.cost }}</td>
-            <td>{{ product.stockQuantity }}</td>
+            <td>
+              <span 
+                class="stock-indicator" 
+                :class="[product.stockQuantity <= product.reorderLevel ? 'low' : 'ok']"
+              >
+                {{ product.stockQuantity }}
+              </span>
+            </td>
             <td>
               <span 
                 class="status-badge" 
@@ -144,7 +154,7 @@
           placeholder="Enter SKU"
           required
         />
-      </div
+      </div>
       
       <div class="form-group">
         <label for="category" class="form-label">Category *</label>
@@ -252,6 +262,10 @@
       <div v-if="selectedProduct.stockQuantity <= selectedProduct.reorderLevel" class="alert alert-warning">
         ⚠️ Stock is at or below reorder level!
       </div>
+      
+      <div v-if="selectedProduct.stockQuantity === 0" class="alert alert-error">
+        ❌ Out of stock!
+      </div>
     </div>
     
     <template #footer>
@@ -275,6 +289,7 @@ const products = ref<Product[]>([]);
 const filteredProducts = ref<Product[]>([]);
 const loading = ref<boolean>(true);
 const error = ref<string | null>(null);
+const lowStockCount = ref(0);
 
 const searchTerm = ref('');
 const selectedCategory = ref<string | null>(null);
@@ -325,6 +340,13 @@ computed(() => {
   });
 });
 
+// Computed property for low stock count
+computed(() => {
+  return filteredProducts.value.filter(product => 
+    product.stockQuantity <= product.reorderLevel
+  ).length;
+});
+
 // Real-time update handlers
 const handleProductUpdated = (updatedProduct: Product) => {
   // Find and update the specific product
@@ -365,6 +387,14 @@ const handleProductDeleted = (productId: string) => {
   });
 };
 
+const handleLowStockAlert = (alert: any) => {
+  notificationService.addNotification({
+    title: 'Low Stock Alert',
+    message: `Product "${alert.productName}" is low in stock (${alert.currentStock} remaining)`,
+    type: 'warning'
+  });
+};
+
 const fetchProducts = async () => {
   try {
     loading.value = true;
@@ -375,11 +405,11 @@ const fetchProducts = async () => {
     console.error('Error fetching products:', err);
     // Fallback to mock data in case of API failure
     products.value = [
-      { id: '1', name: 'Premium Mahogany Casket', sku: 'CAK-001', category: 'Caskets', price: 12500, cost: 8500, stockQuantity: 3, status: 'Active' },
-      { id: '2', name: 'Standard Steel Casket', sku: 'CAK-002', category: 'Caskets', price: 8500, cost: 5500, stockQuantity: 8, status: 'Active' },
-      { id: '3', name: 'Cremation Urn - Bronze', sku: 'URN-001', category: 'Urns', price: 2500, cost: 1200, stockQuantity: 15, status: 'Active' },
-      { id: '4', name: 'Funeral Flowers - Lilly Arrangement', sku: 'FLR-001', category: 'Flowers', price: 1200, cost: 600, stockQuantity: 0, status: 'Active' },
-      { id: '5', name: 'Memorial Plaque - Granite', sku: 'MEM-001', category: 'Memorial Items', price: 1800, cost: 900, stockQuantity: 12, status: 'Active' },
+      { id: '1', name: 'Premium Mahogany Casket', sku: 'CAK-001', category: 'Caskets', price: 12500, cost: 8500, stockQuantity: 3, reorderLevel: 5, status: 'Active' },
+      { id: '2', name: 'Standard Steel Casket', sku: 'CAK-002', category: 'Caskets', price: 8500, cost: 5500, stockQuantity: 8, reorderLevel: 10, status: 'Active' },
+      { id: '3', name: 'Cremation Urn - Bronze', sku: 'URN-001', category: 'Urns', price: 2500, cost: 1200, stockQuantity: 15, reorderLevel: 20, status: 'Active' },
+      { id: '4', name: 'Funeral Flowers - Lilly Arrangement', sku: 'FLR-001', category: 'Flowers', price: 1200, cost: 600, stockQuantity: 0, reorderLevel: 5, status: 'Active' },
+      { id: '5', name: 'Memorial Plaque - Granite', sku: 'MEM-001', category: 'Memorial Items', price: 1800, cost: 900, stockQuantity: 12, reorderLevel: 15, status: 'Active' },
     ];
   } finally {
     loading.value = false;
@@ -436,16 +466,31 @@ const confirmDelete = async (productId: string) => {
 
 const orderProduct = async (productId: string) => {
   try {
-    // In a real implementation, this would create an order
-    // For now, we'll just show a confirmation
-    const result = await VendorHubService.getProductById(productId);
-    alert(`Placing order for ${result.name}...`);
-    
-    // Notify via SignalR that we ordered a product (decreased stock)
-    signalRService.send('ProductOrdered', {
-      productId,
-      quantity: 1
-    });
+    // Decrease stock by 1 when ordering
+    const product = await VendorHubService.getProductById(productId);
+    if (product && product.stockQuantity > 0) {
+      await VendorHubService.updateProduct(productId, {
+        stockQuantity: product.stockQuantity - 1
+      });
+      
+      // Notify via SignalR that we ordered a product (decreased stock)
+      signalRService.send('ProductOrdered', {
+        productId,
+        quantity: 1
+      });
+      
+      // Check if this creates a low stock situation
+      if (product.stockQuantity - 1 <= product.reorderLevel) {
+        signalRService.send('LowStockAlert', {
+          productId: product.id,
+          productName: product.name,
+          currentStock: product.stockQuantity - 1,
+          reorderLevel: product.reorderLevel
+        });
+      }
+    } else {
+      alert('Cannot order: Product is out of stock');
+    }
   } catch (err) {
     error.value = 'Failed to order product. Please try again later.';
     console.error('Error ordering product:', err);
@@ -467,6 +512,8 @@ onMounted(async () => {
     handleProductDeleted
   );
   
+  const lowStockCleanup = signalRService.on('LowStockAlert', handleLowStockAlert);
+  
   // Start SignalR connection
   signalRService.start().catch(err => {
     console.error('Failed to start SignalR connection:', err);
@@ -480,6 +527,7 @@ onMounted(async () => {
   // Cleanup on unmount
   onBeforeUnmount(() => {
     if (productCleanup) productCleanup();
+    if (lowStockCleanup) lowStockCleanup();
     signalRService.stop();
   });
 });
@@ -510,6 +558,24 @@ onMounted(async () => {
   display: flex;
   gap: 1rem;
   align-items: center;
+}
+
+.alert {
+  padding: 1rem;
+  border-radius: 0.375rem;
+  margin-bottom: 1rem;
+}
+
+.alert-warning {
+  background-color: #fffbeb;
+  border: 1px solid #fef3c7;
+  color: #92400e;
+}
+
+.alert-error {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
 }
 
 .filters-section {
@@ -617,6 +683,19 @@ onMounted(async () => {
   color: #d97706;
 }
 
+.stock-indicator {
+  font-weight: 600;
+}
+
+.stock-indicator.low {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.stock-indicator.ok {
+  color: #16a34a;
+}
+
 .actions-cell {
   display: flex;
   gap: 0.5rem;
@@ -630,6 +709,12 @@ onMounted(async () => {
 
 .alert-warning {
   background-color: #fffbeb;
+  border: 1px solid #fef3c7;
+  color: #92400e;
+}
+
+.alert-error {
+  background-color: #f8d7da;
   border: 1px solid #fef3c7;
   color: #92400e;
 }

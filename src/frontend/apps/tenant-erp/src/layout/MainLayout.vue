@@ -37,6 +37,7 @@
         Customers
       </router-link>
       <router-link to="/calendar" class="nav-link" active-class="active">
+      <router-link to="/analytics" class="nav-link" active-class="active">Analytics</router-link>
         Calendar
       </router-link>
     </div>

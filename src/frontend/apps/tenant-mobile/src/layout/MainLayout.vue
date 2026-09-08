@@ -37,6 +37,7 @@
         Operations
       </router-link>
       <router-link to="/production" class="nav-link" active-class="active">
+      <router-link to="/analytics" class="nav-link" active-class="active">Analytics</router-link>
         Production
       </router-link>
     </div>

@@ -15,7 +15,7 @@
           <li><router-link to="/services" active-class="active">Services</router-link></li>
           <li><router-link to="/pricing" active-class="active">Pricing</router-link></li>
           <li><router-link to="/resources" active-class="active">Resources</router-link></li>
-          <li><router-link to="/contact" active-class="active">Contact</router-link></li>
+        <li><router-link to="/analytics" active-class="active">Analytics</router-link></li>
           <li><router-link to="/login" active-class="active">Login</router-link></li>
         </ul>
       </nav>

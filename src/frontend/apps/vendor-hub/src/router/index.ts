@@ -12,6 +12,11 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/login',
+  {
+    path: '/analytics',
+    name: 'Analytics',
+    component: () => import('@/views/AnalyticsDashboardView.vue')
+  },
     name: 'Login',
     component: () => import('@/views/LoginView.vue')
   }

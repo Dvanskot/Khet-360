@@ -22,6 +22,9 @@
       <div class="family-badge">
         <span>Family Access Portal</span>
       </div>
+      <div class="analytics-link">
+        <router-link to="/analytics" class="nav-link">Analytics</router-link>
+      </div>
       <div class="user-profile">
         <span class="username">{{ assignedFuneralDirector.name }}</span>
         <img src="/images/user-placeholder.png" alt="User Profile" class="user-avatar" />
@@ -255,6 +258,24 @@ onMounted(() => {
 }
 
 .family-badge {
+.analytics-link {
+  margin-top: 1rem;
+}
+
+.analytics-link .nav-link {
+  color: var(--family-text-main);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--family-border);
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.analytics-link .nav-link:hover {
+  background-color: var(--family-primary-light, #f3f4f6);
+  color: var(--family-primary);
+}
   background-color: var(--family-primary-light, #f3f4f6);
   color: var(--family-text-muted);
   padding: 6px 16px;

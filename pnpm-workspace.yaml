@@ -1,0 +1,8 @@
+packages:
+  - 'src/frontend/apps/**'
+  - 'src/frontend/packages/**'
+  
+  
+allowBuilds:
+  esbuild: true
+  vue-demi: true

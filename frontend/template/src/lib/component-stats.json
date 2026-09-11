@@ -1,0 +1,384 @@
+{
+  "aurora-background": {
+    "bytes": 1305,
+    "gzip": 627,
+    "deps": []
+  },
+  "grid-pattern": {
+    "bytes": 2410,
+    "gzip": 805,
+    "deps": []
+  },
+  "retro-grid": {
+    "bytes": 1500,
+    "gzip": 717,
+    "deps": []
+  },
+  "particles": {
+    "bytes": 3527,
+    "gzip": 1409,
+    "deps": []
+  },
+  "meteors": {
+    "bytes": 1301,
+    "gzip": 663,
+    "deps": []
+  },
+  "background-beams": {
+    "bytes": 2531,
+    "gzip": 997,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "lamp": {
+    "bytes": 2702,
+    "gzip": 905,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "animated-gradient-text": {
+    "bytes": 581,
+    "gzip": 336,
+    "deps": []
+  },
+  "text-reveal": {
+    "bytes": 1644,
+    "gzip": 754,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "typewriter": {
+    "bytes": 2663,
+    "gzip": 996,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "flip-words": {
+    "bytes": 1821,
+    "gzip": 834,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "sparkles-text": {
+    "bytes": 1927,
+    "gzip": 903,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "text-shimmer": {
+    "bytes": 706,
+    "gzip": 439,
+    "deps": []
+  },
+  "number-ticker": {
+    "bytes": 1877,
+    "gzip": 843,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "shimmer-button": {
+    "bytes": 1119,
+    "gzip": 595,
+    "deps": []
+  },
+  "confetti": {
+    "bytes": 3057,
+    "gzip": 1431,
+    "deps": []
+  },
+  "bento-grid": {
+    "bytes": 2632,
+    "gzip": 1000,
+    "deps": [
+      "lucide-react"
+    ]
+  },
+  "spotlight-card": {
+    "bytes": 1630,
+    "gzip": 787,
+    "deps": []
+  },
+  "tilt-card": {
+    "bytes": 1566,
+    "gzip": 691,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "marquee": {
+    "bytes": 1668,
+    "gzip": 764,
+    "deps": []
+  },
+  "animated-list": {
+    "bytes": 1585,
+    "gzip": 746,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "orbiting-circles": {
+    "bytes": 2193,
+    "gzip": 914,
+    "deps": []
+  },
+  "avatar-circles": {
+    "bytes": 1349,
+    "gzip": 634,
+    "deps": []
+  },
+  "animated-tooltip": {
+    "bytes": 2596,
+    "gzip": 1021,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "dock": {
+    "bytes": 2760,
+    "gzip": 1070,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "border-beam": {
+    "bytes": 2050,
+    "gzip": 951,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "animated-beam": {
+    "bytes": 3920,
+    "gzip": 1422,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "blur-fade": {
+    "bytes": 1703,
+    "gzip": 828,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "scroll-progress": {
+    "bytes": 781,
+    "gzip": 415,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "browser-mockup": {
+    "bytes": 1141,
+    "gzip": 554,
+    "deps": []
+  },
+  "iphone-mockup": {
+    "bytes": 1226,
+    "gzip": 568,
+    "deps": []
+  },
+  "terminal": {
+    "bytes": 3001,
+    "gzip": 1210,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "flickering-grid": {
+    "bytes": 1411,
+    "gzip": 731,
+    "deps": []
+  },
+  "ripple": {
+    "bytes": 1159,
+    "gzip": 630,
+    "deps": []
+  },
+  "light-rays": {
+    "bytes": 1272,
+    "gzip": 699,
+    "deps": []
+  },
+  "word-rotate": {
+    "bytes": 1507,
+    "gzip": 733,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "hyper-text": {
+    "bytes": 1844,
+    "gzip": 884,
+    "deps": []
+  },
+  "text-highlighter": {
+    "bytes": 1550,
+    "gzip": 804,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "morphing-text": {
+    "bytes": 1557,
+    "gzip": 771,
+    "deps": []
+  },
+  "rainbow-button": {
+    "bytes": 1660,
+    "gzip": 813,
+    "deps": []
+  },
+  "ripple-button": {
+    "bytes": 2652,
+    "gzip": 1182,
+    "deps": []
+  },
+  "magnetic-button": {
+    "bytes": 1950,
+    "gzip": 884,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "moving-border": {
+    "bytes": 1845,
+    "gzip": 879,
+    "deps": []
+  },
+  "theme-toggler": {
+    "bytes": 2743,
+    "gzip": 1267,
+    "deps": []
+  },
+  "card-stack": {
+    "bytes": 2101,
+    "gzip": 1031,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "glare-card": {
+    "bytes": 1667,
+    "gzip": 840,
+    "deps": []
+  },
+  "expandable-card": {
+    "bytes": 3782,
+    "gzip": 1279,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "direction-aware-hover": {
+    "bytes": 2200,
+    "gzip": 1023,
+    "deps": []
+  },
+  "compare-slider": {
+    "bytes": 2502,
+    "gzip": 1154,
+    "deps": []
+  },
+  "file-tree": {
+    "bytes": 2487,
+    "gzip": 1089,
+    "deps": []
+  },
+  "floating-navbar": {
+    "bytes": 1850,
+    "gzip": 930,
+    "deps": []
+  },
+  "navbar-menu": {
+    "bytes": 2741,
+    "gzip": 1054,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "sticky-banner": {
+    "bytes": 1793,
+    "gzip": 869,
+    "deps": []
+  },
+  "vanish-input": {
+    "bytes": 3237,
+    "gzip": 1417,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "file-drop": {
+    "bytes": 3462,
+    "gzip": 1433,
+    "deps": []
+  },
+  "stepper": {
+    "bytes": 2953,
+    "gzip": 1192,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "animated-testimonials": {
+    "bytes": 4079,
+    "gzip": 1508,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "tweet-card": {
+    "bytes": 2847,
+    "gzip": 1236,
+    "deps": []
+  },
+  "logo-cloud": {
+    "bytes": 1231,
+    "gzip": 653,
+    "deps": []
+  },
+  "sticky-scroll": {
+    "bytes": 2856,
+    "gzip": 1124,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "container-scroll": {
+    "bytes": 1738,
+    "gzip": 785,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "tracing-beam": {
+    "bytes": 1580,
+    "gzip": 811,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "scroll-velocity": {
+    "bytes": 1918,
+    "gzip": 907,
+    "deps": [
+      "motion/react"
+    ]
+  },
+  "parallax-grid": {
+    "bytes": 1544,
+    "gzip": 741,
+    "deps": [
+      "motion/react"
+    ]
+  }
+}

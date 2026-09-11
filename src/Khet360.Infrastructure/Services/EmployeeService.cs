@@ -1,10 +1,12 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Dtos;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,6 +26,7 @@ public class EmployeeService : IEmployeeService
     public async Task<EmployeeDto> GetEmployeeByIdAsync(Guid id)
     {
         var employee = await _db.Employees
+            .AsNoTracking()
             .Include(e => e.Department)
             .Include(e => e.Branch)
             .Include(e => e.Manager)
@@ -39,6 +42,7 @@ public class EmployeeService : IEmployeeService
     public async Task<List<EmployeeDto>> GetEmployeesByBranchAsync(Guid branchId)
     {
         var employees = await _db.Employees
+            .AsNoTracking()
             .Where(e => e.BranchId == branchId)
             .Include(e => e.Department)
             .Include(e => e.Branch)
@@ -46,7 +50,7 @@ public class EmployeeService : IEmployeeService
             .Include(e => e.Contract)
             .ToListAsync();
 
-        var positions = await _platformDb.Positions.ToListAsync();
+        var positions = await _platformDb.Positions.AsNoTracking().ToListAsync();
         var positionMap = positions.ToDictionary(p => p.Id, p => p.Title);
 
         return employees.Select(e => MapToDto(e, positionMap.GetValueOrDefault(e.PositionId, "Unknown"))).ToList();
@@ -125,7 +129,7 @@ public class EmployeeService : IEmployeeService
 
     public async Task<DepartmentDto> GetDepartmentByIdAsync(Guid id)
     {
-        var dept = await _db.Departments.FindAsync(id);
+        var dept = await _db.Departments.AsNoTracking().FirstOrDefaultAsync(d => d.Id == id);
         if (dept == null) throw new KeyNotFoundException("Department not found.");
         return new DepartmentDto(dept.Id, dept.Name, dept.Description);
     }
@@ -145,7 +149,7 @@ public class EmployeeService : IEmployeeService
 
     public async Task<PositionDto> GetPositionByIdAsync(Guid id)
     {
-        var pos = await _platformDb.Positions.FindAsync(id);
+        var pos = await _platformDb.Positions.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
         if (pos == null) throw new KeyNotFoundException("Position not found.");
         return new PositionDto(pos.Id, pos.Title, pos.Description, pos.Grade);
     }
@@ -153,6 +157,7 @@ public class EmployeeService : IEmployeeService
     public async Task<List<PositionDto>> GetPositionsAsync()
     {
         return await _platformDb.Positions
+            .AsNoTracking()
             .Select(p => new PositionDto(p.Id, p.Title, p.Description, p.Grade))
             .ToListAsync();
     }

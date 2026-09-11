@@ -1,4 +1,7 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 
 namespace Khet360.Application.Dtos;
@@ -45,5 +48,20 @@ public class ApiResponse
         Success = false,
         Message = message,
         Errors = errors
+    };
+
+    public static ApiResponse<T> Ok<T>(T data, string message = "Success") => new()
+    {
+        Success = true,
+        Data = data,
+        Message = message
+    };
+
+    public static ApiResponse<T> Fail<T>(string message, IEnumerable<string>? errors = null) => new()
+    {
+        Success = false,
+        Message = message,
+        Errors = errors,
+        Data = default!
     };
 }

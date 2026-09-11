@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Api\\Khet360.Api.csproj": {}
+    "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Api\\Khet360.Api.csproj": {}
   },
   "projects": {
-    "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Api\\Khet360.Api.csproj": {
+    "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Api\\Khet360.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Api\\Khet360.Api.csproj",
+        "projectUniqueName": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Api\\Khet360.Api.csproj",
         "projectName": "Khet360.Api",
-        "projectPath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Api\\Khet360.Api.csproj",
+        "projectPath": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Api\\Khet360.Api.csproj",
         "packagesPath": "C:\\Users\\Israel Tshikota\\.nuget\\packages\\",
-        "outputPath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Api\\obj\\",
+        "outputPath": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Api\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -34,11 +34,11 @@
             "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Application\\Khet360.Application.csproj": {
-                "projectPath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Application\\Khet360.Application.csproj"
+              "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Application\\Khet360.Application.csproj": {
+                "projectPath": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Application\\Khet360.Application.csproj"
               },
-              "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Infrastructure\\Khet360.Infrastructure.csproj": {
-                "projectPath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Infrastructure\\Khet360.Infrastructure.csproj"
+              "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Infrastructure\\Khet360.Infrastructure.csproj": {
+                "projectPath": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Infrastructure\\Khet360.Infrastructure.csproj"
               }
             }
           }
@@ -80,6 +80,14 @@
               "target": "Package",
               "version": "[10.0.11, )"
             },
+            "Polly": {
+              "target": "Package",
+              "version": "[8.5.0, )"
+            },
+            "Polly.Extensions.Http": {
+              "target": "Package",
+              "version": "[3.0.0, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[10.2.3, )"
@@ -108,7 +116,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.400/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
@@ -526,14 +534,14 @@
         }
       }
     },
-    "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Application\\Khet360.Application.csproj": {
+    "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Application\\Khet360.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Application\\Khet360.Application.csproj",
+        "projectUniqueName": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Application\\Khet360.Application.csproj",
         "projectName": "Khet360.Application",
-        "projectPath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Application\\Khet360.Application.csproj",
+        "projectPath": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Application\\Khet360.Application.csproj",
         "packagesPath": "C:\\Users\\Israel Tshikota\\.nuget\\packages\\",
-        "outputPath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Application\\obj\\",
+        "outputPath": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Application\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -556,8 +564,8 @@
             "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj": {
-                "projectPath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj"
+              "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj": {
+                "projectPath": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj"
               }
             }
           }
@@ -604,7 +612,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.400/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -882,14 +890,14 @@
         }
       }
     },
-    "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj": {
+    "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj",
+        "projectUniqueName": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj",
         "projectName": "Khet360.Domain",
-        "projectPath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj",
+        "projectPath": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj",
         "packagesPath": "C:\\Users\\Israel Tshikota\\.nuget\\packages\\",
-        "outputPath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Domain\\obj\\",
+        "outputPath": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -946,7 +954,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.400/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -1224,14 +1232,14 @@
         }
       }
     },
-    "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Infrastructure\\Khet360.Infrastructure.csproj": {
+    "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Infrastructure\\Khet360.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Infrastructure\\Khet360.Infrastructure.csproj",
+        "projectUniqueName": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Infrastructure\\Khet360.Infrastructure.csproj",
         "projectName": "Khet360.Infrastructure",
-        "projectPath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Infrastructure\\Khet360.Infrastructure.csproj",
+        "projectPath": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Infrastructure\\Khet360.Infrastructure.csproj",
         "packagesPath": "C:\\Users\\Israel Tshikota\\.nuget\\packages\\",
-        "outputPath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Infrastructure\\obj\\",
+        "outputPath": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -1254,8 +1262,8 @@
             "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Application\\Khet360.Application.csproj": {
-                "projectPath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Application\\Khet360.Application.csproj"
+              "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Application\\Khet360.Application.csproj": {
+                "projectPath": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Application\\Khet360.Application.csproj"
               }
             }
           }
@@ -1295,6 +1303,14 @@
               "target": "Package",
               "version": "[7.0.0, )"
             },
+            "Polly": {
+              "target": "Package",
+              "version": "[8.5.0, )"
+            },
+            "Polly.Extensions.Http": {
+              "target": "Package",
+              "version": "[3.0.0, )"
+            },
             "RabbitMQ.Client": {
               "target": "Package",
               "version": "[7.2.2, )"
@@ -1327,7 +1343,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.400/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

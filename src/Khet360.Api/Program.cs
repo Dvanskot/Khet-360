@@ -9,10 +9,14 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using Khet360.Api.Services;
 using Prometheus;
 using Khet360.Infrastructure.Services.WidgetProviders;
 using FluentValidation;
+using Polly.Extensions.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,8 +39,9 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Khet3
 // Authentication Configuration
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = "TenantJwt";
+    options.DefaultChallengeScheme = "TenantJwt";
+    options.DefaultForbidScheme = "TenantJwt";
 })
     .AddJwtBearer("PlatformJwt", options =>
     {
@@ -141,14 +146,33 @@ builder.Services.AddScoped<ISARSReportingService, SARSReportingService>();
 builder.Services.AddScoped<IFinanceVerificationService, FinanceVerificationService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IPlatformPaymentService, PlatformPaymentService>();
+builder.Services.AddScoped<IPlatformTenantService, PlatformTenantService>();
+builder.Services.AddScoped<IPlatformAnalyticsService, PlatformAnalyticsService>();
+builder.Services.AddScoped<IPlatformFeatureService, PlatformFeatureService>();
+builder.Services.AddScoped<IPlatformAuditService, PlatformAuditService>();
+builder.Services.AddScoped<IPlatformAnnouncementService, PlatformAnnouncementService>();
 
 builder.Services.AddHttpClient<IProductivityScorecardService, ProductivityScorecardService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Prometheus:Url"] ?? "http://localhost:9090");
-});
+    client.Timeout = TimeSpan.FromSeconds(10);
+})
+.AddHttpMessageHandler<RetryAndCircuitBreakerHandler>();
+
+builder.Services.AddHttpClient<IIntelligenceService, IntelligenceService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Prometheus:Url"] ?? "http://localhost:9090");
+    client.Timeout = TimeSpan.FromSeconds(10);
+})
+.AddHttpMessageHandler<RetryAndCircuitBreakerHandler>();
+
+builder.Services.AddTransient<RetryAndCircuitBreakerHandler>();
 
 builder.Services.AddSingleton<ICacheService, CacheService>();
 builder.Services.AddSingleton<IMessageBus, MessageBus>();
+builder.Services.AddSingleton<IPlatformCacheService, PlatformCacheService>();
+
+builder.Services.AddHostedService<MessageBusInitializer>();
 
 builder.Services.AddHostedService<SlaEscalationWorker>();
 builder.Services.AddHostedService<EventConsumerService>();
@@ -159,6 +183,7 @@ builder.Services.AddHostedService<InboxCleanupService>();
 builder.Services.AddHostedService<MigrationJobWorker>();
 builder.Services.AddHostedService<LowStockAlertWorker>();
 builder.Services.AddScoped<TenantDbContextFactory>();
+builder.Services.AddScoped<IPlatformAuthService, PlatformAuthService>();
 builder.Services.AddScoped<PlatformAuthService>();
 
 // TenantDbContext - Resolved via factory to apply tenant-specific connection string
@@ -196,6 +221,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseHttpMetrics();
 app.UseMetricServer();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
@@ -203,6 +229,7 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseMiddleware<TenantResolverMiddleware>();
 
 app.UseAuthentication();
+app.UseMiddleware<TenantBindingMiddleware>();
 app.UseAuthorization();
 app.MapHub<Khet360.Api.Hubs.NotificationHub>("/hubs/notifications");
 app.MapControllers();

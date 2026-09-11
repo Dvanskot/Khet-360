@@ -1,10 +1,12 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Dtos;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,10 +48,11 @@ public class LeaveService : ILeaveService
     public async Task<List<LeaveBalanceDto>> GetEmployeeBalancesAsync(Guid employeeId)
     {
         var balances = await _db.LeaveBalances
+            .AsNoTracking()
             .Where(lb => lb.EmployeeId == employeeId)
             .ToListAsync();
 
-        var leaveTypes = await _platformDb.LeaveTypes.ToListAsync();
+        var leaveTypes = await _platformDb.LeaveTypes.AsNoTracking().ToListAsync();
         var typeMap = leaveTypes.ToDictionary(lt => lt.Id, lt => lt.Name);
 
         return balances.Select(lb => new LeaveBalanceDto(
@@ -110,6 +113,7 @@ public class LeaveService : ILeaveService
     public async Task<LeaveApplicationDto> GetLeaveApplicationAsync(Guid id)
     {
         var app = await _db.LeaveApplications
+            .AsNoTracking()
             .Include(la => la.Employee)
             .Include(la => la.Approver)
             .FirstOrDefaultAsync(la => la.Id == id);
@@ -123,12 +127,13 @@ public class LeaveService : ILeaveService
     public async Task<List<LeaveApplicationDto>> GetLeaveApplicationsByEmployeeAsync(Guid employeeId)
     {
         var apps = await _db.LeaveApplications
+            .AsNoTracking()
             .Where(la => la.EmployeeId == employeeId)
             .Include(la => la.Employee)
             .Include(la => la.Approver)
             .ToListAsync();
 
-        var leaveTypes = await _platformDb.LeaveTypes.ToListAsync();
+        var leaveTypes = await _platformDb.LeaveTypes.AsNoTracking().ToListAsync();
         var typeMap = leaveTypes.ToDictionary(lt => lt.Id, lt => lt.Name);
 
         return apps.Select(la => MapToDto(la, typeMap.GetValueOrDefault(la.LeaveTypeId, "Unknown"))).ToList();
@@ -137,12 +142,13 @@ public class LeaveService : ILeaveService
     public async Task<List<LeaveApplicationDto>> GetPendingApplicationsAsync()
     {
         var apps = await _db.LeaveApplications
+            .AsNoTracking()
             .Where(la => la.Status == LeaveStatus.Submitted)
             .Include(la => la.Employee)
             .Include(la => la.Approver)
             .ToListAsync();
 
-        var leaveTypes = await _platformDb.LeaveTypes.ToListAsync();
+        var leaveTypes = await _platformDb.LeaveTypes.AsNoTracking().ToListAsync();
         var typeMap = leaveTypes.ToDictionary(lt => lt.Id, lt => lt.Name);
 
         return apps.Select(la => MapToDto(la, typeMap.GetValueOrDefault(la.LeaveTypeId, "Unknown"))).ToList();

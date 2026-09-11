@@ -1,4 +1,7 @@
 using Khet360.Application.Interfaces;
+using Khet360.Domain.Entities.Tenant;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Common;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,7 +18,7 @@ public class TenantResolverMiddleware
         _logger = logger;
     }
 
-    public async Task InvokeAsync(HttpContext context, PlatformDbContext platformDb, ITenantService tenantService)
+    public async Task InvokeAsync(HttpContext context, PlatformDbContext platformDb, ITenantService tenantService, IPlatformCacheService cache)
     {
         var host = context.Request.Host.Host;
         if (string.IsNullOrEmpty(host))
@@ -30,8 +33,8 @@ public class TenantResolverMiddleware
 
         if (!string.IsNullOrEmpty(slug))
         {
-            var tenant = await platformDb.Tenants
-                .FirstOrDefaultAsync(t => t.Slug == slug && t.IsActive);
+            var tenants = await cache.GetTenantsAsync();
+            var tenant = tenants.FirstOrDefault(t => t.Slug == slug);
 
             if (tenant == null)
             {
@@ -68,5 +71,4 @@ public class TenantResolverMiddleware
 
         return null;
     }
-
 }

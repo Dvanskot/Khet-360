@@ -4,6 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Threading;
 using System.Threading.Tasks;
 

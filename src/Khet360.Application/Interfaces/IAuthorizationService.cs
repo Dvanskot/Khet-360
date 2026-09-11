@@ -1,5 +1,9 @@
 namespace Khet360.Application.Interfaces;
 
+using Khet360.Domain.Entities.Tenant;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Common;
+
 /// <summary>
 /// Service for checking user permissions within the tenant.
 /// </summary>

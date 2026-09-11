@@ -1,9 +1,11 @@
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 
 namespace Khet360.Infrastructure.Services;
 
@@ -12,12 +14,14 @@ public class FuneralCaseService : IFuneralCaseService
     private readonly TenantDbContext _tenantDb;
     private readonly ITenantService _tenantService;
     private readonly IWorkItemService _workItemService;
+    private readonly IMetricsService _metrics;
 
-    public FuneralCaseService(TenantDbContext tenantDb, ITenantService tenantService, IWorkItemService workItemService)
+    public FuneralCaseService(TenantDbContext tenantDb, ITenantService tenantService, IWorkItemService workItemService, IMetricsService metrics)
     {
         _tenantDb = tenantDb;
         _tenantService = tenantService;
         _workItemService = workItemService;
+        _metrics = metrics;
     }
 
     public async Task<Guid> OpenCaseAsync(Guid customerId, Guid? deceasedId, Guid branchId)
@@ -93,6 +97,12 @@ public class FuneralCaseService : IFuneralCaseService
 
         await _tenantDb.SaveChangesAsync();
 
+        if (funeralCase.Status == FuneralCaseStatus.Closed)
+        {
+            var closureDuration = funeralCase.ClosedAt.Value - funeralCase.OpenedAt;
+            _metrics.RecordCaseClosureTime(closureDuration.TotalSeconds);
+        }
+
         // 3. Trigger the WorkItem for the NEXT stage
         if (funeralCase.Status != FuneralCaseStatus.Closed)
         {
@@ -109,6 +119,7 @@ public class FuneralCaseService : IFuneralCaseService
     public async Task<FuneralCaseDto?> GetCaseDetailsAsync(Guid id)
     {
         var funeralCase = await _tenantDb.FuneralCases
+            .AsNoTracking()
             .Include(c => c.Milestones)
             .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -156,6 +167,7 @@ public class FuneralCaseService : IFuneralCaseService
 
         var total = await query.CountAsync();
         var items = await query
+            .AsNoTracking()
             .Skip((filter.Page - 1) * filter.PageSize)
             .Take(filter.PageSize)
             .ToListAsync();

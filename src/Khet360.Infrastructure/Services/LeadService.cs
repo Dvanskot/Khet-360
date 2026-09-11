@@ -1,10 +1,12 @@
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
 using Khet360.Domain.Events;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 
 namespace Khet360.Infrastructure.Services;
 
@@ -120,6 +122,7 @@ public class LeadService : ILeadService
 
         var total = await query.CountAsync();
         var items = await query
+            .AsNoTracking()
             .Skip((filter.Page - 1) * filter.PageSize)
             .Take(filter.PageSize)
             .ToListAsync();

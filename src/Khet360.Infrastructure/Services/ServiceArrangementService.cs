@@ -1,10 +1,12 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Dtos;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -69,6 +71,7 @@ public class ServiceArrangementService : IServiceArrangementService
     public async Task<ServiceArrangementDto?> GetArrangementAsync(Guid id)
     {
         var arrangement = await _db.ServiceArrangements
+            .AsNoTracking()
             .Include(s => s.Items)
             .FirstOrDefaultAsync(s => s.Id == id);
 
@@ -107,6 +110,7 @@ public class ServiceArrangementService : IServiceArrangementService
     public async Task<IEnumerable<ServiceArrangementDto>> GetArrangementsByCaseAsync(Guid funeralCaseId)
     {
         var arrangements = await _db.ServiceArrangements
+            .AsNoTracking()
             .Include(s => s.Items)
             .Where(s => s.FuneralCaseId == funeralCaseId)
             .ToListAsync();

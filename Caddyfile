@@ -6,14 +6,19 @@
     # Redirect all HTTP traffic to HTTPS (uncomment in production)
     # redir https://{host}{uri}
 
-    # Proxy API requests to the .NET Backend (once created)
-    handle_path /api/* {
-        reverse_proxy backend:8080
+    # Proxy Auth API requests to the AuthApi service on localhost:5001
+    handle_path /api/auth/* {
+        reverse_proxy localhost:5001
     }
 
-    # Proxy Frontend requests to the Vue 3 app (once created)
+    # Proxy other API requests to the .NET Backend (monolith) on localhost:8080
+    handle_path /api/* {
+        reverse_proxy localhost:8080
+    }
+
+    # Proxy Frontend requests to the Vue 3 app on localhost:3000
     handle {
-        reverse_proxy frontend:3000
+        reverse_proxy localhost:3000
     }
 
     # Log requests for debugging

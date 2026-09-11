@@ -1,13 +1,18 @@
+using Khet360.Application.Dtos;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Khet360.Api.Controllers;
 
 [ApiController]
+[Authorize(AuthenticationSchemes = "PlatformJwt", Roles = "PlatformAdmin")]
 [Route("api/[controller]")]
 public class BackupController : ControllerBase
 {
@@ -39,6 +44,20 @@ public class BackupController : ControllerBase
         return Ok(history);
     }
 
+    [HttpGet("restore-status/{jobId}")]
+    public async Task<IActionResult> GetRestoreStatus(Guid jobId)
+    {
+        var job = await _backupService.GetRestoreStatusAsync(jobId);
+        return Ok(job);
+    }
+
+    [HttpGet("restore-history")]
+    public async Task<IActionResult> GetRestoreHistory([FromQuery] Guid tenantId)
+    {
+        var history = await _backupService.GetRestoreHistoryAsync(tenantId);
+        return Ok(history);
+    }
+
     [HttpPost("restore")]
     public async Task<IActionResult> RequestRestore([FromBody] RestoreRequest request)
     {
@@ -46,5 +65,3 @@ public class BackupController : ControllerBase
         return Ok(new { RestoreJobId = jobId });
     }
 }
-
-public record RestoreRequest(Guid TenantId, Guid BackupJobId);

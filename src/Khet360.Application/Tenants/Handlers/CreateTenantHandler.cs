@@ -1,4 +1,7 @@
 using MediatR;
+using Khet360.Domain.Entities.Tenant;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Common;
 using Khet360.Application.Tenants.Commands;
 using Khet360.Application.Interfaces;
 

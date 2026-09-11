@@ -1,4 +1,7 @@
 using System.Collections.Generic;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -10,5 +13,5 @@ public interface IFileStorageService
     Task<Stream> DownloadFileAsync(string fileKey);
     Task DeleteFileAsync(string fileKey);
     Task<IEnumerable<string>> ListFilesAsync(string folder);
-    string GetPresignedUrl(string fileKey, int expiryMinutes = 60);
+    Task<string> GetPresignedUrlAsync(string fileKey, int expiryMinutes = 60);
 }

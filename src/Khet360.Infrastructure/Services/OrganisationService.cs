@@ -1,6 +1,8 @@
 using Khet360.Application.Interfaces;
+using Khet360.Domain.Entities.Tenant;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Common;
 using Khet360.Infrastructure.Persistence;
-using Khet360.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Khet360.Infrastructure.Services;

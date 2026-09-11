@@ -1,8 +1,10 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Khet360.Domain.Entities;
 using Khet360.Infrastructure.Persistence;
 using Khet360.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -58,13 +60,28 @@ public class BackupJobWorker : BackgroundService
         {
             try
             {
-                // We call the implementation of IBackupService to perform the actual backup
-                // We pass the job ID so it can update the status.
                 await backupService.PerformBackupInternalAsync(job.Id);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to process backup job {Id}", job.Id);
+            }
+        }
+
+        var pendingRestores = await platformDb.RestoreJobs
+            .Where(j => j.Status == RestoreStatus.Pending)
+            .OrderBy(j => j.RequestedAtUtc)
+            .ToListAsync(stoppingToken);
+
+        foreach (var job in pendingRestores)
+        {
+            try
+            {
+                await backupService.PerformRestoreInternalAsync(job.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to process restore job {Id}", job.Id);
             }
         }
     }

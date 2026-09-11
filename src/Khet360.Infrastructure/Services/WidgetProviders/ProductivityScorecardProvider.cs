@@ -1,4 +1,7 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,8 +24,8 @@ public class ProductivityScorecardProvider : IWidgetProvider
 
     public async Task<object> GetDataAsync(Guid tenantId, Guid userId)
     {
-        var totalItems = await _db.WorkItems.CountAsync();
-        var completedItems = await _db.WorkItems.CountAsync(wi => wi.Status == Khet360.Domain.Enums.WorkItemStatus.Completed);
+        var totalItems = await _db.WorkItems.AsNoTracking().CountAsync();
+        var completedItems = await _db.WorkItems.AsNoTracking().CountAsync(wi => wi.Status == Khet360.Domain.Enums.WorkItemStatus.Completed);
 
         double completionRate = totalItems == 0 ? 0 : (double)completedItems / totalItems * 100;
 

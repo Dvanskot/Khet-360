@@ -1,9 +1,11 @@
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 
 namespace Khet360.Infrastructure.Services;
 
@@ -44,7 +46,7 @@ public class OpportunityService : IOpportunityService
 
     public async Task<OpportunityDto?> GetOpportunityAsync(Guid id)
     {
-        var opp = await _tenantDb.Opportunities.FindAsync(id);
+        var opp = await _tenantDb.Opportunities.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id);
         if (opp == null) return null;
 
         return new OpportunityDto(
@@ -85,6 +87,7 @@ public class OpportunityService : IOpportunityService
 
         var total = await query.CountAsync();
         var items = await query
+            .AsNoTracking()
             .Skip((filter.Page - 1) * filter.PageSize)
             .Take(filter.PageSize)
             .ToListAsync();

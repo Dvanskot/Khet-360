@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using Khet360.Domain.Entities;
 using Khet360.Application.Interfaces;
 using System.Linq.Expressions;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Reflection;
 using System.Text.Json;
 
@@ -188,6 +190,11 @@ public class TenantDbContext : DbContext
             entity.HasOne(wh => wh.WorkItem)
                 .WithMany(wi => wi.History)
                 .HasForeignKey(wh => wh.WorkItemId);
+        });
+
+        modelBuilder.Entity<InboxMessage>(entity =>
+        {
+            entity.HasIndex(e => e.MessageId).IsUnique();
         });
 
         modelBuilder.Entity<Activity>(entity =>

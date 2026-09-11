@@ -1,0 +1,63 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build outputs
+dist/
+out/
+publish/
+
+# Test results
+TestResults/
+*.trx
+*.xml
+coverage/
+
+# IDE
+.vs/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/
+
+# Documentation
+*.md
+docs/
+
+# Environment
+.env
+.env.*
+appsettings.*.json
+!appsettings.json
+
+# NuGet
+packages/
+*.nupkg
+
+# Temporary files
+tmp/
+temp/
+*.tmp

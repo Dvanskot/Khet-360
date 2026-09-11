@@ -1,10 +1,12 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Dtos;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -47,17 +49,20 @@ public class FamilyPortalService : IFamilyPortalService
     public async Task<FamilyCaseViewDto?> GetCaseViewByTokenAsync(string token)
     {
         var accessToken = await _db.CaseAccessTokens
+            .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Token == token && t.IsActive && t.ExpiryDate > DateTime.UtcNow);
 
         if (accessToken == null) return null;
 
         var funeralCase = await _db.FuneralCases
+            .AsNoTracking()
             .Include(c => c.Milestones)
             .FirstOrDefaultAsync(c => c.Id == accessToken.FuneralCaseId);
 
         if (funeralCase == null) return null;
 
         var arrangements = await _db.ServiceArrangements
+            .AsNoTracking()
             .Include(s => s.Items)
             .Where(s => s.FuneralCaseId == funeralCase.Id)
             .ToListAsync();
@@ -65,20 +70,29 @@ public class FamilyPortalService : IFamilyPortalService
         var selectedItems = arrangements.SelectMany(a => a.Items).ToList();
 
         var pendingDocs = await _db.DocumentRequests
+            .AsNoTracking()
             .Where(d => d.FuneralCaseId == funeralCase.Id && !d.IsFulfilled)
             .Select(d => new DocumentRequestDto(d.Id, d.DocumentName, d.Description, d.IsMandatory))
             .ToListAsync();
 
-        var fulfilledDocs = await _db.DocumentRequests
+        var fulfilledDocRecords = await _db.DocumentRequests
+            .AsNoTracking()
             .Where(d => d.FuneralCaseId == funeralCase.Id && d.IsFulfilled && d.FileKey != null)
-            .Select(d => new DocumentDto(
+            .ToListAsync();
+
+        var fulfilledDocs = new List<DocumentDto>();
+        foreach (var d in fulfilledDocRecords)
+        {
+            var presignedUrl = await _storage.GetPresignedUrlAsync(d.FileKey!);
+            fulfilledDocs.Add(new DocumentDto(
                 d.Id,
                 d.DocumentName,
                 DateTime.UtcNow,
-                _storage.GetPresignedUrl(d.FileKey!)))
-            .ToListAsync();
+                presignedUrl));
+        }
 
         var invoices = await _db.Invoices
+            .AsNoTracking()
             .Where(i => i.FuneralCaseId == funeralCase.Id && i.Status != InvoiceStatus.Paid)
             .Select(i => new InvoiceDto(
                 i.Id,

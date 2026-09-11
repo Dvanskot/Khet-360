@@ -1,4 +1,3 @@
-using Khet360.Domain.Entities;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -6,7 +5,11 @@ using Microsoft.Extensions.DependencyInjection;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -53,58 +56,68 @@ public class EventConsumerService : BackgroundService
             {
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
+                var deliveryTag = ea.DeliveryTag;
 
                 _logger.LogInformation("Received event: {Message}", message);
 
-                // Use a scoped service provider to access TenantDbContext
-                using var scope = _serviceProvider.CreateScope();
-                var db = scope.ServiceProvider.GetRequiredService<TenantDbContext>();
-
-                // Extract MessageId from the payload (Assuming events now include it)
-                // For this implementation, we'll simulate MessageId extraction
-                var messageId = ExtractMessageId(message);
-
-                if (string.IsNullOrEmpty(messageId))
-                {
-                    _logger.LogWarning("Received event without a valid MessageId. Skipping idempotency check.");
-                    await RouteEvent(message);
-                    return;
-                }
-
-                // Inbox Pattern: Check-Process-Mark
-                using var transaction = await db.Database.BeginTransactionAsync();
                 try
                 {
-                    var processed = await db.InboxMessages
-                        .AnyAsync(m => m.MessageId == messageId);
+                    using var scope = _serviceProvider.CreateScope();
+                    var db = scope.ServiceProvider.GetRequiredService<TenantDbContext>();
 
-                    if (!processed)
+                    var messageId = ExtractMessageId(message);
+
+                    if (string.IsNullOrEmpty(messageId))
                     {
+                        _logger.LogWarning("Received event without a valid MessageId. Skipping idempotency check.");
                         await RouteEvent(message);
-
-                        db.InboxMessages.Add(new InboxMessage
-                        {
-                            Id = Guid.NewGuid(),
-                            MessageId = messageId,
-                            ProcessedAt = DateTime.UtcNow
-                        });
-                        await db.SaveChangesAsync();
+                        await _channel.BasicAckAsync(deliveryTag, false);
+                        return;
                     }
-                    else
+
+                    using var transaction = await db.Database.BeginTransactionAsync();
+                    try
                     {
-                        _logger.LogInformation("Event {MessageId} already processed. Skipping.", messageId);
+                        var processed = await db.InboxMessages
+                            .AnyAsync(m => m.MessageId == messageId);
+
+                        if (!processed)
+                        {
+                            await RouteEvent(message);
+
+                            db.InboxMessages.Add(new InboxMessage
+                            {
+                                Id = Guid.NewGuid(),
+                                MessageId = messageId,
+                                ProcessedAt = DateTime.UtcNow
+                            });
+                            await db.SaveChangesAsync();
+                        }
+                        else
+                        {
+                            _logger.LogInformation("Event {MessageId} already processed. Skipping.", messageId);
+                        }
+
+                        await transaction.CommitAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        _logger.LogError(ex, "Error processing event {MessageId}. Transaction rolled back.", messageId);
+                        await _channel.BasicNackAsync(deliveryTag, false, requeue: true);
+                        return;
                     }
 
-                    await transaction.CommitAsync();
+                    await _channel.BasicAckAsync(deliveryTag, false);
                 }
                 catch (Exception ex)
                 {
-                    await transaction.RollbackAsync();
-                    _logger.LogError(ex, "Error processing event {MessageId}. Transaction rolled back.", messageId);
+                    _logger.LogError(ex, "Unhandled error processing event. Nacking message.");
+                    await _channel.BasicNackAsync(deliveryTag, false, requeue: true);
                 }
             };
 
-            await _channel.BasicConsumeAsync(queue: queueName, autoAck: true, consumer: consumer, cancellationToken: stoppingToken);
+            await _channel.BasicConsumeAsync(queue: queueName, autoAck: false, consumer: consumer, cancellationToken: stoppingToken);
 
             _logger.LogInformation("Event Consumer Service is listening for events with Inbox Pattern reliability.");
 
@@ -138,12 +151,16 @@ public class EventConsumerService : BackgroundService
 
     private string ExtractMessageId(string message)
     {
-        // Simple extraction logic for JSON payloads
-        if (message.Contains("\"MessageId\":\""))
+        try
         {
-            int start = message.IndexOf("\"MessageId\":\"") + 13;
-            int end = message.IndexOf("\"", start);
-            return message.Substring(start, end - start);
+            using var document = JsonDocument.Parse(message);
+            if (document.RootElement.TryGetProperty("MessageId", out var messageIdElement))
+            {
+                return messageIdElement.GetString() ?? string.Empty;
+            }
+        }
+        catch (JsonException)
+        {
         }
         return string.Empty;
     }

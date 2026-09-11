@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj": {}
+    "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj": {}
   },
   "projects": {
-    "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj": {
+    "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj",
+        "projectUniqueName": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj",
         "projectName": "Khet360.Domain",
-        "projectPath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj",
+        "projectPath": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Domain\\Khet360.Domain.csproj",
         "packagesPath": "C:\\Users\\Israel Tshikota\\.nuget\\packages\\",
-        "outputPath": "C:\\2026\\Projects\\August\\Khet-360\\src\\Khet360.Domain\\obj\\",
+        "outputPath": "C:\\2026\\Projects\\September\\Khet-360\\src\\Khet360.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -68,7 +68,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.400/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",

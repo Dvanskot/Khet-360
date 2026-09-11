@@ -1,0 +1,74 @@
+services:
+  public-web:
+    build:
+      context: .
+      dockerfile: frontend/public-web/Dockerfile
+    container_name: khet360_public_web
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE=http://api:8080
+      - NEXT_PUBLIC_SITE_URL=http://localhost:3000
+    depends_on:
+      - api
+    restart: unless-stopped
+    profiles:
+      - dev
+
+  tenant-erp:
+    build:
+      context: .
+      dockerfile: frontend/tenant-erp/Dockerfile
+    container_name: khet360_tenant_erp
+    ports:
+      - "3001:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE=http://api:8080
+    restart: unless-stopped
+    profiles:
+      - dev
+
+  api:
+    build:
+      context: .
+      dockerfile: src/Khet360.Api/Dockerfile
+    container_name: khet360_api
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__PlatformConnection=Server=sqlserver;Database=KhetLinQ_Platform;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      - Jwt__Issuer=Khet360
+      - Jwt__Audience=Khet360
+      - Jwt__PlatformKey=${JWT_PLATFORM_KEY}
+      - Jwt__TenantKey=${JWT_TENANT_KEY}
+      - Prometheus__Url=http://prometheus:9090
+      - RabbitMq__Host=rabbitmq
+      - RabbitMq__User=${RABBITMQ_DEFAULT_USER}
+      - RabbitMq__Pass=${RABBITMQ_DEFAULT_PASS}
+      - Redis__ConnectionString=redis:${REDIS_PASSWORD}@redis:6379
+      - MinIO__Endpoint=minio:9000
+      - MinIO__AccessKey=${MINIO_ROOT_USER}
+      - MinIO__SecretKey=${MINIO_ROOT_PASSWORD}
+    depends_on:
+      - sqlserver
+      - redis
+      - rabbitmq
+      - minio
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: khet360_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:

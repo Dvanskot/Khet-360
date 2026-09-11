@@ -1,15 +1,18 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Dtos;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using System.Text.Json;
 
 namespace Khet360.Api.Controllers.Platform;
 
@@ -39,8 +42,10 @@ public class PublicSubscriptionController : ControllerBase
     public async Task<ActionResult<IEnumerable<object>>> GetPublicPlans()
     {
         var plans = await _platformDb.SubscriptionPlans
+            .AsNoTracking()
             .Where(p => p.IsActive)
-            .Select(p => new {
+            .Select(p => new
+            {
                 p.Id,
                 p.Name,
                 p.Description,
@@ -69,7 +74,8 @@ public class PublicSubscriptionController : ControllerBase
             dto.SubscriptionPlanId,
             IsolationTier.Isolated);
 
-        return Ok(new {
+        return Ok(new
+        {
             Message = "Free trial started successfully!",
             TenantId = tenant.Id,
             TrialEndDate = tenant.TrialEndDate
@@ -89,7 +95,8 @@ public class PublicSubscriptionController : ControllerBase
                 dto.Email,
                 dto.CompanyName);
 
-            return Ok(new {
+            return Ok(new
+            {
                 Message = "Payment initiated. Please complete the payment to activate your account.",
                 PaymentLink = paymentLink,
                 Plan = plan.Name,
@@ -103,23 +110,86 @@ public class PublicSubscriptionController : ControllerBase
     }
 
     [HttpPost("webhook/payment-success")]
-    public async Task<IActionResult> HandlePaymentWebhook([FromBody] PaymentWebhookDto dto)
+    public async Task<IActionResult> HandlePaymentWebhook([FromBody] JsonElement payload)
     {
-        var isValid = await _platformPaymentService.VerifySubscriptionPaymentAsync(dto.TransactionReference, dto.Amount);
-        if (!isValid) return BadRequest("Invalid payment verification.");
+        PaymentWebhookDto? dto;
+        try
+        {
+            dto = payload.Deserialize<PaymentWebhookDto>(JsonSerializerOptions.Web);
+        }
+        catch
+        {
+            return BadRequest("Invalid payment webhook payload.");
+        }
 
-        var tenant = await _tenantManagementService.CreateTenantAsync(
-            dto.CompanyName,
-            dto.Slug,
-            dto.SubscriptionPlanId,
-            IsolationTier.Isolated);
+        if (dto == null)
+        {
+            return BadRequest("Invalid payment webhook payload.");
+        }
 
-        await _subscriptionService.ActivateSubscriptionAsync(tenant.Id, 1);
+        var rawPayload = payload.GetRawText();
+        var signature = Request.Headers["X-Payment-Signature"].ToString();
+        var existingReceipt = await _platformDb.PlatformPaymentReceipts
+            .AsNoTracking()
+            .FirstOrDefaultAsync(receipt => receipt.TransactionReference == dto.TransactionReference);
 
-        return Ok(new { Message = "Tenant provisioned and subscription activated." });
+        if (existingReceipt?.ProcessedAtUtc.HasValue == true)
+        {
+            return Ok(new { Message = "Payment already processed.", Idempotent = true });
+        }
+
+        var isValid = await _platformPaymentService.VerifySubscriptionPaymentAsync(
+            dto.TransactionReference,
+            dto.Amount,
+            rawPayload,
+            signature);
+
+        if (!isValid)
+        {
+            return BadRequest("Invalid payment verification.");
+        }
+
+        var tenant = await _platformDb.Tenants.FirstOrDefaultAsync(item => item.Slug == dto.Slug);
+        if (tenant == null)
+        {
+            tenant = await _tenantManagementService.CreateTenantAsync(
+                dto.CompanyName,
+                dto.Slug,
+                dto.SubscriptionPlanId,
+                IsolationTier.Isolated);
+        }
+
+        if (tenant.SubscriptionStatus != SubscriptionStatus.Active)
+        {
+            await _subscriptionService.ActivateSubscriptionAsync(tenant.Id, 1);
+        }
+
+        if (existingReceipt == null)
+        {
+            _platformDb.PlatformPaymentReceipts.Add(new PlatformPaymentReceipt
+            {
+                Id = Guid.NewGuid(),
+                TransactionReference = dto.TransactionReference,
+                Amount = dto.Amount,
+                TenantId = tenant.Id,
+                ProcessedAtUtc = DateTime.UtcNow
+            });
+            await _platformDb.SaveChangesAsync();
+        }
+        else
+        {
+            existingReceipt = await _platformDb.PlatformPaymentReceipts
+                .FirstOrDefaultAsync(receipt => receipt.TransactionReference == dto.TransactionReference);
+
+            if (existingReceipt != null)
+            {
+                existingReceipt.TenantId = tenant.Id;
+                existingReceipt.Amount = dto.Amount;
+                existingReceipt.ProcessedAtUtc = DateTime.UtcNow;
+                await _platformDb.SaveChangesAsync();
+            }
+        }
+
+        return Ok(new { Message = "Tenant provisioned and subscription activated.", Idempotent = false });
     }
 }
-
-public record TrialSignupDto(string CompanyName, string Slug, Guid SubscriptionPlanId, string Email);
-public record SubscribeDto(string CompanyName, string Slug, Guid SubscriptionPlanId, string Email);
-public record PaymentWebhookDto(string TransactionReference, decimal Amount, string CompanyName, string Slug, Guid SubscriptionPlanId);

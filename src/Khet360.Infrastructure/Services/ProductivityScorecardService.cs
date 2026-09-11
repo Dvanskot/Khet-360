@@ -1,4 +1,8 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
+using System.Globalization;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
@@ -16,13 +20,11 @@ public class ProductivityScorecardService : IProductivityScorecardService
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<ProductivityScorecardService> _logger;
-    private readonly string _prometheusUrl;
 
-    public ProductivityScorecardService(HttpClient httpClient, IConfiguration configuration, ILogger<ProductivityScorecardService> logger)
+    public ProductivityScorecardService(HttpClient httpClient, ILogger<ProductivityScorecardService> logger)
     {
         _httpClient = httpClient;
         _logger = logger;
-        _prometheusUrl = configuration["Prometheus:Url"] ?? "http://localhost:9090";
     }
 
     public async Task<ProductivityScorecardDto> GetScorecardAsync(Guid branchId)
@@ -70,7 +72,7 @@ public class ProductivityScorecardService : IProductivityScorecardService
         var result = await response.Content.ReadFromJsonAsync<PrometheusResponse>();
         var vector = result?.Data?.Result?.FirstOrDefault();
 
-        if (vector != null && double.TryParse(vector.Value[1], out var val))
+        if (vector != null && double.TryParse(vector.Value[1], NumberStyles.Any, CultureInfo.InvariantCulture, out var val))
         {
             return val;
         }

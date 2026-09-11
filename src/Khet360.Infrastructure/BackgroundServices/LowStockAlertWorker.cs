@@ -1,8 +1,13 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Khet360.Application.Interfaces;
+using Khet360.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -13,12 +18,14 @@ public class LowStockAlertWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<LowStockAlertWorker> _logger;
+    private readonly IPlatformCacheService _cache;
     private readonly TimeSpan _checkInterval = TimeSpan.FromHours(1);
 
-    public LowStockAlertWorker(IServiceProvider serviceProvider, ILogger<LowStockAlertWorker> logger)
+    public LowStockAlertWorker(IServiceProvider serviceProvider, ILogger<LowStockAlertWorker> logger, IPlatformCacheService cache)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _cache = cache;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -29,21 +36,46 @@ public class LowStockAlertWorker : BackgroundService
         {
             try
             {
-                using (var scope = _serviceProvider.CreateScope())
+                var tenants = await _cache.GetTenantsAsync();
+
+                foreach (var tenant in tenants)
                 {
-                    var inventoryService = scope.ServiceProvider.GetRequiredService<IInventoryService>();
-                    var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
-                    var branchService = scope.ServiceProvider.GetRequiredService<ITenantService>(); // To get branches
+                    if (stoppingToken.IsCancellationRequested) break;
 
-                    // In a real system, we would iterate over all active branches for the tenant
-                    // For now, we'll assume the context is handled or we fetch branches.
-                    // Since we are in a background service, we need to handle multi-tenancy carefully.
-                    // In Khet-360, background tasks often operate on the Platform plane or iterate tenants.
+                    using var tenantScope = _serviceProvider.CreateScope();
+                    var tenantService = tenantScope.ServiceProvider.GetRequiredService<ITenantService>();
+                    tenantService.SetTenant(tenant);
 
-                    _logger.LogInformation("Checking for low stock items...");
+                    var db = tenantScope.ServiceProvider.GetRequiredService<TenantDbContext>();
+                    var inventoryService = tenantScope.ServiceProvider.GetRequiredService<IInventoryService>();
+                    var notificationService = tenantScope.ServiceProvider.GetRequiredService<INotificationService>();
 
-                    // Note: Simplified for demonstration.
-                    // Ideally, this would iterate all branches in the database.
+                    var branches = await db.Branches
+                        .Where(b => b.IsActive)
+                        .ToListAsync(stoppingToken);
+
+                    foreach (var branch in branches)
+                    {
+                        var lowStockItems = await inventoryService.GetLowStockItemsAsync(branch.Id);
+
+                        foreach (var stock in lowStockItems)
+                        {
+                            var branchUserIds = await db.UserBranches
+                                .Where(ub => ub.BranchId == branch.Id)
+                                .Select(ub => ub.UserId)
+                                .Distinct()
+                                .ToListAsync(stoppingToken);
+
+                            foreach (var userId in branchUserIds)
+                            {
+                                await notificationService.SendNotificationAsync(
+                                    userId,
+                                    "Low Stock Alert",
+                                    $"Product {stock.ProductId} at branch {branch.Name} is low on stock. Current quantity: {stock.QuantityOnHand}, Reorder level: {stock.ReorderLevel}",
+                                    NotificationPriority.High);
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception ex)

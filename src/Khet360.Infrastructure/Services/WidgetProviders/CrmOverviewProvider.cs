@@ -1,9 +1,11 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -23,14 +25,14 @@ public class CrmOverviewProvider : IWidgetProvider
 
     public async Task<object> GetDataAsync(Guid tenantId, Guid userId)
     {
-        var newLeads = await _db.Leads.CountAsync(l => l.Status == LeadStatus.New);
-        var openOpportunities = await _db.Opportunities
+        var newLeads = await _db.Leads.AsNoTracking().CountAsync(l => l.Status == LeadStatus.New);
+        var openOpportunities = await _db.Opportunities.AsNoTracking()
             .CountAsync(o => o.Stage != OpportunityStage.ClosedWon && o.Stage != OpportunityStage.ClosedLost);
-        var pipelineValue = await _db.Opportunities
+        var pipelineValue = await _db.Opportunities.AsNoTracking()
             .Where(o => o.Stage != OpportunityStage.ClosedWon && o.Stage != OpportunityStage.ClosedLost)
             .SumAsync(o => o.EstimatedValue);
-        var totalLeads = await _db.Leads.CountAsync();
-        var convertedLeads = await _db.Leads.CountAsync(l => l.Status == LeadStatus.Converted);
+        var totalLeads = await _db.Leads.AsNoTracking().CountAsync();
+        var convertedLeads = await _db.Leads.AsNoTracking().CountAsync(l => l.Status == LeadStatus.Converted);
         double conversionRate = totalLeads == 0 ? 0 : (double)convertedLeads / totalLeads * 100;
 
         return new

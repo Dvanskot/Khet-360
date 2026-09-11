@@ -1,10 +1,12 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Dtos;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -62,6 +64,7 @@ public class VendorService : IVendorService
     public async Task<IEnumerable<VendorDto>> GetVendorsByCategoryAsync(string category, Guid branchId)
     {
         return await _db.Vendors
+            .AsNoTracking()
             .Where(v => v.Category == category && v.BranchId == branchId)
             .Select(v => new VendorDto(v.Id, v.CompanyName, v.ContactName, v.Email, v.Phone, v.Category, v.Status))
             .ToListAsync();
@@ -121,6 +124,7 @@ public class VendorService : IVendorService
     public async Task<VendorOrderDto?> GetOrderAsync(Guid id)
     {
         var order = await _db.VendorOrders
+            .AsNoTracking()
             .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.Id == id);
 

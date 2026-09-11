@@ -1,4 +1,7 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -95,14 +98,13 @@ public class MinioStorageService : IFileStorageService
         return await Task.FromResult(new List<string>());
     }
 
-    public string GetPresignedUrl(string fileKey, int expiryMinutes = 60)
+    public async Task<string> GetPresignedUrlAsync(string fileKey, int expiryMinutes = 60)
     {
         var args = new PresignedGetObjectArgs()
             .WithBucket(_bucketName)
             .WithObject(fileKey)
             .WithExpiry(expiryMinutes * 60);
 
-        // Try to use the async method and block for the result since the interface is sync
-        return _minioClient.PresignedGetObjectAsync(args).GetAwaiter().GetResult();
+        return await _minioClient.PresignedGetObjectAsync(args);
     }
 }

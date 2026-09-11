@@ -1,11 +1,14 @@
 using Khet360.Application.Interfaces;
 using Khet360.Infrastructure.Persistence;
-using Khet360.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using System.Text.RegularExpressions;
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Threading.Tasks;
 
 namespace Khet360.Infrastructure.Services;
@@ -27,6 +30,11 @@ public class TenantProvisioningService : ITenantProvisioningService
 
     public async Task<string> ProvisionTenantAsync(Guid tenantId, string slug, IsolationTier tier)
     {
+        if (string.IsNullOrWhiteSpace(slug) || slug.Length > 100 || !Regex.IsMatch(slug, "^[a-z0-9-]+$"))
+        {
+            throw new InvalidOperationException("Tenant slug must contain only lowercase letters, numbers, and hyphens.");
+        }
+
         _logger.LogInformation("Provisioning tenant {Slug} ({TenantId}) with tier {Tier}", slug, tenantId, tier);
 
         try

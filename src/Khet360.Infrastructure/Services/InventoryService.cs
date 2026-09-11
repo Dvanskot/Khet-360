@@ -1,9 +1,11 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,6 +23,7 @@ public class InventoryService : IInventoryService
     public async Task<int> GetStockLevelAsync(Guid productId, Guid branchId)
     {
         var stock = await _db.InventoryStocks
+            .AsNoTracking()
             .FirstOrDefaultAsync(s => s.ProductId == productId && s.BranchId == branchId);
         return stock?.QuantityOnHand ?? 0;
     }
@@ -65,6 +68,7 @@ public class InventoryService : IInventoryService
     public async Task<IEnumerable<InventoryStock>> GetLowStockItemsAsync(Guid branchId)
     {
         return await _db.InventoryStocks
+            .AsNoTracking()
             .Where(s => s.BranchId == branchId && s.QuantityOnHand <= s.ReorderLevel)
             .ToListAsync();
     }

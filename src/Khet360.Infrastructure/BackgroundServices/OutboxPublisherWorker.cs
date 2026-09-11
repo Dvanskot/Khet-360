@@ -1,10 +1,13 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,12 +20,14 @@ public class OutboxPublisherWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<OutboxPublisherWorker> _logger;
+    private readonly IPlatformCacheService _cache;
     private readonly TimeSpan _checkInterval = TimeSpan.FromSeconds(5);
 
-    public OutboxPublisherWorker(IServiceProvider serviceProvider, ILogger<OutboxPublisherWorker> logger)
+    public OutboxPublisherWorker(IServiceProvider serviceProvider, ILogger<OutboxPublisherWorker> logger, IPlatformCacheService cache)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _cache = cache;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -46,14 +51,24 @@ public class OutboxPublisherWorker : BackgroundService
 
     private async Task ProcessAllTenantsOutboxes(CancellationToken stoppingToken)
     {
-        using var scope = _serviceProvider.CreateScope();
-        var platformDb = scope.ServiceProvider.GetRequiredService<PlatformDbContext>();
-        var tenants = await platformDb.Tenants.ToListAsync(stoppingToken);
+        var tenants = await _cache.GetTenantsAsync();
 
-        foreach (var tenant in tenants)
+        // Process tenants in parallel with a degree of parallelism to avoid overwhelming the system
+        var semaphore = new SemaphoreSlim(5); // Max 5 concurrent tenant processing
+        var tasks = tenants.Select(async tenant =>
         {
-            await ProcessTenantOutbox(tenant, stoppingToken);
-        }
+            await semaphore.WaitAsync(stoppingToken);
+            try
+            {
+                await ProcessTenantOutbox(tenant, stoppingToken);
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        });
+
+        await Task.WhenAll(tasks);
     }
 
     private async Task ProcessTenantOutbox(Tenant tenant, CancellationToken stoppingToken)
@@ -72,6 +87,11 @@ public class OutboxPublisherWorker : BackgroundService
             .Take(20)
             .ToListAsync(stoppingToken);
 
+        if (messages.Count == 0)
+        {
+            return; // No messages for this tenant, skip
+        }
+
         foreach (var message in messages)
         {
             try
@@ -86,6 +106,8 @@ public class OutboxPublisherWorker : BackgroundService
             {
                 _logger.LogError(ex, "Failed to publish outbox message {Id}", message.Id);
                 message.Error = ex.Message;
+                message.RetryCount++;
+                message.LastErrorAt = DateTime.UtcNow;
             }
         }
 

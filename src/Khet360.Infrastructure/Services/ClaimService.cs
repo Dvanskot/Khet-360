@@ -1,10 +1,12 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Dtos;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -54,7 +56,7 @@ public class ClaimService : IClaimService
 
     public async Task<ClaimDto?> GetClaimAsync(Guid id)
     {
-        var claim = await _db.InsuranceClaims.FindAsync(id);
+        var claim = await _db.InsuranceClaims.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
         if (claim == null) return null;
 
         return new ClaimDto(
@@ -102,6 +104,7 @@ public class ClaimService : IClaimService
     public async Task<IEnumerable<ClaimDto>> GetClaimsByPolicyAsync(Guid policyId)
     {
         return await _db.InsuranceClaims
+            .AsNoTracking()
             .Where(c => c.PolicyId == policyId)
             .Select(c => new ClaimDto(
                 c.Id,
@@ -119,6 +122,7 @@ public class ClaimService : IClaimService
     public async Task<IEnumerable<ClaimDto>> GetClaimsByCaseAsync(Guid funeralCaseId)
     {
         return await _db.InsuranceClaims
+            .AsNoTracking()
             .Where(c => c.FuneralCaseId == funeralCaseId)
             .Select(c => new ClaimDto(
                 c.Id,
@@ -154,10 +158,11 @@ public class ClaimService : IClaimService
 
         // Automatically move claim to 'Paid' if total payments >= claim amount
         var totalPaid = await _db.ClaimPayments
+            .AsNoTracking()
             .Where(p => p.ClaimId == dto.ClaimId)
             .SumAsync(p => p.Amount);
 
-        var claim = await _db.InsuranceClaims.FindAsync(dto.ClaimId);
+        var claim = await _db.InsuranceClaims.AsNoTracking().FirstOrDefaultAsync(c => c.Id == dto.ClaimId);
         if (claim != null && totalPaid >= claim.ClaimAmount)
         {
             claim.Status = ClaimStatus.Paid;

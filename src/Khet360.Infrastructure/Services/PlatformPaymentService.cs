@@ -1,9 +1,11 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -15,12 +17,14 @@ public class PlatformPaymentService : IPlatformPaymentService
 {
     private readonly PlatformDbContext _platformDb;
     private readonly IEnumerable<IPaymentGatewayProvider> _gatewayProviders;
+    private readonly IWebhookValidator _webhookValidator;
     private readonly ILogger<PlatformPaymentService> _logger;
 
-    public PlatformPaymentService(PlatformDbContext platformDb, IEnumerable<IPaymentGatewayProvider> gatewayProviders, ILogger<PlatformPaymentService> logger)
+    public PlatformPaymentService(PlatformDbContext platformDb, IEnumerable<IPaymentGatewayProvider> gatewayProviders, IWebhookValidator webhookValidator, ILogger<PlatformPaymentService> logger)
     {
         _platformDb = platformDb;
         _gatewayProviders = gatewayProviders;
+        _webhookValidator = webhookValidator;
         _logger = logger;
     }
 
@@ -50,13 +54,14 @@ public class PlatformPaymentService : IPlatformPaymentService
             Provider = Enum.Parse<PaymentProvider>(config.ProviderName, true),
             ApiKey = config.ApiKey,
             SecretKey = config.SecretKey,
+            WebhookSecret = config.WebhookSecret,
             MerchantId = "PLATFORM_MERCHANT"
         };
 
         return await provider.CreatePaymentLinkAsync(paymentConfig, plan.MonthlyPrice, reference);
     }
 
-    public async Task<bool> VerifySubscriptionPaymentAsync(string transactionRef, decimal amount)
+    public async Task<bool> VerifySubscriptionPaymentAsync(string transactionRef, decimal amount, string payload, string signatureHeader)
     {
         var config = await _platformDb.PlatformPaymentConfigs.FirstOrDefaultAsync(c => c.IsActive);
         if (config == null) return false;
@@ -71,9 +76,11 @@ public class PlatformPaymentService : IPlatformPaymentService
             Provider = Enum.Parse<PaymentProvider>(config.ProviderName, true),
             ApiKey = config.ApiKey,
             SecretKey = config.SecretKey,
+            WebhookSecret = config.WebhookSecret,
             MerchantId = "PLATFORM_MERCHANT"
         };
 
-        return await provider.VerifyPaymentAsync(paymentConfig, transactionRef, amount);
+        var paymentIsValid = await provider.VerifyPaymentAsync(paymentConfig, transactionRef, amount);
+        return paymentIsValid && await _webhookValidator.ValidateSignatureAsync(paymentConfig, payload, signatureHeader);
     }
 }

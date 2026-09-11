@@ -3,6 +3,9 @@ using Khet360.Application.Interfaces;
 using Khet360.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Threading.Tasks;
 
 namespace Khet360.Api.Controllers;
@@ -29,9 +32,9 @@ public class LeadsController : ControllerBase
     public async Task<ActionResult<ApiResponse<LeadDto>>> GetLead(Guid id)
     {
         var lead = await _leadService.GetLeadAsync(id);
-        if (lead == null) 
+        if (lead == null)
             return NotFound(ApiResponse.Fail<LeadDto>("Lead not found"));
-        
+
         return Ok(ApiResponse.Ok(lead, "Lead retrieved successfully"));
     }
 

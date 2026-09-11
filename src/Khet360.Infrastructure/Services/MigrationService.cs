@@ -1,13 +1,17 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Data.SqlClient;
 
 namespace Khet360.Infrastructure.Services;
 
@@ -15,12 +19,19 @@ public class MigrationService : IMigrationService
 {
     private readonly PlatformDbContext _platformDb;
     private readonly IBackupService _backupService;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<MigrationService> _logger;
 
     public MigrationService(PlatformDbContext platformDb, IBackupService backupService, ILogger<MigrationService> logger)
+        : this(platformDb, backupService, new ConfigurationBuilder().Build(), logger)
+    {
+    }
+
+    public MigrationService(PlatformDbContext platformDb, IBackupService backupService, IConfiguration configuration, ILogger<MigrationService> logger)
     {
         _platformDb = platformDb;
         _backupService = backupService;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -62,16 +73,44 @@ public class MigrationService : IMigrationService
         return true;
     }
 
+    private string BuildMigrationConnectionString(IsolationTier tier, string databaseName)
+    {
+        var connectionString = tier == IsolationTier.Dedicated
+            ? _configuration["Migration:DedicatedConnectionString"]
+            : _configuration["Migration:SharedConnectionString"];
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException("Migration target connection string is not configured.");
+        }
+
+        var builder = new SqlConnectionStringBuilder(connectionString)
+        {
+            InitialCatalog = databaseName
+        };
+        return builder.ConnectionString;
+    }
+
     public async Task StartMigrationAsync(Guid jobId)
     {
         var job = await _platformDb.MigrationJobs.FindAsync(jobId);
-        if (job == null) throw new KeyNotFoundException("Migration job not found.");
+        if (job == null)
+        {
+            throw new KeyNotFoundException("Migration job not found.");
+        }
+
+        if (job.Status != MigrationStatus.Pending)
+        {
+            return;
+        }
+
+        job.Status = MigrationStatus.InProgress;
+        job.ClaimedAtUtc = DateTime.UtcNow;
+        job.ClaimedBy = "migration-worker";
+        await _platformDb.SaveChangesAsync();
 
         try
         {
-            job.Status = MigrationStatus.InProgress;
-            await _platformDb.SaveChangesAsync();
-
             _logger.LogInformation("Starting migration for job {JobId}. Requesting snapshot...", jobId);
 
             // Trigger the backup as a prerequisite for migration
@@ -90,6 +129,11 @@ public class MigrationService : IMigrationService
 
     public async Task CompleteTransferAsync(Guid jobId)
     {
+        if (!await ClaimMigrationJobAsync(jobId, MigrationStatus.InProgress, "migration-transfer-worker"))
+        {
+            return;
+        }
+
         var job = await _platformDb.MigrationJobs.FindAsync(jobId);
         if (job == null) throw new KeyNotFoundException("Migration job not found.");
 
@@ -121,9 +165,7 @@ public class MigrationService : IMigrationService
 
             // Update connection string based on tier
             // This is a simplified mock of connection string resolution
-            tenant.ConnectionString = job.TargetTier == IsolationTier.Dedicated
-                ? "Server=DedicatedServer;Database=KhetLinQ_" + tenant.Slug + ";User Id=sa;Password=Password123!;"
-                : "Server=SharedServer;Database=KhetLinQ_" + tenant.Slug + ";User Id=sa;Password=Password123!;";
+            tenant.ConnectionString = BuildMigrationConnectionString(job.TargetTier, $"KhetLinQ_{tenant.Slug}");
 
             _platformDb.Tenants.Update(tenant);
 
@@ -140,5 +182,48 @@ public class MigrationService : IMigrationService
             await _platformDb.SaveChangesAsync();
             _logger.LogError(ex, "Error during transfer phase for job {JobId}.", jobId);
         }
+    }
+
+    private async Task<bool> ClaimMigrationJobAsync(Guid jobId, MigrationStatus expectedStatus, string worker)
+    {
+        var now = DateTime.UtcNow;
+        if (_platformDb.Database.IsRelational())
+        {
+            if (expectedStatus == MigrationStatus.Pending)
+            {
+                var claimed = await _platformDb.MigrationJobs
+                    .Where(job => job.Id == jobId && job.Status == expectedStatus)
+                    .ExecuteUpdateAsync(items => items
+                        .SetProperty(job => job.Status, MigrationStatus.InProgress)
+                        .SetProperty(job => job.ClaimedAtUtc, now)
+                        .SetProperty(job => job.ClaimedBy, worker));
+
+                return claimed == 1;
+            }
+
+            var claimedInProgress = await _platformDb.MigrationJobs
+                .Where(job => job.Id == jobId && job.Status == expectedStatus)
+                .ExecuteUpdateAsync(items => items
+                    .SetProperty(job => job.ClaimedAtUtc, now)
+                    .SetProperty(job => job.ClaimedBy, worker));
+
+            return claimedInProgress == 1;
+        }
+
+        var job = await _platformDb.MigrationJobs.FindAsync(jobId);
+        if (job == null || job.Status != expectedStatus)
+        {
+            return false;
+        }
+
+        if (expectedStatus == MigrationStatus.Pending)
+        {
+            job.Status = MigrationStatus.InProgress;
+            job.ClaimedAtUtc = now;
+        }
+
+        job.ClaimedBy = worker;
+        await _platformDb.SaveChangesAsync();
+        return true;
     }
 }

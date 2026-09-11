@@ -1,11 +1,17 @@
+using Khet360.Application.Dtos;
 using Khet360.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Threading.Tasks;
 
 namespace Khet360.Api.Controllers;
 
 [ApiController]
+[Authorize(AuthenticationSchemes = "PlatformJwt", Roles = "PlatformAdmin")]
 [Route("api/[controller]")]
 public class MigrationController : ControllerBase
 {
@@ -24,5 +30,3 @@ public class MigrationController : ControllerBase
         return Ok(new { Message = "Migration completed successfully." });
     }
 }
-
-public record MigrationRequest(Guid TenantId, string TargetEnvironment);

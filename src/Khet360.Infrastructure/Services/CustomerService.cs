@@ -1,8 +1,10 @@
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 
 namespace Khet360.Infrastructure.Services;
 
@@ -120,6 +122,7 @@ public class CustomerService : ICustomerService
         if (cachedCustomer != null) return cachedCustomer;
 
         var customer = await _tenantDb.Customers
+            .AsNoTracking()
             .Include(c => c.Addresses)
             .Include(c => c.Contacts)
             .FirstOrDefaultAsync(c => c.Id == id);
@@ -212,6 +215,7 @@ public class CustomerService : ICustomerService
 
         var total = await query.CountAsync();
         var items = await query
+            .AsNoTracking()
             .Skip((filter.Page - 1) * filter.PageSize)
             .Take(filter.PageSize)
             .Include(c => c.Addresses)

@@ -1,5 +1,7 @@
-using Khet360.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Khet360.Domain.Entities.Tenant;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Common;
 using Microsoft.Extensions.Logging;
 
 namespace Khet360.Infrastructure.Persistence;
@@ -104,6 +106,16 @@ public class DbInitializer
                     new LeaveType { Id = Guid.NewGuid(), Name = "Sick Leave", Code = "SL", IsPaid = true, AnnualAccrualRate = 10 },
                     new LeaveType { Id = Guid.NewGuid(), Name = "Maternity Leave", Code = "MAT", IsPaid = true, AnnualAccrualRate = 0 },
                     new LeaveType { Id = Guid.NewGuid(), Name = "Family Responsibility Leave", Code = "FRL", IsPaid = true, AnnualAccrualRate = 3 }
+                );
+
+                // Seed Platform Features
+                context.PlatformFeatures.AddRange(
+                    new PlatformFeature { Id = Guid.NewGuid(), Name = "Advanced Reporting", Code = "ADVANCED_REPORTING", Description = "Access to advanced analytics and reports", Type = FeatureFlagType.Boolean, IsEnabledGlobally = false, CreatedAt = DateTime.UtcNow },
+                    new PlatformFeature { Id = Guid.NewGuid(), Name = "API Access", Code = "API_ACCESS", Description = "REST API access for integrations", Type = FeatureFlagType.Boolean, IsEnabledGlobally = true, CreatedAt = DateTime.UtcNow },
+                    new PlatformFeature { Id = Guid.NewGuid(), Name = "Dedicated Support", Code = "DEDICATED_SUPPORT", Description = "Priority support channel", Type = FeatureFlagType.Boolean, IsEnabledGlobally = false, CreatedAt = DateTime.UtcNow },
+                    new PlatformFeature { Id = Guid.NewGuid(), Name = "Custom Branding", Code = "CUSTOM_BRANDING", Description = "Custom logo and colors", Type = FeatureFlagType.Boolean, IsEnabledGlobally = false, CreatedAt = DateTime.UtcNow },
+                    new PlatformFeature { Id = Guid.NewGuid(), Name = "Max Storage GB", Code = "MAX_STORAGE_GB", Description = "Maximum storage allocation", Type = FeatureFlagType.Limit, IsEnabledGlobally = true, CreatedAt = DateTime.UtcNow },
+                    new PlatformFeature { Id = Guid.NewGuid(), Name = "API Rate Limit", Code = "API_RATE_LIMIT", Description = "API calls per minute", Type = FeatureFlagType.Limit, IsEnabledGlobally = true, CreatedAt = DateTime.UtcNow }
                 );
 
                 await context.SaveChangesAsync();

@@ -1,6 +1,8 @@
-using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
 using System.Collections.Generic;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Threading.Tasks;
 
 namespace Khet360.Application.Interfaces;

@@ -5,6 +5,9 @@ using Khet360.Application.Interfaces;
 using Khet360.Api.Attributes;
 using Khet360.Domain.Enums;
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 
 namespace Khet360.Api.Controllers;
 
@@ -39,12 +42,12 @@ public class FuneralCasesController : ControllerBase
 
     [HttpGet("{id}")]
     [HasPermission("FuneralCases.Read")]
-    public async Task<ActionResult<ApiResponse<FuneralCaseDetailsDto>>> GetById(Guid id)
+    public async Task<ActionResult<ApiResponse<FuneralCaseDto>>> GetById(Guid id)
     {
         var funeralCase = await _funeralCaseService.GetCaseDetailsAsync(id);
-        if (funeralCase == null) 
-            return NotFound(ApiResponse.Fail<FuneralCaseDetailsDto>("Case not found"));
-        
+        if (funeralCase == null)
+            return NotFound(ApiResponse.Fail<FuneralCaseDto>("Case not found"));
+
         return Ok(ApiResponse.Ok(funeralCase, "Case retrieved successfully"));
     }
 

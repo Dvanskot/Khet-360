@@ -1,9 +1,12 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/AuthApi/AuthApi.csproj" />
+    <Project Path="src/CreatePlatformUser/CreatePlatformUser.csproj" />
     <Project Path="src/Khet360.Api/Khet360.Api.csproj" />
     <Project Path="src/Khet360.Application/Khet360.Application.csproj" />
     <Project Path="src/Khet360.Domain/Khet360.Domain.csproj" />
     <Project Path="src/Khet360.Infrastructure/Khet360.Infrastructure.csproj" />
     <Project Path="src/Khet360.Tests/Khet360.Tests.csproj" />
+    <Project Path="src/SeedDb/SeedDb.csproj" />
   </Folder>
 </Solution>

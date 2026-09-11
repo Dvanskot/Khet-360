@@ -1,7 +1,10 @@
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
+using Khet360.Domain.Entities.Tenant;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Common;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 namespace Khet360.Infrastructure.Services;
 
@@ -18,6 +21,11 @@ public class TenantManagementService : ITenantManagementService
 
     public async Task<Tenant> CreateTenantAsync(string name, string slug, Guid subscriptionPlanId, IsolationTier tier)
     {
+        if (string.IsNullOrWhiteSpace(slug) || slug.Length > 100 || !Regex.IsMatch(slug, "^[a-z0-9-]+$"))
+        {
+            throw new InvalidOperationException("Tenant slug must contain only lowercase letters, numbers, and hyphens.");
+        }
+
         if (await _platformDb.Tenants.AnyAsync(t => t.Slug == slug))
         {
             throw new InvalidOperationException($"Tenant with slug {slug} already exists.");
@@ -80,6 +88,8 @@ public class TenantManagementService : ITenantManagementService
 
     public async Task<Tenant?> GetTenantBySlugAsync(string slug)
     {
-        return await _platformDb.Tenants.FirstOrDefaultAsync(t => t.Slug == slug);
+        return await _platformDb.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Slug == slug);
     }
 }

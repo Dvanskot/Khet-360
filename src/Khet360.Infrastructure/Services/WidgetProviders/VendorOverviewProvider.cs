@@ -1,9 +1,11 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +26,7 @@ public class VendorOverviewProvider : IWidgetProvider
     public async Task<object> GetDataAsync(Guid tenantId, Guid userId)
     {
         var pendingOrders = await _db.VendorOrders
+            .AsNoTracking()
             .Where(vo => vo.Status != VendorOrderStatus.Delivered)
             .ToListAsync();
 

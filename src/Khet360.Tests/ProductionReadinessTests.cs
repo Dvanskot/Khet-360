@@ -1,14 +1,17 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
 using Khet360.Infrastructure.Persistence;
 using Khet360.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -118,7 +121,13 @@ public class ProductionReadinessTests
         var db = GetPlatformDb();
         var mockBackup = new Mock<IBackupService>();
         var mockLogger = new Mock<ILogger<MigrationService>>();
-        var service = new MigrationService(db, mockBackup.Object, mockLogger.Object);
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Migration:DedicatedConnectionString"] = "Server=DedicatedServer;"
+            })
+            .Build();
+        var service = new MigrationService(db, mockBackup.Object, config, mockLogger.Object);
 
         var tenantId = Guid.NewGuid();
         var tenant = new Tenant { Id = tenantId, Slug = "test-tenant", Tier = IsolationTier.Isolated };

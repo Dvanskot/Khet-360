@@ -1,8 +1,10 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -23,6 +25,7 @@ public class SubscriptionService : ISubscriptionService
     public async Task<SubscriptionStatusDto> GetSubscriptionStatusAsync(Guid tenantId)
     {
         var tenant = await _platformDb.Tenants
+            .AsNoTracking()
             .Include(t => t.SubscriptionPlan)
             .FirstOrDefaultAsync(t => t.Id == tenantId);
 
@@ -45,9 +48,11 @@ public class SubscriptionService : ISubscriptionService
         if (tenant == null)
             throw new KeyNotFoundException($"Tenant with ID {tenantId} not found.");
 
-        var plan = await _platformDb.SubscriptionPlans.FindAsync(newPlanId);
+        var plan = await _platformDb.SubscriptionPlans
+            .AsNoTracking()
+            .FirstOrDefaultAsync(plan => plan.Id == newPlanId && plan.IsActive);
         if (plan == null)
-            throw new KeyNotFoundException($"Subscription plan with ID {newPlanId} not found.");
+            throw new KeyNotFoundException($"Subscription plan with ID {newPlanId} not found or inactive.");
 
         tenant.SubscriptionPlanId = newPlanId;
         tenant.UpdatedAt = DateTime.UtcNow;
@@ -62,6 +67,9 @@ public class SubscriptionService : ISubscriptionService
         if (tenant == null)
             throw new KeyNotFoundException($"Tenant with ID {tenantId} not found.");
 
+        if (durationMonths <= 0)
+            throw new ArgumentOutOfRangeException(nameof(durationMonths), "Subscription duration must be positive.");
+
         tenant.SubscriptionStatus = SubscriptionStatus.Active;
         tenant.SubscriptionStartDate = DateTime.UtcNow;
         tenant.SubscriptionEndDate = DateTime.UtcNow.AddMonths(durationMonths);
@@ -73,6 +81,7 @@ public class SubscriptionService : ISubscriptionService
     public async Task<bool> ValidateLimitAsync(Guid tenantId, string entitlementCode, decimal currentUsage)
     {
         var tenant = await _platformDb.Tenants
+            .AsNoTracking()
             .Include(t => t.SubscriptionPlan)
             .ThenInclude(p => p.Entitlements)
             .FirstOrDefaultAsync(t => t.Id == tenantId);

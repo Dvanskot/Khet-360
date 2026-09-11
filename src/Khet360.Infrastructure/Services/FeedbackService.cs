@@ -1,10 +1,12 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Dtos;
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -46,6 +48,7 @@ public class FeedbackService : IFeedbackService
     public async Task<List<FeedbackDto>> GetTenantFeedbackAsync()
     {
         return await _db.Feedbacks
+            .AsNoTracking()
             .OrderByDescending(f => f.CreatedAtUtc)
             .Select(f => new FeedbackDto(
                 f.Id,

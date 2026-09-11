@@ -1,9 +1,11 @@
 using Khet360.Application.Interfaces;
-using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 
 namespace Khet360.Infrastructure.Services;
 
@@ -12,12 +14,14 @@ public class WorkItemService : IWorkItemService
     private readonly TenantDbContext _tenantDb;
     private readonly ITenantService _tenantService;
     private readonly IRoutingService _routingService;
+    private readonly IMetricsService _metrics;
 
-    public WorkItemService(TenantDbContext tenantDb, ITenantService tenantService, IRoutingService routingService)
+    public WorkItemService(TenantDbContext tenantDb, ITenantService tenantService, IRoutingService routingService, IMetricsService metrics)
     {
         _tenantDb = tenantDb;
         _tenantService = tenantService;
         _routingService = routingService;
+        _metrics = metrics;
     }
 
     public async Task<Guid> CreateWorkItemAsync(string entityType, Guid entityId, string nextAction, WorkItemPriority priority, DateTime dueDate, Guid branchId)
@@ -100,7 +104,9 @@ public class WorkItemService : IWorkItemService
         await UpdateStatusAsync(workItemId, WorkItemStatus.Completed, "None");
 
         var workItem = await _tenantDb.WorkItems.FindAsync(workItemId);
-        // Log the outcome in history
+        var onTime = workItem != null && workItem.DueDate >= DateTime.UtcNow;
+        _metrics.RecordWorkItemCompletion(onTime);
+
         _tenantDb.WorkItemHistories.Add(new WorkItemHistory
         {
             Id = Guid.NewGuid(),
@@ -115,6 +121,7 @@ public class WorkItemService : IWorkItemService
     public async Task<PagedList<WorkItemDto>> GetMyWorkAsync(Guid userId, Guid branchId)
     {
         var query = _tenantDb.WorkItems
+            .AsNoTracking()
             .Where(wi => wi.OwnerId == userId && wi.Status != WorkItemStatus.Completed && wi.BranchId == branchId);
 
         var total = await query.CountAsync();
@@ -129,6 +136,7 @@ public class WorkItemService : IWorkItemService
     public async Task<PagedList<WorkItemDto>> GetTeamQueueAsync(Guid branchId)
     {
         var query = _tenantDb.WorkItems
+            .AsNoTracking()
             .Where(wi => wi.OwnerId == null && wi.Status != WorkItemStatus.Completed && wi.BranchId == branchId);
 
         var total = await query.CountAsync();

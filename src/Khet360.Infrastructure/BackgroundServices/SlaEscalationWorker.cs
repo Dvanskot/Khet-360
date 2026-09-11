@@ -1,18 +1,20 @@
-using Khet360.Domain.Entities;
 using Khet360.Domain.Enums;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Khet360.Application.Interfaces;
 
 namespace Khet360.Infrastructure.BackgroundServices;
@@ -21,61 +23,32 @@ public class SlaEscalationWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<SlaEscalationWorker> _logger;
+    private readonly IConfiguration _configuration;
     private readonly TimeSpan _checkInterval = TimeSpan.FromMinutes(30);
 
-    public SlaEscalationWorker(IServiceProvider serviceProvider, ILogger<SlaEscalationWorker> logger)
+    public SlaEscalationWorker(IServiceProvider serviceProvider, ILogger<SlaEscalationWorker> logger, IConfiguration configuration)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _configuration = configuration;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("SLA Escalation Worker started.");
 
-        var factory = new ConnectionFactory();
-        factory.HostName = "localhost";
-        factory.UserName = "guest";
-        factory.Password = "guest";
-
-        try
+        while (!stoppingToken.IsCancellationRequested)
         {
-            using var connection = await factory.CreateConnectionAsync(stoppingToken);
-            using var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken);
-
-            await channel.ExchangeDeclareAsync("khet360_events", ExchangeType.Fanout, cancellationToken: stoppingToken);
-            var queueDeclareResult = await channel.QueueDeclareAsync(cancellationToken: stoppingToken);
-            var queueName = queueDeclareResult.QueueName;
-            await channel.QueueBindAsync(queueName, "khet360_events", "", cancellationToken: stoppingToken);
-
-            var consumer = new AsyncEventingBasicConsumer(channel);
-            consumer.ReceivedAsync += async (model, ea) =>
+            try
             {
-                var body = ea.Body.ToArray();
-                var message = Encoding.UTF8.GetString(body);
-                _logger.LogInformation("SLA Worker received event: {Message}", message);
-                await Task.CompletedTask;
-            };
-
-            await channel.BasicConsumeAsync(queueName, autoAck: true, consumer: consumer, cancellationToken: stoppingToken);
-
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                try
-                {
-                    await ProcessSlaEscalations();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error occurred while processing SLA escalations.");
-                }
-
-                await Task.Delay(_checkInterval, stoppingToken);
+                await ProcessSlaEscalations();
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogCritical(ex, "SLA Escalation Worker failed to initialize RabbitMQ connection.");
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while processing SLA escalations.");
+            }
+
+            await Task.Delay(_checkInterval, stoppingToken);
         }
     }
 
@@ -113,13 +86,16 @@ public class SlaEscalationWorker : BackgroundService
                     var oldStatus = wi.SlaStatus;
                     wi.SlaStatus = currentSla;
                     wi.LastSlaUpdate = DateTime.UtcNow;
+                    wi.UpdatedAt = DateTime.UtcNow;
+
+                    _logger.LogWarning("SLA Status change: WorkItem {Id} transitioned from {OldStatus} to {NewStatus}", wi.Id, oldStatus, currentSla);
 
                     db.WorkItemHistories.Add(new WorkItemHistory
                     {
-                        Id = Guid.NewGuid(),
                         WorkItemId = wi.Id,
-                        Note = $"SLA Status transitioned from {oldStatus} to {currentSla}",
-                        TimestampUtc = DateTime.UtcNow
+                        OldStatus = oldStatus.ToString(),
+                        NewStatus = currentSla.ToString(),
+                        Note = "SLA status transition"
                     });
 
                     if (currentSla == SlaStatus.Breached)
@@ -144,6 +120,7 @@ public class SlaEscalationWorker : BackgroundService
 
         // Check for overdue maintenance - use a limited query if possible
         var overdueMaintenance = await db.MaintenanceSchedules
+            .AsNoTracking()
             .Where(s => s.NextDueDate <= now)
             .Take(1000) // Limit to top 1000 alerts per run
             .ToListAsync();
@@ -155,6 +132,7 @@ public class SlaEscalationWorker : BackgroundService
 
         // Check for delayed trips (e.g., Trip not started within 30 mins of scheduled time)
         var delayedTrips = await db.TripAssignments
+            .AsNoTracking()
             .Where(t => !t.IsCompleted && t.ActualStartTime == null && t.ScheduledStartTime < now.AddMinutes(-30))
             .Take(1000)
             .ToListAsync();

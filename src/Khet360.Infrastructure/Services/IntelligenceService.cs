@@ -1,4 +1,8 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -19,21 +23,21 @@ public class IntelligenceService : IIntelligenceService
     private readonly PlatformDbContext _platformDb;
     private readonly HttpClient _httpClient;
     private readonly ILogger<IntelligenceService> _logger;
-    private readonly string _prometheusUrl;
+    private readonly IPlatformCacheService _cache;
 
-    public IntelligenceService(PlatformDbContext platformDb, IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<IntelligenceService> logger)
+    public IntelligenceService(PlatformDbContext platformDb, HttpClient httpClient, IPlatformCacheService cache, ILogger<IntelligenceService> logger)
     {
         _platformDb = platformDb;
+        _httpClient = httpClient;
+        _cache = cache;
         _logger = logger;
-        _prometheusUrl = configuration["Prometheus:Url"] ?? "http://localhost:9090";
-        _httpClient = httpClientFactory.CreateClient();
     }
 
     public async Task<PlatformHealthDto> GetPlatformHealthAsync()
     {
         try
         {
-            var totalTenants = await _platformDb.Tenants.CountAsync();
+            var totalTenants = (await _cache.GetTenantsAsync()).Count;
             var slaBreaches = await QueryPrometheus<double>("sum(khet360_sla_breaches_total)");
             var avgResponseTime = await QueryPrometheus<double>("avg(http_request_duration_seconds)");
 
@@ -57,6 +61,7 @@ public class IntelligenceService : IIntelligenceService
         try
         {
             var tenants = await _platformDb.Tenants
+                .AsNoTracking()
                 .Where(t => t.CreatedAt >= from && t.CreatedAt <= to)
                 .OrderBy(t => t.CreatedAt)
                 .ToListAsync();
@@ -64,7 +69,7 @@ public class IntelligenceService : IIntelligenceService
             var growth = new List<TenantGrowthDto>();
             var grouped = tenants.GroupBy(t => t.CreatedAt.Date).OrderBy(g => g.Key);
 
-            int runningTotal = await _platformDb.Tenants.CountAsync(t => t.CreatedAt < from);
+            int runningTotal = await _platformDb.Tenants.AsNoTracking().CountAsync(t => t.CreatedAt < from);
 
             foreach (var group in grouped)
             {
@@ -123,7 +128,7 @@ public class IntelligenceService : IIntelligenceService
         var result = await response.Content.ReadFromJsonAsync<PrometheusResponse>();
         var vector = result?.Data?.Result?.FirstOrDefault();
 
-        if (vector != null && double.TryParse(vector.Value[1], out var val))
+        if (vector != null && double.TryParse(vector.Value[1], NumberStyles.Any, CultureInfo.InvariantCulture, out var val))
         {
             return val;
         }

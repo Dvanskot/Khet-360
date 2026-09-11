@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
+using Khet360.Domain.Entities.Tenant;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Common;
 using Microsoft.AspNetCore.Authorization;
 using MediatR;
 using Khet360.Application.Tenants.Commands;
 
 namespace Khet360.Api.Controllers.Platform;
 
-[Authorize(Roles = "PlatformAdmin")]
+[Authorize(AuthenticationSchemes = "PlatformJwt", Roles = "PlatformAdmin")]
 [ApiController]
 [Route("api/platform/[controller]")]
 public class TenantAdminController : ControllerBase

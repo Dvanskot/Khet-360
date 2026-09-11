@@ -1,9 +1,12 @@
 using System;
+using Khet360.Domain.Entities.Common;
+using Khet360.Domain.Entities.Platform;
+using Khet360.Domain.Entities.Tenant;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Khet360.Application.Dtos;
-using Khet360.Domain.Entities;
+using Khet360.Application.Interfaces;
 using Khet360.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,22 +16,22 @@ namespace Khet360.Api.Controllers.Platform;
 
 [ApiController]
 [Route("platform/api/[controller]")]
-[Authorize]
+[Authorize(AuthenticationSchemes = "PlatformJwt", Roles = "PlatformAdmin")]
 public class SubscriptionPlanController : ControllerBase
 {
     private readonly PlatformDbContext _platformDb;
+    private readonly IPlatformCacheService _cache;
 
-    public SubscriptionPlanController(PlatformDbContext platformDb)
+    public SubscriptionPlanController(PlatformDbContext platformDb, IPlatformCacheService cache)
     {
         _platformDb = platformDb;
+        _cache = cache;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<SubscriptionPlan>>> GetPlans()
     {
-        var plans = await _platformDb.SubscriptionPlans
-            .Include(p => p.Entitlements)
-            .ToListAsync();
+        var plans = await _cache.GetSubscriptionPlansAsync();
         return Ok(plans);
     }
 
@@ -39,6 +42,7 @@ public class SubscriptionPlanController : ControllerBase
         plan.CreatedAt = DateTime.UtcNow;
         _platformDb.SubscriptionPlans.Add(plan);
         await _platformDb.SaveChangesAsync();
+        await _cache.InvalidateSubscriptionPlansAsync();
         return CreatedAtAction(nameof(GetPlans), new { id = plan.Id }, plan);
     }
 
@@ -58,6 +62,7 @@ public class SubscriptionPlanController : ControllerBase
         existingPlan.UpdatedAt = DateTime.UtcNow;
 
         await _platformDb.SaveChangesAsync();
+        await _cache.InvalidateSubscriptionPlansAsync();
         return NoContent();
     }
 
@@ -69,6 +74,7 @@ public class SubscriptionPlanController : ControllerBase
 
         _platformDb.SubscriptionPlans.Remove(plan);
         await _platformDb.SaveChangesAsync();
+        await _cache.InvalidateSubscriptionPlansAsync();
         return NoContent();
     }
 
@@ -84,6 +90,7 @@ public class SubscriptionPlanController : ControllerBase
         tenant.SubscriptionPlanId = planId;
         tenant.UpdatedAt = DateTime.UtcNow;
         await _platformDb.SaveChangesAsync();
+        await _cache.InvalidateTenantsAsync();
 
         return Ok(new { Message = "Tenant subscription updated successfully" });
     }
